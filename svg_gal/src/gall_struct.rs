@@ -1,5 +1,6 @@
 use std::f64::consts::FRAC_PI_2;
 
+#[derive(PartialEq)]
 pub struct GallCircle<'loc> { //Syllable equivalent
     pub character: char,
     pub repeat: bool,
@@ -8,20 +9,20 @@ pub struct GallCircle<'loc> { //Syllable equivalent
     pub radius: f64,
     pub decorators:Vec<Decor<'loc>>
 }
-
+#[derive(PartialEq)]
 pub struct VowCircle { //for attached vowels only
     pub character: char,
     pub repeat: bool,
     pub radius: f64,
 }
-
+#[derive(PartialEq)]
 pub struct Decor<'loc> {
     pub loc: GallOrd<'loc>,
     pub dot: bool,
 }
 
 
-
+#[derive(PartialEq)]
 pub struct GallOrd <'parent> {
     pub ang: Option<f64>,
     pub dist: f64,
@@ -30,15 +31,15 @@ pub struct GallOrd <'parent> {
 }
 
 impl GallOrd<'_> {
-    fn _svg_x(&self) -> f64 {
+    pub fn svg_x(&self) -> f64 {
         match self.ang {
-            Some(rad) => self.dist*(rad - FRAC_PI_2).cos() + self.center.0,
+            Some(rad) => self.dist*(FRAC_PI_2 - rad).cos() + self.center.0,
             None => self.center.0
         }
     }
-    fn _svg_y(&self) -> f64 {
+    pub fn svg_y(&self) -> f64 {
         match self.ang {
-            Some(rad) => self.dist*(rad - FRAC_PI_2).sin() + self.center.1,
+            Some(rad) => self.dist*(FRAC_PI_2 - rad).sin() + self.center.1,
             None => self.center.1
         }
     }
@@ -56,6 +57,9 @@ impl GallOrd<'_> {
     pub fn set_ang_d(&mut self, co_ord: (f64,f64)) {
         self.ang = Some(co_ord.0);
         self.dist = co_ord.1;
+    }
+    pub fn set_ang(&mut self, new_ang:f64) {
+        self.ang = Some(new_ang);
     }
     pub fn clockwise(&mut self, radians:f64) {
         let ang= match self.ang {

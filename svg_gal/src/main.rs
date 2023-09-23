@@ -9,7 +9,7 @@ mod gall_struct;
 
 fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
     let mut syllable_list = Vec::new();
-    for letter in text.chars() {
+    for (n, letter) in text.chars().enumerate() {
         syllable_list.push(
             GallCircle{
                 character: letter,
@@ -17,7 +17,7 @@ fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
                 vowel: None,
                 loc:
                     gall_struct::GallOrd { 
-                        ang: Some(1.0), 
+                        ang: Some(0.9 * n as f64), 
                         dist: 200.0, 
                         center: origin, 
                         parent: None
@@ -56,40 +56,58 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
             .set("fill", "none")
             .set("stroke", "black")
             .set("stroke-width", 3)
-            .set("cx", loc.center.0/2.0)
-            .set("cy", loc.center.1/2.0)
+            .set("cx", loc.center.0)
+            .set("cy", loc.center.1)
             .set("r", 200);
         svg_doc.add(circle)
     } else {
         let mut init_angle = 0.0;
-        if false { //skeleton_letters[0].character == '_'
-            init_angle += 0.2;
+        let mut thi_letter = thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,200.0);
+        if thi_letter > 0.0 { //skeleton_letters[0].character == '_'
+            init_angle -= thi_letter;
         }
         loc.set_ang_d((init_angle,200.0));
         let continuum_pt = loc.svg_ord();
+        let mut first = true;
         
-        //start loop here?
-        let thi_letter = thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,200.0);
-        let angle = match skeleton_letters[0].loc.ang {
+        let mut angle = match skeleton_letters[0].loc.ang {
             Some(ang) => ang,
             None => 0.2
         };
-        let word_arc_start = loc.svg_ord();
-        loc.c_clockwise( angle - thi_letter);
-        let letter_arc_start = loc.svg_ord();
+        loc.set_ang( angle - thi_letter);
+        let mut letter_arc_start = loc.svg_ord();
         loc.c_clockwise(2.0 * thi_letter);
-        let letter_arc_finish = loc.svg_ord();
+        let mut letter_arc_finish = loc.svg_ord();
         
         //actually fill in data
-        let skele_data = Data::new()
-            .move_to(word_arc_start)
+        let mut skele_data = Data::new()
+            .move_to(continuum_pt)
             // x radius, y radius, rotation, large arc, sweep direction, end x, end y
             .elliptical_arc_to((200,200, 0,0,0,letter_arc_start.0,letter_arc_start.1))
             .elliptical_arc_to((skeleton_letters[0].radius, skeleton_letters[0].radius,0,0,1,letter_arc_finish.0,letter_arc_finish.1));
 
-        let mut final_sweep = 0;
-        if angle + thi_letter - init_angle < std::f64::consts::FRAC_PI_2 {
-            final_sweep = 1
+        for letter in skeleton_letters {
+            if first {
+                first = false;
+                continue;
+            }
+            thi_letter = thi(letter.loc.dist,letter.radius,200.0);
+            angle = match letter.loc.ang {
+                Some(ang) => ang,
+                None => 0.2
+            };
+            loc.set_ang( angle - thi_letter);
+            letter_arc_start = loc.svg_ord();
+            loc.c_clockwise(2.0 * thi_letter);
+            letter_arc_finish = loc.svg_ord();
+            skele_data = skele_data
+                .elliptical_arc_to((200,200, 0,0,0,letter_arc_start.0,letter_arc_start.1))
+                .elliptical_arc_to((letter.radius, letter.radius,0,0,1,letter_arc_finish.0,letter_arc_finish.1));
+        }
+
+        let mut final_sweep = 1;
+        if -angle - thi_letter + init_angle < -std::f64::consts::FRAC_PI_2 {
+            final_sweep = 0
         }
         let closed_loop = skele_data
             .elliptical_arc_to((200.0,200.0,0,final_sweep,0,continuum_pt.0,continuum_pt.1))
@@ -106,22 +124,21 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
 }
 
 fn render_lttr_path(syllables:Vec<gall_struct::GallCircle>, svg_doc:Document) -> SVG {
-    if syllables.len() == 0 {
-        let skele_data = Data::new()
-            .move_to((10,10))
-            // x radius, y radius, rotation, large arc, sweep direction
-            .elliptical_arc_by((30,30, 0,0,0,250,250))
-            .line_by((50, 0))
-            .line_by((0, -50))
-            .close();
-        let path2 = Path::new()
-            .set("fill", "none")
-            .set("stroke", "black")
-            .set("stroke-width", 3)
-            .set("d", skele_data);
-        svg_doc.add(path2)
-    } else {
+    if false {//syllables.len() == 0 {
         svg_doc
+    } else {
+        let mut drawn = svg_doc;
+        for letter in syllables {
+            let circle = Circle::new()
+                .set("fill", "blue")
+                .set("stroke", "black")
+                .set("stroke-width", 3)
+                .set("cx", letter.loc.svg_x())
+                .set("cy", letter.loc.svg_y())
+                .set("r", 30);
+            drawn = drawn.add(circle);
+        }
+        drawn
     }
 }
 
@@ -140,8 +157,8 @@ fn main() {
     };
     println!("Start");
     let all_letters = text_to_gall(raw_text.to_owned(), origin.center);
-    let skele_ltrs = all_letters;//Vec::new();
-    let oth_ltrs = Vec::new();
+    let skele_ltrs = Vec::new();
+    let oth_ltrs = all_letters;//Vec::new();
 
     let document = Document::new()
         .set("viewBox", (0, 0, width, height));

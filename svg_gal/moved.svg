@@ -1,4 +1,8 @@
 <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-<path d="M256,456 A200,200,0,0,0,406.23746,388.01782 A30,30,0,0,1,438.5643,337.67175 A200,200,0,1,0,256,456 z" fill="green" stroke="black" stroke-width="3"/>
-<path d="M10,10 a30,30,0,0,0,250,250 l50,0 l0,-50 z" fill="none" stroke="black" stroke-width="3"/>
+<circle cx="256" cy="256" fill="none" r="200" stroke="black" stroke-width="3"/>
+<circle cx="256" cy="456" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="412.6653819254967" cy="380.3219936541329" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="450.76952617563904" cy="210.55958106138257" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="341.47597604676594" cy="75.18557159658775" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="167.4959113410295" cy="76.64831673317059" fill="blue" r="30" stroke="black" stroke-width="3"/>
 </svg>
