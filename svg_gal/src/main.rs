@@ -1,27 +1,28 @@
 use std::env;
 
+use gall_struct::GallCircle;
 use svg::Document;
 use svg::node::element::{Path, Circle, SVG};
 use svg::node::element::path::Data;
 
 mod gall_struct;
 
-fn text_to_gall(text:&String) -> Vec<gall_struct::GallCircle> {
+fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
     let mut syllable_list = Vec::new();
     for letter in text.chars() {
         syllable_list.push(
-            gall_struct::GallCircle{
+            GallCircle{
                 character: letter,
                 repeat: false,
                 vowel: None,
                 loc:
                     gall_struct::GallOrd { 
-                        ang: Some(0.0), 
-                        dist: 10.0, 
-                        center: (30.0,30.0), 
-                        parent: None 
+                        ang: Some(1.0), 
+                        dist: 200.0, 
+                        center: origin, 
+                        parent: None
                     },
-                radius: 100.0,
+                radius: 30.0,
                 decorators: Vec::new(),
             }
         )
@@ -60,23 +61,46 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
             .set("r", 200);
         svg_doc.add(circle)
     } else {
-        loc.set_ang_d((0.0,loc.center.0));
+        let mut init_angle = 0.0;
         if false { //skeleton_letters[0].character == '_'
-            loc.ang = Some(-0.1);
+            init_angle += 0.2;
         }
+        loc.set_ang_d((init_angle,200.0));
+        let continuum_pt = loc.svg_ord();
+        
+        //start loop here?
+        let thi_letter = thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,200.0);
+        let angle = match skeleton_letters[0].loc.ang {
+            Some(ang) => ang,
+            None => 0.2
+        };
+        let word_arc_start = loc.svg_ord();
+        loc.c_clockwise( angle - thi_letter);
+        let letter_arc_start = loc.svg_ord();
+        loc.c_clockwise(2.0 * thi_letter);
+        let letter_arc_finish = loc.svg_ord();
+        
+        //actually fill in data
         let skele_data = Data::new()
-            .move_to(loc.svg_ord())
-            // x radius, y radius, rotation, large arc, sweep direction
-            .elliptical_arc_by((0,0, 0,0,0,250,250))
-            .close();
+            .move_to(word_arc_start)
+            // x radius, y radius, rotation, large arc, sweep direction, end x, end y
+            .elliptical_arc_to((200,200, 0,0,0,letter_arc_start.0,letter_arc_start.1))
+            .elliptical_arc_to((skeleton_letters[0].radius, skeleton_letters[0].radius,0,0,1,letter_arc_finish.0,letter_arc_finish.1));
 
+        let mut final_sweep = 0;
+        if angle + thi_letter - init_angle < std::f64::consts::FRAC_PI_2 {
+            final_sweep = 1
+        }
+        let closed_loop = skele_data
+            .elliptical_arc_to((200.0,200.0,0,final_sweep,0,continuum_pt.0,continuum_pt.1))
+            .close();
 
         //attach path to svg
         let path = Path::new()
             .set("fill", "green")
             .set("stroke", "black")
             .set("stroke-width", 3)
-            .set("d", skele_data);
+            .set("d", closed_loop);
         svg_doc.add(path)
     }
 }
@@ -108,17 +132,17 @@ fn main() {
     let raw_text = &args[1];
     let seed_text = &args[2];
     let _seed = seed_text.to_owned().into_bytes();
-    println!("Start");
-    let all_letters = text_to_gall(raw_text);
-    let skele_ltrs = all_letters;//Vec::new();
-    let oth_ltrs = Vec::new();
-
     let mut origin = gall_struct::GallOrd{
         ang: None,
         dist: 0.0,
         center: (width/2.0,height/2.0),
         parent: None,
     };
+    println!("Start");
+    let all_letters = text_to_gall(raw_text.to_owned(), origin.center);
+    let skele_ltrs = all_letters;//Vec::new();
+    let oth_ltrs = Vec::new();
+
     let document = Document::new()
         .set("viewBox", (0, 0, width, height));
     let skeleton = render_skele_path(skele_ltrs, document, &mut origin);

@@ -1,3 +1,4 @@
+use std::f64::consts::FRAC_PI_2;
 
 pub struct GallCircle<'loc> { //Syllable equivalent
     pub character: char,
@@ -19,7 +20,7 @@ pub struct Decor<'loc> {
     pub dot: bool,
 }
 
-use std::f64::consts::PI;
+
 
 pub struct GallOrd <'parent> {
     pub ang: Option<f64>,
@@ -31,22 +32,23 @@ pub struct GallOrd <'parent> {
 impl GallOrd<'_> {
     fn _svg_x(&self) -> f64 {
         match self.ang {
-            Some(rad) => self.dist*(rad - PI/2.0).cos() + self.center.0,
+            Some(rad) => self.dist*(rad - FRAC_PI_2).cos() + self.center.0,
             None => self.center.0
         }
     }
     fn _svg_y(&self) -> f64 {
         match self.ang {
-            Some(rad) => self.dist*(rad - PI/2.0).sin() - self.center.1,
+            Some(rad) => self.dist*(rad - FRAC_PI_2).sin() + self.center.1,
             None => self.center.1
         }
     }
+    //SVG is stupid, and positive angles are clockwise
     pub fn svg_ord(&self) -> (f64,f64) {
         match self.ang {
             //can I use float.sin_cos()?
             Some(rad) => (
-                self.dist*(rad - PI/2.0).cos() + self.center.0,
-                self.dist*(rad - PI/2.0).sin() - self.center.1
+                self.dist*(FRAC_PI_2 - rad).cos() + self.center.0,
+                self.dist*(FRAC_PI_2 - rad).sin() + self.center.1
             ),
             None => self.center
         }
