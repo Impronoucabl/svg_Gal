@@ -28,6 +28,26 @@ fn text_to_gall(text:&String) -> Vec<gall_struct::GallCircle> {
     }
     syllable_list
 }
+//below is python
+//self.theta  = math.acos((Wrd.inner_rad**2 - dist**2 - self.outer_rad**2)/(2*dist*self.outer_rad))
+fn theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
+    let theta = ((big_radius.powf(2.0) - letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*letter_radius)).acos();
+    if theta == std::f64::NAN {
+        0.0 //could do math error?
+    } else {
+        theta
+    }
+}
+//below is python
+//math.acos((Wrd.inner_rad**2 + dist**2 - self.outer_rad**2)/(2*dist*Wrd.inner_rad))
+fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
+    let thi = ((big_radius.powf(2.0) + letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*big_radius)).acos();
+    if thi == std::f64::NAN {
+        0.0 //could do math error?
+    } else {
+        thi
+    }
+}
 
 fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Document, loc: &mut gall_struct::GallOrd) -> SVG {
     if skeleton_letters.len() == 0 {
@@ -61,7 +81,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
     }
 }
 
-fn render_lttr_path(syllables:Vec<gall_struct::GallCircle>, svg_doc:Document, loc: &gall_struct::GallOrd) -> SVG {
+fn render_lttr_path(syllables:Vec<gall_struct::GallCircle>, svg_doc:Document) -> SVG {
     if syllables.len() == 0 {
         let skele_data = Data::new()
             .move_to((10,10))
@@ -82,8 +102,8 @@ fn render_lttr_path(syllables:Vec<gall_struct::GallCircle>, svg_doc:Document, lo
 }
 
 fn main() {
-    let WIDTH = 512.0;
-    let HEIGHT = 512.0;
+    let width = 512.0;
+    let height = 512.0;
     let args: Vec<String> = env::args().collect();
     let raw_text = &args[1];
     let seed_text = &args[2];
@@ -96,13 +116,13 @@ fn main() {
     let mut origin = gall_struct::GallOrd{
         ang: None,
         dist: 0.0,
-        center: (WIDTH/2.0,HEIGHT/2.0),
+        center: (width/2.0,height/2.0),
         parent: None,
     };
     let document = Document::new()
-        .set("viewBox", (0, 0, WIDTH, HEIGHT));
+        .set("viewBox", (0, 0, width, height));
     let skeleton = render_skele_path(skele_ltrs, document, &mut origin);
-    let all_letters = render_lttr_path(oth_ltrs, skeleton, &origin);
+    let all_letters = render_lttr_path(oth_ltrs, skeleton);
     println!("Saving");
     svg::save(raw_text.to_owned() + ".svg", &all_letters).unwrap();
 }

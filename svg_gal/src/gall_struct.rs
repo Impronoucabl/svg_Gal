@@ -1,3 +1,4 @@
+
 pub struct GallCircle<'loc> { //Syllable equivalent
     pub character: char,
     pub repeat: bool,
@@ -27,23 +28,14 @@ pub struct GallOrd <'parent> {
     pub parent: Option<&'parent GallOrd<'parent>>,
 }
 
-impl GallCircle<'_> {
-    pub fn theta(&self) -> f64 {
-        1.1
-    }
-    pub fn thi(&self) -> f64 {
-        0.6
-    }
-}
-
 impl GallOrd<'_> {
-    fn svg_x(&self) -> f64 {
+    fn _svg_x(&self) -> f64 {
         match self.ang {
             Some(rad) => self.dist*(rad - PI/2.0).cos() + self.center.0,
             None => self.center.0
         }
     }
-    fn svg_y(&self) -> f64 {
+    fn _svg_y(&self) -> f64 {
         match self.ang {
             Some(rad) => self.dist*(rad - PI/2.0).sin() - self.center.1,
             None => self.center.1
@@ -51,6 +43,7 @@ impl GallOrd<'_> {
     }
     pub fn svg_ord(&self) -> (f64,f64) {
         match self.ang {
+            //can I use float.sin_cos()?
             Some(rad) => (
                 self.dist*(rad - PI/2.0).cos() + self.center.0,
                 self.dist*(rad - PI/2.0).sin() - self.center.1
@@ -76,7 +69,7 @@ impl GallOrd<'_> {
         };
         self.ang = Some(ang + radians);
     }
-    fn set_dist(&mut self, new_dist:f64) {
+    pub fn set_dist(&mut self, new_dist:f64) {
         self.dist = new_dist
     }
 }
