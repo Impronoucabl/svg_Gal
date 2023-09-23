@@ -9,7 +9,7 @@ mod gall_struct;
 fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Document, &WIDTH: &i32, &HEIGHT: &i32) -> SVG {
     if skeleton_letters.len() == 0 {
         let circle = Circle::new()
-            .set("fill", "red")
+            .set("fill", "none")
             .set("stroke", "black")
             .set("stroke-width", 3)
             .set("cx", WIDTH/2)
@@ -18,6 +18,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
         svg_doc.add(circle)
     } else {
         let skele_data = Data::new()
+            .move_to((10,10))
             // x radius, y radius, rotation, large arc, sweep direction
             .elliptical_arc_by((30,30, 0,0,0,250,250))
             .line_by((50, 0))
@@ -35,6 +36,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
 fn render_lttr_path(syllables:Vec<gall_struct::GallCircle>, svg_doc:Document, &WIDTH: &i32, &HEIGHT: &i32) -> SVG {
     if syllables.len() == 0 {
         let skele_data = Data::new()
+            .move_to((10,10))
             // x radius, y radius, rotation, large arc, sweep direction
             .elliptical_arc_by((30,30, 0,0,0,250,250))
             .line_by((50, 0))
