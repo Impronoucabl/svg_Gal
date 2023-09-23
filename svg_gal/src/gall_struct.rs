@@ -1,3 +1,23 @@
+pub struct GallCircle<'loc> { //Syllable equivalent
+    character: char,
+    repeat: bool,
+    vowel:Option<VowCircle>,
+    loc: GallOrd<'loc>,
+    radius: f64,
+    decorators:Vec<Decor<'loc>>
+}
+
+struct VowCircle { //for attached vowels only
+    character: char,
+    repeat: bool,
+    radius: f64,
+}
+
+struct Decor<'loc> {
+    loc: GallOrd<'loc>,
+    dot: bool,
+}
+
 use std::f64::consts::PI;
 
 pub struct GallOrd <'parent> {
@@ -42,4 +62,3 @@ impl GallOrd<'_> {
         self.dist = new_dist
     }
 }
-
