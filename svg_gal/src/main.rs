@@ -1,10 +1,22 @@
 use std::env;
+
 use svg::Document;
 use svg::node::element::{Path, Circle};
 use svg::node::element::path::Data;
 
+mod gallord;
+
 fn skele_path(skele_str: &str, WIDTH: &i32) -> Path {
-    print!("{}", skele_str);
+    for divot in skele_str.chars() {
+        print!("{}", divot);
+        let _test = gallord::GallOrd{
+            ang:Some(1.0),
+            dist:1.0,
+            center: (1.0,1.0),
+            parent: None,
+        };
+    };
+    
     let data = Data::new()
         .move_to((WIDTH/2, 10))
         // x radius, y radius, rotation, large arc, sweep direction
@@ -29,7 +41,7 @@ fn main() {
     let _seed = seed_text.to_owned().into_bytes();
     println!("Start");
     
-    let skele_str = "zoo";
+    let skele_str = "_t";
     let skele = skele_path(skele_str, &WIDTH);
 
     let circle = Circle::new()
@@ -38,7 +50,7 @@ fn main() {
         .set("stroke-width", 3)
         .set("cx", &WIDTH/2)
         .set("cy", &HEIGHT/2)
-        .set("r", 40);
+        .set("r", 200);
 
     let document = Document::new()
         .set("viewBox", (0, 0, WIDTH, HEIGHT))
