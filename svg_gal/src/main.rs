@@ -5,46 +5,7 @@ use svg::node::element::{Path, Circle, SVG};
 use svg::node::element::path::Data;
 
 mod gall_struct;
-use gall_struct::{GallCircle, LetterType};
-
-//python import ------
-(cType, feature Type, feature number)
-        'b' : (1,0,0), #No features
-        'j' : (2,0,0),
-        't' : (3,0,0),
-        'th': (4,0,0),
-        'ch': (1,1,2), #Dots
-        'k' : (2,1,2),
-        'sh': (3,1,2),
-        'y' : (4,1,2),
-        'd' : (1,1,3),
-        'l' : (2,1,3),
-        'r' : (3,1,3),
-        'z' : (4,1,3),
-        'g' : (1,2,1), #Dashes
-        'n' : (2,2,1),
-        'v' : (3,2,1),
-        'qu': (4,2,1),
-        'h' : (1,2,2),
-        'p' : (2,2,2),
-        'w' : (3,2,2),
-        'x' : (4,2,2),
-        'f' : (1,2,3),
-        'm' : (2,2,3),
-        's' : (3,2,3),
-        'ng': (4,2,3),
-        'a' : (0,0,0), #vowels
-        'e' : (0,0,0),
-        'i' : (0,2,1),
-        'o' : (0,0,0),
-        'u' : (0,2,1),
-        'ph': (2,1,1), #Extended alphabet
-        'wh': (3,1,1),
-        'gh': (4,1,1),
-        'c' : (2,1,4),
-        'q' : (4,1,4)
-
-------
+use gall_struct::{GallCircle, GallOrd, LetterType};
 
 fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
     let mut syllable_list = Vec::new();
@@ -60,64 +21,61 @@ fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
             'Q'|'X'|'Y'|'Z'|'q'|'x'|'y'|'z'                 => LetterType::ZStem, // Also GH, NG, QU, TH
             '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'         => LetterType::Digit, // TODO
             _ => LetterType::Punctuation, //TODO
-        }
+        };
         let dot = match letter {
-            'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true)
-            'E'|'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'V'|'W'|'X'|'e'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'v'|'w'|'x' => Some(false)
-            'B'|'J'|'T'|'b'|'j'|'t' => None
-            '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9' => None //TODO
+            'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true),
+            'E'|'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'V'|'W'|'X'|'e'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'v'|'w'|'x' => Some(false),
+            'B'|'J'|'T'|'b'|'j'|'t' => None,
+            '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9' => None, //TODO
             _ => None
-        }
-        let mut decor_num = 0
+        };
+        let mut decor_num = 0;
         if dot.is_some()  {
             decor_num = match letter {
-                'E' => 1
-                'G' => 2
-                'F' => 3
-                'C' => 4
+                'E'|'G'|'I'|'N'|'U'|'V'|'e'|'g'|'i'|'n'|'u'|'v'  => 1,
+                'H'|'K'|'P'|'W'|'X'|'Y'|'h'|'k'|'p'|'w'|'x'|'y' => 2,
+                'D'|'F'|'L'|'M'|'R'|'S'|'Z'|'d'|'f'|'l'|'m'|'r'|'s'|'z' => 3,
+                'C'|'Q'|'c'|'q' => 4,
                 _ => 0
             }
         }
-
+        let letter_loc = GallOrd { 
+            ang: Some(letter_sep_ang * n as f64), 
+            dist: 180.0, 
+            center: origin, 
+            parent: None
+        };
+        let mut decor_list = Vec::new();
+        while decor_num > 0 {
+            let decor_type = match dot {
+                Some(boolean) => boolean,
+                None => false, //TODO fix
+            };
+            let dec = gall_struct::Decor{
+                loc: GallOrd{
+                    ang:Some(0.2 * decor_num as f64),
+                    dist:30.0,
+                    center: origin,
+                    parent: None //TODO fix
+                },
+                dot: decor_type,
+            };
+            decor_list.push(dec);
+            decor_num -= 1;
+        } 
         syllable_list.push(
             GallCircle{
                 character: letter,
                 stem:stem,
                 repeat: false,
                 vowel: None, //for attached vowels only
-                loc:
-                    gall_struct::GallOrd { 
-                        ang: Some(letter_sep_ang * n as f64), 
-                        dist: 180.0, 
-                        center: origin, 
-                        parent: None
-                    },
+                loc:letter_loc,                    
                 radius: 30.0,
-                decorators: Vec::new(),
+                decorators: decor_list,
             }
         )
     }
     syllable_list
-}
-//below is python
-//self.theta  = math.acos((Wrd.inner_rad**2 - dist**2 - self.outer_rad**2)/(2*dist*self.outer_rad))
-fn theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
-    let theta = ((big_radius.powf(2.0) - letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*letter_radius)).acos();
-    if theta == std::f64::NAN {
-        0.0 //could do math error?
-    } else {
-        theta
-    }
-}
-//below is python
-//math.acos((Wrd.inner_rad**2 + dist**2 - self.outer_rad**2)/(2*dist*Wrd.inner_rad))
-fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
-    let thi = ((big_radius.powf(2.0) + letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*big_radius)).acos();
-    if thi == std::f64::NAN {
-        0.0 //could do math error?
-    } else {
-        thi
-    }
 }
 
 fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Document, loc: &mut gall_struct::GallOrd) -> SVG {
@@ -132,7 +90,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
         svg_doc.add(circle)
     } else {
         let mut init_angle = 0.0;
-        let mut thi_letter = thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,200.0);
+        let mut thi_letter = gall_struct::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,200.0);
         if thi_letter > 0.0 { //skeleton_letters[0].character == '_'
             init_angle -= thi_letter;
         }
@@ -145,7 +103,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
             Some(ang) => ang,
             None => 0.0
         };
-        if false {//test for b divot here. also line 98ish?
+        if skeleton_letters[0].stem == gall_struct::LetterType::BStem {
             b_divot_flag = 1;
         }
         loc.set_ang( angle - thi_letter);
@@ -165,12 +123,12 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
                 first = false;
                 continue;
             }
-            if true { //test for b divot here. also line 79ish?
-                b_divot_flag = 0
-            } else {
+            if letter.stem == gall_struct::LetterType::BStem {
                 b_divot_flag = 1
+            } else {
+                b_divot_flag = 0
             }
-            thi_letter = thi(letter.loc.dist,letter.radius,200.0);
+            thi_letter = gall_struct::thi(letter.loc.dist,letter.radius,200.0);
             angle = match letter.loc.ang {
                 Some(ang) => ang,
                 None => 0.2
@@ -228,7 +186,7 @@ fn main() {
     let raw_text = &args[1];
     let seed_text = &args[2];
     let _seed = seed_text.to_owned().into_bytes();
-    let mut origin = gall_struct::GallOrd{
+    let mut origin = GallOrd{
         ang: None,
         dist: 0.0,
         center: (width/2.0,height/2.0),
