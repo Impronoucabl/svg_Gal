@@ -1,24 +1,94 @@
 use std::env;
 
-use gall_struct::GallCircle;
 use svg::Document;
 use svg::node::element::{Path, Circle, SVG};
 use svg::node::element::path::Data;
 
 mod gall_struct;
+use gall_struct::{GallCircle, LetterType};
+
+//python import ------
+(cType, feature Type, feature number)
+        'b' : (1,0,0), #No features
+        'j' : (2,0,0),
+        't' : (3,0,0),
+        'th': (4,0,0),
+        'ch': (1,1,2), #Dots
+        'k' : (2,1,2),
+        'sh': (3,1,2),
+        'y' : (4,1,2),
+        'd' : (1,1,3),
+        'l' : (2,1,3),
+        'r' : (3,1,3),
+        'z' : (4,1,3),
+        'g' : (1,2,1), #Dashes
+        'n' : (2,2,1),
+        'v' : (3,2,1),
+        'qu': (4,2,1),
+        'h' : (1,2,2),
+        'p' : (2,2,2),
+        'w' : (3,2,2),
+        'x' : (4,2,2),
+        'f' : (1,2,3),
+        'm' : (2,2,3),
+        's' : (3,2,3),
+        'ng': (4,2,3),
+        'a' : (0,0,0), #vowels
+        'e' : (0,0,0),
+        'i' : (0,2,1),
+        'o' : (0,0,0),
+        'u' : (0,2,1),
+        'ph': (2,1,1), #Extended alphabet
+        'wh': (3,1,1),
+        'gh': (4,1,1),
+        'c' : (2,1,4),
+        'q' : (4,1,4)
+
+------
 
 fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
     let mut syllable_list = Vec::new();
+    let letter_sep_ang = 2.0 * std::f64::consts::PI/(text.len() as f64);
     for (n, letter) in text.chars().enumerate() {
+        let stem = match letter {
+            //char => letter type, decorator type, # decor, 
+            'A'|'O'|'a'|'o'                                 => LetterType::FloatingVowel,
+            'E'|'I'|'U'|'e'|'i'|'u'                         => LetterType::StaticVowel,
+            '█'|'B'|'D'|'F'|'G'|'H'|'b'|'d'|'f'|'g'|'h'     => LetterType::BStem, // Also CH & ND
+            'C'|'J'|'K'|'L'|'N'|'P'|'c'|'j'|'k'|'l'|'n'|'p' => LetterType::JStem, // Also PH
+            'R'|'S'|'T'|'V'|'W'|'r'|'s'|'t'|'v'|'w'         => LetterType::TStem, // Also WH, SH, NT
+            'Q'|'X'|'Y'|'Z'|'q'|'x'|'y'|'z'                 => LetterType::ZStem, // Also GH, NG, QU, TH
+            '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'         => LetterType::Digit, // TODO
+            _ => LetterType::Punctuation, //TODO
+        }
+        let dot = match letter {
+            'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true)
+            'E'|'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'V'|'W'|'X'|'e'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'v'|'w'|'x' => Some(false)
+            'B'|'J'|'T'|'b'|'j'|'t' => None
+            '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9' => None //TODO
+            _ => None
+        }
+        let mut decor_num = 0
+        if dot.is_some()  {
+            decor_num = match letter {
+                'E' => 1
+                'G' => 2
+                'F' => 3
+                'C' => 4
+                _ => 0
+            }
+        }
+
         syllable_list.push(
             GallCircle{
                 character: letter,
+                stem:stem,
                 repeat: false,
-                vowel: None,
+                vowel: None, //for attached vowels only
                 loc:
                     gall_struct::GallOrd { 
-                        ang: Some(0.9 * n as f64), 
-                        dist: 200.0, 
+                        ang: Some(letter_sep_ang * n as f64), 
+                        dist: 180.0, 
                         center: origin, 
                         parent: None
                     },
@@ -69,11 +139,15 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
         loc.set_ang_d((init_angle,200.0));
         let continuum_pt = loc.svg_ord();
         let mut first = true;
+        let mut b_divot_flag = 0;
         
         let mut angle = match skeleton_letters[0].loc.ang {
             Some(ang) => ang,
-            None => 0.2
+            None => 0.0
         };
+        if false {//test for b divot here. also line 98ish?
+            b_divot_flag = 1;
+        }
         loc.set_ang( angle - thi_letter);
         let mut letter_arc_start = loc.svg_ord();
         loc.c_clockwise(2.0 * thi_letter);
@@ -84,12 +158,17 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
             .move_to(continuum_pt)
             // x radius, y radius, rotation, large arc, sweep direction, end x, end y
             .elliptical_arc_to((200,200, 0,0,0,letter_arc_start.0,letter_arc_start.1))
-            .elliptical_arc_to((skeleton_letters[0].radius, skeleton_letters[0].radius,0,0,1,letter_arc_finish.0,letter_arc_finish.1));
+            .elliptical_arc_to((skeleton_letters[0].radius, skeleton_letters[0].radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
 
         for letter in skeleton_letters {
             if first {
                 first = false;
                 continue;
+            }
+            if true { //test for b divot here. also line 79ish?
+                b_divot_flag = 0
+            } else {
+                b_divot_flag = 1
             }
             thi_letter = thi(letter.loc.dist,letter.radius,200.0);
             angle = match letter.loc.ang {
@@ -102,7 +181,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
             letter_arc_finish = loc.svg_ord();
             skele_data = skele_data
                 .elliptical_arc_to((200,200, 0,0,0,letter_arc_start.0,letter_arc_start.1))
-                .elliptical_arc_to((letter.radius, letter.radius,0,0,1,letter_arc_finish.0,letter_arc_finish.1));
+                .elliptical_arc_to((letter.radius, letter.radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
         }
 
         let mut final_sweep = 1;
@@ -157,8 +236,8 @@ fn main() {
     };
     println!("Start");
     let all_letters = text_to_gall(raw_text.to_owned(), origin.center);
-    let skele_ltrs = Vec::new();
-    let oth_ltrs = all_letters;//Vec::new();
+    let skele_ltrs = all_letters;//Vec::new();
+    let oth_ltrs = Vec::new();
 
     let document = Document::new()
         .set("viewBox", (0, 0, width, height));

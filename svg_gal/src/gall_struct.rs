@@ -1,29 +1,43 @@
 use std::f64::consts::FRAC_PI_2;
+#[derive(PartialEq,Default)]
+pub enum  LetterType {
+    Digit,
+    StaticVowel,
+    BStem,
+    JStem,
+    TStem,
+    ZStem,
+    FloatingVowel,
+    #[default]
+    Punctuation, //more for error case than anything
+}
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Default)]
 pub struct GallCircle<'loc> { //Syllable equivalent
     pub character: char,
+    pub stem:LetterType,
     pub repeat: bool,
     pub vowel:Option<VowCircle>,
     pub loc: GallOrd<'loc>,
     pub radius: f64,
     pub decorators:Vec<Decor<'loc>>
 }
-#[derive(PartialEq)]
+#[derive(PartialEq,Default)]
 pub struct VowCircle { //for attached vowels only
     pub character: char,
     pub repeat: bool,
     pub radius: f64,
 }
-#[derive(PartialEq)]
+#[derive(PartialEq,Default)]
 pub struct Decor<'loc> {
     pub loc: GallOrd<'loc>,
     pub dot: bool,
 }
 
 
-#[derive(PartialEq)]
+#[derive(PartialEq,Default)]
 pub struct GallOrd <'parent> {
+    //ang is undefined if dist == 0.0
     pub ang: Option<f64>,
     pub dist: f64,
     pub center: (f64,f64), // abs xy
