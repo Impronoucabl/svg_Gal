@@ -5,15 +5,16 @@ use svg::Document;
 use svg::node::element::{Path, Circle, SVG};
 use svg::node::element::path::Data;
 
+mod gall_fn;
 mod gall_struct;
 use gall_struct::{GallCircle, GallOrd};
-mod gall_fn;
+
 
 fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
     let mut syllable_list = Vec::new();
     let letter_sep_ang = 2.0 * std::f64::consts::PI/(text.len() as f64);
     for (n, letter) in text.chars().enumerate() {
-        let (stem,dot,mut decor_num) = gall_fn::ctype_lookup(letter);
+        let stem = gall_fn::stem_lookup(letter);
         let letter_loc = GallOrd { 
             ang: Some(letter_sep_ang * n as f64), 
             dist: gall_fn::stem_dist(&stem, 200.0), 
@@ -21,25 +22,8 @@ fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
             parent: None
         };
         let letter_size = gall_fn::stem_size(&stem);
-        let mut decor_list = Vec::new();
-        while decor_num > 0 {
-            let dec_loc = GallOrd{
-                ang:Some(0.2 * decor_num as f64),
-                dist:30.0,
-                center: origin,
-                parent: None //TODO fix
-            };
-            let decor_type = match dot {
-                Some(boolean) => boolean,
-                None => panic!("Decorator has no type.")
-            };
-            let dec = gall_struct::Decor{
-                loc: dec_loc,
-                dot: decor_type,
-            };
-            decor_list.push(dec);
-            decor_num -= 1;
-        }
+        //make mut later when doing dots & dashes
+        let decor_list = Vec::new();
         let syllable = GallCircle{
             character: letter,
             stem:stem,
@@ -52,6 +36,30 @@ fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
         syllable_list.push(syllable);
     }
     syllable_list
+}
+
+//Holding code until I actually do dots & dashes
+fn _decor_gen(letter:char, origin: (f64,f64)) {
+    let (dot, mut decor_num) = gall_fn::decor_lookup(letter);
+    let letter_size = 30.0;//remove later
+    while decor_num > 0 {
+        let dec_loc = GallOrd{
+            ang:Some(0.2 * decor_num as f64),
+            dist:letter_size,
+            center: origin,
+            parent: None //TODO fix
+        };
+        let decor_type = match dot {
+            Some(boolean) => boolean,
+            None => panic!("Decorator has no type.")
+        };
+        let _dec = gall_struct::Decor{
+            loc: dec_loc,
+            dot: decor_type,
+        };
+        //decor_list.push(dec);
+        decor_num -= 1;
+    }
 }
 
 fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Document, loc: &mut gall_struct::GallOrd) -> SVG {
@@ -137,7 +145,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
 }
 
 fn render_lttr_path(syllables:Vec<gall_struct::GallCircle>, svg_doc:Document) -> SVG {
-    if false {//syllables.len() == 0 {
+    if syllables.len() == 0 {
         svg_doc
     } else {
         let mut drawn = svg_doc;
@@ -168,25 +176,24 @@ fn main() {
         center: (width/2.0,height/2.0),
         parent: None,
     };
-    println!("Start");
+    println!("Generating...");
     let all_letters = text_to_gall(raw_text.to_owned(), origin.center);
     //Do fancy stuff here?
+
     let mut skele_ltrs = Vec::new();
     let mut oth_ltrs = Vec::new();
     for letter in all_letters {
         match letter.stem {
             gall_struct::LetterType::BStem          => skele_ltrs.push(letter),
             gall_struct::LetterType::TStem          => skele_ltrs.push(letter),
-            //gall_struct::LetterType::ZStem          => skele_ltrs.push(letter),
-            //gall_struct::LetterType::StaticVowel    => skele_ltrs.push(letter),
             _ => oth_ltrs.push(letter),
         } 
     }
-
-    let document = Document::new()
-        .set("viewBox", (0, 0, width, height));
+    println!("Rendering...");
+    let document = Document::new().set("viewBox", (0, 0, width, height));   
     let skeleton = render_skele_path(skele_ltrs, document, &mut origin);
     let all_letters = render_lttr_path(oth_ltrs, skeleton);
-    println!("Saving");
+    println!("Saving...");
     svg::save(raw_text.to_owned() + ".svg", &all_letters).unwrap();
+    println!("Done!");
 }

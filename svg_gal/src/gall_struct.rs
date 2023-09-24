@@ -13,6 +13,13 @@ pub enum  LetterType {
     #[default]
     Punctuation, //more for error case than anything
 }
+#[derive(PartialEq, Default)]
+pub struct GallWord<'loc> {
+    pub syllables: Vec<GallCircle<'loc>>,
+    pub loc: GallOrd<'loc>,
+    pub radius: f64,
+    pub decorators:Vec<Decor<'loc>>
+}
 
 #[derive(PartialEq, Default)]
 pub struct GallCircle<'loc> { //Syllable equivalent

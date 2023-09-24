@@ -22,9 +22,8 @@ pub fn stem_size(stem:&LetterType) -> f64 {
     }
 }
 
-pub fn ctype_lookup(letter:char) -> (LetterType,Option<bool>,i8) {
-    let stem = match letter {
-        //char => letter type, decorator type, # decor, 
+pub fn stem_lookup(letter:char) -> LetterType {
+    match letter {
         'A'|'a'                                                 => LetterType::AVowel,
         'E'|'I'|'U'|'e'|'i'|'u'                                 => LetterType::StaticVowel,
         'O'|'o'                                                 => LetterType::OVowel,
@@ -34,7 +33,10 @@ pub fn ctype_lookup(letter:char) -> (LetterType,Option<bool>,i8) {
         'Q'|'X'|'Y'|'Z'|'q'|'x'|'y'|'z'                         => LetterType::ZStem, // Also GH, NG, QU, TH
         '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'                 => LetterType::Digit, // TODO
         _ => LetterType::Punctuation, //TODO
-    };
+    }
+}
+
+pub fn decor_lookup(letter:char) -> (Option<bool>,i8) {
     let dot = match letter {
         'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true),
         'E'|'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'V'|'W'|'X'|'e'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'v'|'w'|'x' => Some(false),
@@ -52,7 +54,7 @@ pub fn ctype_lookup(letter:char) -> (LetterType,Option<bool>,i8) {
             _ => 0
         }
     };
-    (stem, dot, decor_num)
+    (dot, decor_num)
 }
 
 //below is python
