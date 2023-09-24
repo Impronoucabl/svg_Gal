@@ -1,3 +1,4 @@
+use core::panic;
 use std::env;
 
 use svg::Document;
@@ -5,75 +6,50 @@ use svg::node::element::{Path, Circle, SVG};
 use svg::node::element::path::Data;
 
 mod gall_struct;
-use gall_struct::{GallCircle, GallOrd, LetterType};
+use gall_struct::{GallCircle, GallOrd};
+mod gall_fn;
 
 fn text_to_gall<'a>(text: String, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
     let mut syllable_list = Vec::new();
     let letter_sep_ang = 2.0 * std::f64::consts::PI/(text.len() as f64);
     for (n, letter) in text.chars().enumerate() {
-        let stem = match letter {
-            //char => letter type, decorator type, # decor, 
-            'A'|'O'|'a'|'o'                                 => LetterType::FloatingVowel,
-            'E'|'I'|'U'|'e'|'i'|'u'                         => LetterType::StaticVowel,
-            '█'|'B'|'D'|'F'|'G'|'H'|'b'|'d'|'f'|'g'|'h'     => LetterType::BStem, // Also CH & ND
-            'C'|'J'|'K'|'L'|'N'|'P'|'c'|'j'|'k'|'l'|'n'|'p' => LetterType::JStem, // Also PH
-            'R'|'S'|'T'|'V'|'W'|'r'|'s'|'t'|'v'|'w'         => LetterType::TStem, // Also WH, SH, NT
-            'Q'|'X'|'Y'|'Z'|'q'|'x'|'y'|'z'                 => LetterType::ZStem, // Also GH, NG, QU, TH
-            '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'         => LetterType::Digit, // TODO
-            _ => LetterType::Punctuation, //TODO
-        };
-        let dot = match letter {
-            'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true),
-            'E'|'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'V'|'W'|'X'|'e'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'v'|'w'|'x' => Some(false),
-            'B'|'J'|'T'|'b'|'j'|'t' => None,
-            '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9' => None, //TODO
-            _ => None
-        };
-        let mut decor_num = 0;
-        if dot.is_some()  {
-            decor_num = match letter {
-                'E'|'G'|'I'|'N'|'U'|'V'|'e'|'g'|'i'|'n'|'u'|'v'  => 1,
-                'H'|'K'|'P'|'W'|'X'|'Y'|'h'|'k'|'p'|'w'|'x'|'y' => 2,
-                'D'|'F'|'L'|'M'|'R'|'S'|'Z'|'d'|'f'|'l'|'m'|'r'|'s'|'z' => 3,
-                'C'|'Q'|'c'|'q' => 4,
-                _ => 0
-            }
-        }
+        let (stem,dot,mut decor_num) = gall_fn::ctype_lookup(letter);
         let letter_loc = GallOrd { 
             ang: Some(letter_sep_ang * n as f64), 
-            dist: 180.0, 
+            dist: gall_fn::stem_dist(&stem, 200.0), 
             center: origin, 
             parent: None
         };
+        let letter_size = gall_fn::stem_size(&stem);
         let mut decor_list = Vec::new();
         while decor_num > 0 {
+            let dec_loc = GallOrd{
+                ang:Some(0.2 * decor_num as f64),
+                dist:30.0,
+                center: origin,
+                parent: None //TODO fix
+            };
             let decor_type = match dot {
                 Some(boolean) => boolean,
-                None => false, //TODO fix
+                None => panic!("Decorator has no type.")
             };
             let dec = gall_struct::Decor{
-                loc: GallOrd{
-                    ang:Some(0.2 * decor_num as f64),
-                    dist:30.0,
-                    center: origin,
-                    parent: None //TODO fix
-                },
+                loc: dec_loc,
                 dot: decor_type,
             };
             decor_list.push(dec);
             decor_num -= 1;
-        } 
-        syllable_list.push(
-            GallCircle{
-                character: letter,
-                stem:stem,
-                repeat: false,
-                vowel: None, //for attached vowels only
-                loc:letter_loc,                    
-                radius: 30.0,
-                decorators: decor_list,
-            }
-        )
+        }
+        let syllable = GallCircle{
+            character: letter,
+            stem:stem,
+            repeat: false,
+            vowel: None, //for attached vowels only
+            loc:letter_loc,                    
+            radius: letter_size,
+            decorators: decor_list,
+        };
+        syllable_list.push(syllable);
     }
     syllable_list
 }
@@ -90,7 +66,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
         svg_doc.add(circle)
     } else {
         let mut init_angle = 0.0;
-        let mut thi_letter = gall_struct::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,200.0);
+        let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,200.0);
         if thi_letter > 0.0 { //skeleton_letters[0].character == '_'
             init_angle -= thi_letter;
         }
@@ -128,7 +104,7 @@ fn render_skele_path(skeleton_letters:Vec<gall_struct::GallCircle>, svg_doc:Docu
             } else {
                 b_divot_flag = 0
             }
-            thi_letter = gall_struct::thi(letter.loc.dist,letter.radius,200.0);
+            thi_letter = gall_fn::thi(letter.loc.dist,letter.radius,200.0);
             angle = match letter.loc.ang {
                 Some(ang) => ang,
                 None => 0.2
@@ -172,7 +148,7 @@ fn render_lttr_path(syllables:Vec<gall_struct::GallCircle>, svg_doc:Document) ->
                 .set("stroke-width", 3)
                 .set("cx", letter.loc.svg_x())
                 .set("cy", letter.loc.svg_y())
-                .set("r", 30);
+                .set("r", gall_fn::stem_size(&letter.stem));
             drawn = drawn.add(circle);
         }
         drawn
@@ -194,8 +170,18 @@ fn main() {
     };
     println!("Start");
     let all_letters = text_to_gall(raw_text.to_owned(), origin.center);
-    let skele_ltrs = all_letters;//Vec::new();
-    let oth_ltrs = Vec::new();
+    //Do fancy stuff here?
+    let mut skele_ltrs = Vec::new();
+    let mut oth_ltrs = Vec::new();
+    for letter in all_letters {
+        match letter.stem {
+            gall_struct::LetterType::BStem          => skele_ltrs.push(letter),
+            gall_struct::LetterType::TStem          => skele_ltrs.push(letter),
+            //gall_struct::LetterType::ZStem          => skele_ltrs.push(letter),
+            //gall_struct::LetterType::StaticVowel    => skele_ltrs.push(letter),
+            _ => oth_ltrs.push(letter),
+        } 
+    }
 
     let document = Document::new()
         .set("viewBox", (0, 0, width, height));

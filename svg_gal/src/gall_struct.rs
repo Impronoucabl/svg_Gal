@@ -1,27 +1,5 @@
 use std::f64::consts::FRAC_PI_2;
 
-//below is python
-//math.acos((Wrd.inner_rad**2 + dist**2 - self.outer_rad**2)/(2*dist*Wrd.inner_rad))
-pub fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
-    let thi = ((big_radius.powf(2.0) + letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*big_radius)).acos();
-    if thi == std::f64::NAN {
-        0.0 //could do math error?
-    } else {
-        thi
-    }
-}
-
-//below is python
-//self.theta  = math.acos((Wrd.inner_rad**2 - dist**2 - self.outer_rad**2)/(2*dist*self.outer_rad))
-pub fn theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
-    let theta = ((big_radius.powf(2.0) - letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*letter_radius)).acos();
-    if theta == std::f64::NAN {
-        0.0 //could do math error?
-    } else {
-        theta
-    }
-}
-
 #[derive(PartialEq,Default)]
 pub enum  LetterType {
     Digit,
@@ -30,7 +8,8 @@ pub enum  LetterType {
     JStem,
     TStem,
     ZStem,
-    FloatingVowel,
+    AVowel,
+    OVowel,
     #[default]
     Punctuation, //more for error case than anything
 }
@@ -56,7 +35,6 @@ pub struct Decor<'loc> {
     pub loc: GallOrd<'loc>,
     pub dot: bool,
 }
-
 
 #[derive(PartialEq,Default)]
 pub struct GallOrd <'parent> {
