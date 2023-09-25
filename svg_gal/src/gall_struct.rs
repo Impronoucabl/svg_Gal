@@ -52,6 +52,14 @@ pub struct GallOrd <'parent> {
     pub parent: Option<&'parent GallOrd<'parent>>,
 }
 
+impl GallWord<'_> {
+    fn update_kids(&mut self) {
+        for circle in &mut self.syllables {
+            circle.loc.center = self.loc.svg_ord();
+        }
+    }
+}
+
 impl GallOrd<'_> {
     pub fn svg_x(&self) -> f64 {
         match self.ang {

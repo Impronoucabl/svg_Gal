@@ -10,7 +10,7 @@ mod gall_struct;
 use gall_struct::{GallCircle, GallOrd};
 
 
-fn text_to_gall<'a>(text: String, word_radius:f64, origin: (f64,f64)) -> Vec<GallCircle<'a>> {
+fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> Vec<GallCircle<'a>> {
     let mut syllable_list = Vec::new();
     let letter_sep_ang = 2.0 * std::f64::consts::PI/(text.len() as f64);
     for (n, letter) in text.chars().enumerate() {
@@ -18,7 +18,7 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: (f64,f64)) -> Vec<Gal
         let letter_loc = GallOrd { 
             ang: Some(letter_sep_ang * n as f64), 
             dist: gall_fn::stem_dist(&stem, word_radius), 
-            center: origin, 
+            center: origin.to_owned(), 
             parent: None
         };
         let letter_size = gall_fn::stem_size(&stem);
@@ -77,29 +77,26 @@ impl gall_struct::GallWord<'_> {
     }
 
     fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> Path {
-        let mut init_angle = 0.0;
         let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,self.radius);
-        if thi_letter > 0.0 { //skeleton_letters[0].character == '_'
-            init_angle -= thi_letter;
-        }
+        let init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_letter);
         let mut tracker_loc = GallOrd{
             ang: Some(init_angle),
             dist: self.radius,
-            center: self.loc.center,
+            center: self.loc.svg_ord(),
             parent: None,
         };
         let continuum_pt = tracker_loc.svg_ord();
         let mut first = true;
         let mut b_divot_flag = 0;
-        
-        let mut angle = match skeleton_letters[0].loc.ang {
-            Some(ang) => ang,
-            None => 0.0
-        };
+        let mut long_skeleton = 0;
+        if skeleton_letters[0].loc.ang.unwrap() - thi_letter > std::f64::consts::PI {
+            long_skeleton = 1;
+        }
+        let mut word_start_angle = skeleton_letters[0].loc.ang.unwrap() - thi_letter;
         if skeleton_letters[0].stem == gall_struct::LetterType::BStem {
             b_divot_flag = 1;
         }
-        tracker_loc.set_ang( angle - thi_letter);
+        tracker_loc.set_ang( word_start_angle);
         let mut letter_arc_start = tracker_loc.svg_ord();
         tracker_loc.c_clockwise(2.0 * thi_letter);
         let mut letter_arc_finish = tracker_loc.svg_ord();
@@ -108,7 +105,7 @@ impl gall_struct::GallWord<'_> {
         let mut skele_data = Data::new()
             .move_to(continuum_pt)
             // x radius, y radius, rotation, large arc, sweep direction, end x, end y
-            .elliptical_arc_to((self.radius,self.radius, 0,0,0,letter_arc_start.0,letter_arc_start.1))
+            .elliptical_arc_to((self.radius,self.radius, 0,long_skeleton,0,letter_arc_start.0,letter_arc_start.1))
             .elliptical_arc_to((skeleton_letters[0].radius, skeleton_letters[0].radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
 
         for letter in skeleton_letters {
@@ -122,21 +119,23 @@ impl gall_struct::GallWord<'_> {
                 b_divot_flag = 0
             }
             thi_letter = gall_fn::thi(letter.loc.dist,letter.radius,self.radius);
-            angle = match letter.loc.ang {
-                Some(ang) => ang,
-                None => 0.2
-            };
-            tracker_loc.set_ang( angle - thi_letter);
+            word_start_angle = letter.loc.ang.unwrap() - thi_letter;
+            if word_start_angle - tracker_loc.ang.unwrap() > std::f64::consts::PI {
+                long_skeleton = 1
+            } else {
+                long_skeleton = 0
+            }
+            tracker_loc.set_ang( word_start_angle);
             letter_arc_start = tracker_loc.svg_ord();
             tracker_loc.c_clockwise(2.0 * thi_letter);
             letter_arc_finish = tracker_loc.svg_ord();
             skele_data = skele_data
-                .elliptical_arc_to((self.radius,self.radius, 0,0,0,letter_arc_start.0,letter_arc_start.1))
+                .elliptical_arc_to((self.radius,self.radius, 0,long_skeleton,0,letter_arc_start.0,letter_arc_start.1))
                 .elliptical_arc_to((letter.radius, letter.radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
         }
 
         let mut final_sweep = 1;
-        if -angle - thi_letter + init_angle < -std::f64::consts::FRAC_PI_2 {
+        if tracker_loc.ang.unwrap() - init_angle > std::f64::consts::PI {
             final_sweep = 0
         }
         let closed_loop = skele_data
@@ -182,34 +181,56 @@ impl gall_struct::GallWord<'_> {
 }
 
 fn main() {
-    let width = 512.0;
-    let height = 512.0;
-    let args: Vec<String> = env::args().collect();
-    let raw_text = &args[1];
-    let seed_text = &args[2];
-    let _seed = seed_text.to_owned().into_bytes();
-    let origin = GallOrd{
+    static WIDTH:f64 = 512.0;
+    static HEIGHT:f64 = 512.0;
+    static ORIGIN:GallOrd = GallOrd{
         ang: None,
         dist: 0.0,
-        center: (width/2.0,height/2.0),
+        center: (WIDTH/2.0,HEIGHT/2.0),
         parent: None,
     };
-    println!("Generating...");
-    let word_radius = 200.0;
-    let all_letters = text_to_gall(raw_text.to_owned(),word_radius, origin.center);
-    let word_circle = gall_struct::GallWord {
-        syllables: all_letters,
-        loc: origin,
-        radius: word_radius,
-        decorators: Vec::new(),
+    println!("Initialising...");
+    let mut args= env::args();
+    args.next();
+    let word_list: Vec<String> = args.collect();
+    let (word_radius, word_angle, word_dist) = match word_list.len() {
+        0|1 => (200.0,0.0,0.0),
+        2 => (80.0,std::f64::consts::PI,120.0),
+        phrase_len => (
+            50.0,
+            2.0 * std::f64::consts::PI/(phrase_len as f64),
+            150.0,
+        ),
     };
+    println!("Generating...");
+    let mut phrase = Vec::new();
+    let mut filename:String = "SVGs\\".to_string();
+    for (num,words) in word_list.into_iter().enumerate() {
+        let word_loc = GallOrd {
+            ang: Some(word_angle * num as f64), 
+            dist:word_dist, 
+            center: ORIGIN.center, 
+            parent: None 
+        };
+        let all_letters = text_to_gall(words.to_owned(),word_radius, &word_loc.svg_ord());
+        let word_circle = gall_struct::GallWord {
+            syllables: all_letters,
+            loc: word_loc,
+            radius: word_radius,
+            decorators: Vec::new(),
+        };
+        phrase.push(word_circle);
+        filename += &words;
+    }
     //Do fancy stuff here?
-
     
     println!("Rendering...");
-    let document = Document::new().set("viewBox", (0, 0, width, height));   
-    let rendered = word_circle.render(document);
+    let document = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
+    let mut drawn = document;
+    for word in phrase {
+        drawn = word.render(drawn);
+    }
     println!("Saving...");
-    svg::save(raw_text.to_owned() + ".svg", &rendered).unwrap();
-    println!("Done!");
+    print!("{}",filename);
+    svg::save(filename + ".svg", &drawn).unwrap();
 }
