@@ -7,8 +7,9 @@ pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
         LetterType::TStem => dist,
         LetterType::ZStem => dist,
         LetterType::StaticVowel => dist,
-        LetterType::OVowel => dist + 20.0,
-        LetterType::AVowel => dist - 20.0,
+        LetterType::OVowel => dist - 20.0,
+        LetterType::AVowel => dist + 20.0,
+        LetterType::Digit => dist - 35.0,
         _ => 0.0
     }
 }
