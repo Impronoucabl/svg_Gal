@@ -1,4 +1,3 @@
-use core::panic;
 use std::env;
 
 use svg::Document;
@@ -12,7 +11,7 @@ use gall_struct::{GallCircle, GallOrd};
 
 fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> Vec<GallCircle<'a>> {
     let mut syllable_list = Vec::new();
-    let letter_sep_ang = 2.0 * std::f64::consts::PI/(text.len() as f64);
+    let letter_sep_ang = 2.0 * std::f64::consts::PI/(text.chars().count() as f64);
     for (n, letter) in text.chars().enumerate() {
         let stem = gall_fn::stem_lookup(letter);
         let letter_loc = GallOrd { 
@@ -38,27 +37,23 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> Vec<Ga
     syllable_list
 }
 
-//Holding code until I actually do dots & dashes
-fn _decor_gen(letter:char, origin: (f64,f64)) {
-    let (dot, mut decor_num) = gall_fn::decor_lookup(letter);
-    let letter_size = 30.0;//remove later
-    while decor_num > 0 {
-        let dec_loc = GallOrd{
-            ang:Some(0.2 * decor_num as f64),
-            dist:letter_size,
-            center: origin,
-            parent: None //TODO fix
-        };
-        let decor_type = match dot {
-            Some(boolean) => boolean,
-            None => panic!("Decorator has no type.")
-        };
-        let _dec = gall_struct::Decor{
-            loc: dec_loc,
-            dot: decor_type,
-        };
-        //decor_list.push(dec);
-        decor_num -= 1;
+impl GallCircle<'_> {
+    fn generate_decor(&mut self) {
+        let (dot, mut decor_num) = gall_fn::decor_lookup(self.character);
+        while decor_num > 0 {
+            let dec_loc = GallOrd{
+                ang:Some(0.2 * decor_num as f64),
+                dist:self.radius,
+                center: self.loc.svg_ord(),
+                parent: None //TODO fix
+            };
+            let dec = gall_struct::Decor{
+                loc: dec_loc,
+                dot: dot.unwrap(),
+            };
+            self.decorators.push(dec);
+            decor_num -= 1;
+        }
     }
 }
 
@@ -190,9 +185,17 @@ fn main() {
         parent: None,
     };
     println!("Initialising...");
-    let mut args= env::args();
-    args.next();
-    let word_list: Vec<String> = args.collect();
+    let args = env::args();
+    let mut word_list = Vec::new();
+    let mut filename:String = "".to_string();
+    for raw_word in args {
+        if filename.len() == 0 {
+            filename += "SVGs\\"; //Save to SVGs folder
+            continue;//first argument is usually runpath
+        }
+        filename += &raw_word;
+        word_list.push(gall_fn::string_parse(raw_word));
+    }
     let (word_radius, word_angle, word_dist) = match word_list.len() {
         0|1 => (200.0,0.0,0.0),
         2 => (80.0,std::f64::consts::PI,120.0),
@@ -204,7 +207,6 @@ fn main() {
     };
     println!("Generating...");
     let mut phrase = Vec::new();
-    let mut filename:String = "SVGs\\".to_string();
     for (num,words) in word_list.into_iter().enumerate() {
         let word_loc = GallOrd {
             ang: Some(word_angle * num as f64), 
@@ -220,9 +222,15 @@ fn main() {
             decorators: Vec::new(),
         };
         phrase.push(word_circle);
-        filename += &words;
     }
     //Do fancy stuff here?
+
+    //Now generate decorators - not rendered yet
+    for word in &mut phrase {
+        for syllable in &mut word.syllables {
+            syllable.generate_decor();
+        }
+    }
     
     println!("Rendering...");
     let document = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
@@ -230,7 +238,18 @@ fn main() {
     for word in phrase {
         drawn = word.render(drawn);
     }
-    println!("Saving...");
-    print!("{}",filename);
-    svg::save(filename + ".svg", &drawn).unwrap();
+    //Draw sentence circle
+    let circle = Circle::new()
+        .set("fill", "none")
+        .set("stroke", "black")
+        .set("stroke-width", 6)
+        .set("cx", ORIGIN.svg_x())
+        .set("cy", ORIGIN.svg_y())
+        .set("r", 250);
+    drawn = drawn.add(circle);
+    println!("Saving under {}", filename);
+    match svg::save(filename + ".svg", &drawn) {
+        Ok(_) => println!("Done!"),
+        Err(message) => println!("{}", message),
+    }
 }

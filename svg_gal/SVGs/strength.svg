@@ -1,0 +1,7 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M226.08449,453.75 A200,200,0,0,0,226.08449,453.75 A30,30,0,0,1,285.9155,453.75 A200,200,0,0,0,412.29877,380.7826 A30,30,0,0,1,442.21426,328.9674 A200,200,0,0,0,442.21426,183.0326 A30,30,0,0,1,412.29877,131.2174 A200,200,0,1,0,226.08449,453.75 z" fill="green" stroke="black" stroke-width="3"/>
+<circle cx="256" cy="56" fill="blue" r="15" stroke="black" stroke-width="3"/>
+<circle cx="82.7949192431123" cy="155.99999999999994" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="82.79491924311219" cy="355.9999999999999" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="256" cy="256" fill="none" r="250" stroke="black" stroke-width="6"/>
+</svg>
