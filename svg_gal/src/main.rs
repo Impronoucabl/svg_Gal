@@ -9,37 +9,57 @@ mod gall_struct;
 use gall_struct::{GallCircle, GallOrd};
 
 
-fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> Vec<GallCircle<'a>> {
+fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (f64, Vec<GallCircle<'a>>) {
     let mut syllable_list = Vec::new();
-    let letter_sep_ang = 2.0 * std::f64::consts::PI/(text.chars().count() as f64);
-    for (n, letter) in text.chars().enumerate() {
-        let stem = gall_fn::stem_lookup(letter);
+    let count_guess = text.len() as f64; //len() is byte len, not # of chars
+    let mut count = 0.0;
+    let letter_sep_ang = 2.0 * std::f64::consts::PI/(count_guess);
+    let mut text_iter = text.chars(); 
+    let mut letter = text_iter.next();
+    loop {
+        if letter.is_none() {
+            break;
+        }
+        let mut vowel =None;
+        let char1 = letter.unwrap();
+        let stem = gall_fn::stem_lookup(&char1);
+        let letter_size = gall_fn::stem_size(&stem);
+        letter = text_iter.next();
+        if letter.is_some() && gall_fn::stem_lookup(&letter.unwrap()) == gall_struct::LetterType::StaticVowel {
+            vowel = Some(gall_struct::VowCircle {
+                character: letter.unwrap(),
+                repeat: false,
+                radius: letter_size/2.0
+            });
+            letter = text_iter.next();
+        }
         let letter_loc = GallOrd { 
-            ang: Some(letter_sep_ang * n as f64), 
+            ang: Some(letter_sep_ang * count), 
             dist: gall_fn::stem_dist(&stem, word_radius), 
             center: origin.to_owned(), 
             parent: None
         };
-        let letter_size = gall_fn::stem_size(&stem);
+        
         //make mut later when doing dots & dashes
         let decor_list = Vec::new();
         let syllable = GallCircle{
-            character: letter,
+            character: char1,
             stem:stem,
             repeat: false,
-            vowel: None, //for attached vowels only
+            vowel: vowel, //for attached vowels only
             loc:letter_loc,                    
             radius: letter_size,
             decorators: decor_list,
         };
         syllable_list.push(syllable);
+        count += 1.0;
     }
-    syllable_list
+    (count, syllable_list)
 }
 
 impl GallCircle<'_> {
     fn generate_decor(&mut self) {
-        let (dot, mut decor_num) = gall_fn::decor_lookup(self.character);
+        let (dot, mut decor_num) = gall_fn::decor_lookup(&self.character);
         while decor_num > 0 {
             let dec_loc = GallOrd{
                 ang:Some(0.2 * decor_num as f64),
@@ -71,7 +91,8 @@ impl gall_struct::GallWord<'_> {
         (skele_ltrs,oth_ltrs)
     }
 
-    fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> Path {
+    fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Vec<Circle>, Path) {
+        let mut attached_letters = Vec::new();
         let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,self.radius);
         let init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_letter);
         let mut tracker_loc = GallOrd{
@@ -81,9 +102,20 @@ impl gall_struct::GallWord<'_> {
             parent: None,
         };
         let continuum_pt = tracker_loc.svg_ord();
+
         let mut first = true;
         let mut b_divot_flag = 0;
         let mut long_skeleton = 0;
+        if skeleton_letters[0].vowel.is_some() {
+            let circle_vowel = Circle::new()
+                .set("fill", "none")
+                .set("stroke", "black")
+                .set("stroke-width", 3)
+                .set("cx", skeleton_letters[0].loc.svg_x())
+                .set("cy", skeleton_letters[0].loc.svg_y())
+                .set("r", skeleton_letters[0].vowel.as_ref().unwrap().radius);
+            attached_letters.push(circle_vowel);
+        }
         if skeleton_letters[0].loc.ang.unwrap() - thi_letter > std::f64::consts::PI {
             long_skeleton = 1;
         }
@@ -113,6 +145,16 @@ impl gall_struct::GallWord<'_> {
             } else {
                 b_divot_flag = 0
             }
+            if letter.vowel.is_some() {
+                let circle_vowel = Circle::new()
+                    .set("fill", "none")
+                    .set("stroke", "black")
+                    .set("stroke-width", 3)
+                    .set("cx", letter.loc.svg_x())
+                    .set("cy", letter.loc.svg_y())
+                    .set("r", letter.vowel.as_ref().unwrap().radius);
+                attached_letters.push(circle_vowel);
+            }
             thi_letter = gall_fn::thi(letter.loc.dist,letter.radius,self.radius);
             word_start_angle = letter.loc.ang.unwrap() - thi_letter;
             if word_start_angle - tracker_loc.ang.unwrap() > std::f64::consts::PI {
@@ -137,11 +179,12 @@ impl gall_struct::GallWord<'_> {
             .elliptical_arc_to((self.radius,self.radius,0,final_sweep,0,continuum_pt.0,continuum_pt.1))
             .close();
 
-        Path::new()
+        let path = Path::new()
             .set("fill", "green")
             .set("stroke", "black")
             .set("stroke-width", 3)
-            .set("d", closed_loop)
+            .set("d", closed_loop);
+        (attached_letters, path)
     }
 
     pub fn render(&self, mut svg_doc:Document) -> SVG {
@@ -156,8 +199,11 @@ impl gall_struct::GallWord<'_> {
                 .set("r", self.radius);
             svg_doc = svg_doc.add(circle)
         } else {
-            let path = self.render_skele_path(skeleton_letters);
-            svg_doc = svg_doc.add(path)
+            let (attached_letters, path) = self.render_skele_path(skeleton_letters);
+            svg_doc = svg_doc.add(path);
+            for node in attached_letters {
+                svg_doc = svg_doc.add(node);
+            }
         }
         if other_letters.len() != 0 {
             for letter in other_letters {
@@ -214,9 +260,11 @@ fn main() {
             center: ORIGIN.center, 
             parent: None 
         };
-        let all_letters = text_to_gall(words.to_owned(),word_radius, &word_loc.svg_ord());
+        let (letter_count, all_letters) = text_to_gall(words.to_owned(),word_radius, &word_loc.svg_ord());
+        //parse letters more?
         let word_circle = gall_struct::GallWord {
             syllables: all_letters,
+            letter_count:letter_count,
             loc: word_loc,
             radius: word_radius,
             decorators: Vec::new(),
