@@ -9,11 +9,11 @@ mod gall_struct;
 use gall_struct::{GallCircle, GallOrd};
 
 
-fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (f64, Vec<GallCircle<'a>>) {
-    let mut syllable_list = Vec::new();
-    let count_guess = text.len() as f64; //len() is byte len, not # of chars
-    let mut count = 0.0;
-    let letter_sep_ang = 2.0 * std::f64::consts::PI/(count_guess);
+fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize, Vec<GallCircle<'a>>) {
+    let count_guess = text.len(); //len() is byte len, not # of chars
+    let mut syllable_list = Vec::with_capacity(count_guess);
+    let mut count:usize = 0;
+    let letter_sep_ang = std::f64::consts::TAU/(count_guess as f64);
     let mut text_iter = text.chars(); 
     let mut letter = text_iter.next();
     loop {
@@ -34,7 +34,7 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (f64, 
             letter = text_iter.next();
         }
         let letter_loc = GallOrd { 
-            ang: Some(letter_sep_ang * count), 
+            ang: Some(letter_sep_ang * count as f64), 
             dist: gall_fn::stem_dist(&stem, word_radius), 
             center: origin.to_owned(), 
             parent: None
@@ -52,7 +52,7 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (f64, 
             decorators: decor_list,
         };
         syllable_list.push(syllable);
-        count += 1.0;
+        count += 1;
     }
     (count, syllable_list)
 }
@@ -78,6 +78,43 @@ impl GallCircle<'_> {
 }
 
 impl gall_struct::GallWord<'_> {
+    //generates a list of angles between letters, as measured by thi 
+    fn angular_distance_list(&self) -> Vec<f64> {
+        let mut angle_list = Vec::new();
+        let mut angle1 = f64::NAN; //dummy value
+        let mut first_angle_cache = f64::NAN;
+        for letter in &self.syllables {
+            let angle2 = letter.loc.ang.unwrap() - self.thi(letter);
+            if angle1.is_nan() {
+                first_angle_cache = angle2;
+                angle1 = angle2 + 2.0 * self.thi(letter);
+                continue;
+            }
+            angle_list.push(angle2 - angle1);
+            angle1 = angle2 + 2.0 * self.thi(letter);
+        }
+        angle_list.push(std::f64::consts::TAU + first_angle_cache - angle1);
+        angle_list
+    }
+    fn distribute_letters(&mut self) -> Option<()> {
+        let distribution = self.angular_distance_list();
+        let mut success = None;
+        for index in 0..self.letter_count {
+            let prev:usize; 
+            if index == 0 {
+                prev = self.letter_count - 1;
+            } else {
+                prev = index - 1;
+            }
+            success = match (distribution[index] - distribution[prev]).signum() {
+                -1.0 => self.syllables[index].loc.cw_step(),
+                1.0 => self.syllables[index].loc.ccw_step(),
+                _ => success,
+            };
+        };
+        success
+    }
+
     fn skele_syl_split(&self) -> (Vec<&GallCircle>,Vec<&GallCircle>) {
         let mut skele_ltrs = Vec::new();
         let mut oth_ltrs = Vec::new();
@@ -93,7 +130,8 @@ impl gall_struct::GallWord<'_> {
 
     fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Vec<Circle>, Path) {
         let mut attached_letters = Vec::new();
-        let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,self.radius);
+        //let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,self.radius);
+        let mut thi_letter = self.thi(skeleton_letters[0]);
         let init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_letter);
         let mut tracker_loc = GallOrd{
             ang: Some(init_angle),
@@ -155,7 +193,7 @@ impl gall_struct::GallWord<'_> {
                     .set("r", letter.vowel.as_ref().unwrap().radius);
                 attached_letters.push(circle_vowel);
             }
-            thi_letter = gall_fn::thi(letter.loc.dist,letter.radius,self.radius);
+            thi_letter = self.thi(letter);
             word_start_angle = letter.loc.ang.unwrap() - thi_letter;
             if word_start_angle - tracker_loc.ang.unwrap() > std::f64::consts::PI {
                 long_skeleton = 1
@@ -247,7 +285,7 @@ fn main() {
         2 => (80.0,std::f64::consts::PI,120.0),
         phrase_len => (
             50.0,
-            2.0 * std::f64::consts::PI/(phrase_len as f64),
+            std::f64::consts::TAU/(phrase_len as f64),
             150.0,
         ),
     };
@@ -271,7 +309,17 @@ fn main() {
         };
         phrase.push(word_circle);
     }
-    //Do fancy stuff here?
+
+    for word in &mut phrase {
+        let mut count = 0;
+        while word.distribute_letters().is_some() {
+            count += 1;
+            if count > 200 {
+                println!("Distribute timeout");
+                break;
+            }
+        }
+    }
 
     //Now generate decorators - not rendered yet
     for word in &mut phrase {

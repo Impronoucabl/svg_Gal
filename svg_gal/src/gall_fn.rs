@@ -112,7 +112,7 @@ pub fn decor_lookup(letter:&char) -> (Option<bool>,i8) {
 
 //below is python
 //math.acos((Wrd.inner_rad**2 + dist**2 - self.outer_rad**2)/(2*dist*Wrd.inner_rad))
-pub fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
+pub fn _thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
     let thi = ((big_radius.powf(2.0) + letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*big_radius)).acos();
     if thi == std::f64::NAN {
         0.0 //could do math error?
