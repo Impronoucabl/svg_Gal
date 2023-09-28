@@ -96,9 +96,10 @@ impl gall_struct::GallWord<'_> {
         angle_list.push(std::f64::consts::TAU + first_angle_cache - angle1);
         angle_list
     }
-    fn distribute_letters(&mut self) -> Option<()> {
+    fn distribute_letters(&mut self) -> Option<f64> {
         let distribution = self.angular_distance_list();
         let mut success = None;
+        let mut max = 0.0;
         for index in 0..self.letter_count {
             let prev:usize; 
             if index == 0 {
@@ -106,13 +107,16 @@ impl gall_struct::GallWord<'_> {
             } else {
                 prev = index - 1;
             }
-            success = match (distribution[index] - distribution[prev]).signum() {
-                -1.0 => self.syllables[index].loc.cw_step(),
-                1.0 => self.syllables[index].loc.ccw_step(),
-                _ => success,
+            let right_dist_weight = distribution[index] - distribution[prev];
+            if right_dist_weight.abs() > std::f64::consts::FRAC_PI_8/10.0 {
+                max = f64::max(max, right_dist_weight.abs());
+                success = self.syllables[index].loc.c_clockwise(right_dist_weight/2.0);
             };
         };
-        success
+        match success {
+            Some(_) => Some(max),
+            None => None,
+        }
     }
 
     fn skele_syl_split(&self) -> (Vec<&GallCircle>,Vec<&GallCircle>) {
@@ -312,10 +316,20 @@ fn main() {
 
     for word in &mut phrase {
         let mut count = 0;
-        while word.distribute_letters().is_some() {
+        let mut max = word.distribute_letters().unwrap();
+        loop {
             count += 1;
+            let val = match word.distribute_letters() {
+                Some(val0) => val0,
+                None => break
+            };
+            if val > max {
+                break;
+            }
+            max = val;
+            println!("{}", count);
             if count > 200 {
-                println!("Distribute timeout");
+                println!("Error! Distribute timeout");
                 break;
             }
         }

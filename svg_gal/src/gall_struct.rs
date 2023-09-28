@@ -121,10 +121,10 @@ impl GallOrd<'_> {
         Some(())
     }
     pub fn cw_step(&mut self) -> Option<()> {
-        self.c_clockwise(-self.ang?.min(FRAC_PI_8/10.0))
+        self.c_clockwise(-self.ang?.min(FRAC_PI_8/12.0))
     }
     pub fn ccw_step(&mut self) -> Option<()>{
-        self.c_clockwise(FRAC_PI_8/10.0)
+        self.c_clockwise(FRAC_PI_8/8.0)
     }
     pub fn set_dist(&mut self, new_dist:f64) {
         self.dist = new_dist;
