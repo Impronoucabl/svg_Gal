@@ -60,7 +60,7 @@ impl GallWord<'_> {
         //below is python
         //math.acos((Wrd.inner_rad**2 + dist**2 - self.outer_rad**2)/(2*dist*Wrd.inner_rad))
         let thi = ((self.radius.powf(2.0) + letter.loc.dist.powf(2.0) - letter.radius.powf(2.0))/(2.0*letter.loc.dist*self.radius)).acos();
-        if thi == std::f64::NAN { //Circles aren't touching
+        if thi.is_nan() { //Circles aren't touching
             0.0 //could do math error?
         } else {
             thi
@@ -78,7 +78,7 @@ impl GallCircle<'_> {
     //self.theta  = math.acos((Wrd.inner_rad**2 - dist**2 - self.outer_rad**2)/(2*dist*self.outer_rad))
     pub fn theta(&self, word:&GallWord) -> f64 {
         let theta = ((word.radius.powf(2.0) - self.loc.dist.powf(2.0) - self.radius.powf(2.0))/(2.0*self.loc.dist*self.radius)).acos();
-        if theta == std::f64::NAN {
+        if theta.is_nan() {
             0.0 //could do math error?
         } else {
             theta
@@ -117,11 +117,16 @@ impl GallOrd<'_> {
         }
     }
     pub fn c_clockwise(&mut self, radians:f64) -> Option<()> {
-        self.ang = Some(self.ang? + radians);
-        Some(())
+        let new_angle = (self.ang? + radians).max(0.0);
+        if new_angle > std::f64::consts::TAU {
+            None
+        } else {
+            self.ang = Some(new_angle);
+            Some(())
+        }
     }
     pub fn cw_step(&mut self) -> Option<()> {
-        self.c_clockwise(-self.ang?.min(FRAC_PI_8/12.0))
+        self.c_clockwise(-self.ang?.min(FRAC_PI_8/8.0))
     }
     pub fn ccw_step(&mut self) -> Option<()>{
         self.c_clockwise(FRAC_PI_8/8.0)

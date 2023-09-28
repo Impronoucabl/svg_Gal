@@ -20,6 +20,7 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize
         if letter.is_none() {
             break;
         }
+        count += 1;
         let mut vowel =None;
         let char1 = letter.unwrap();
         let stem = gall_fn::stem_lookup(&char1);
@@ -52,7 +53,7 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize
             decorators: decor_list,
         };
         syllable_list.push(syllable);
-        count += 1;
+        
     }
     (count, syllable_list)
 }
@@ -93,6 +94,7 @@ impl gall_struct::GallWord<'_> {
             angle_list.push(angle2 - angle1);
             angle1 = angle2 + 2.0 * self.thi(letter);
         }
+        
         angle_list.push(std::f64::consts::TAU + first_angle_cache - angle1);
         angle_list
     }
@@ -108,9 +110,17 @@ impl gall_struct::GallWord<'_> {
                 prev = index - 1;
             }
             let right_dist_weight = distribution[index] - distribution[prev];
-            if right_dist_weight.abs() > std::f64::consts::FRAC_PI_8/10.0 {
+            if right_dist_weight.abs() > std::f64::consts::FRAC_PI_8/10.0{
+                if right_dist_weight.abs() > 0.1 {
+                    success = self.syllables[index].loc.c_clockwise(right_dist_weight/3.0);
+                } else {
+                    success = match right_dist_weight.signum() {
+                        1.0 => self.syllables[index].loc.ccw_step(),
+                        -1.0 => self.syllables[index].loc.cw_step(),
+                        _ => success
+                    }
+                }
                 max = f64::max(max, right_dist_weight.abs());
-                success = self.syllables[index].loc.c_clockwise(right_dist_weight/2.0);
             };
         };
         match success {
@@ -323,11 +333,11 @@ fn main() {
                 Some(val0) => val0,
                 None => break
             };
-            if val > max {
+            if val >= max {
                 break;
             }
             max = val;
-            println!("{}", count);
+            println!("{}", max);
             if count > 200 {
                 println!("Error! Distribute timeout");
                 break;
