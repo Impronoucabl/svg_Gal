@@ -118,8 +118,12 @@ impl GallOrd<'_> {
     }
     pub fn c_clockwise(&mut self, radians:f64) -> Option<()> {
         let new_angle = (self.ang? + radians).max(0.0);
-        if new_angle > std::f64::consts::TAU {
+        static READABILITY_ANGLE:f64 = std::f64::consts::TAU - 0.35;
+        if new_angle == READABILITY_ANGLE {
             None
+        } else if new_angle > READABILITY_ANGLE {
+            self.ang = Some(READABILITY_ANGLE);
+            Some(())
         } else {
             self.ang = Some(new_angle);
             Some(())
