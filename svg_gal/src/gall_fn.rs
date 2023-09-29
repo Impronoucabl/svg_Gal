@@ -23,9 +23,23 @@ pub fn stem_size(stem:&LetterType) -> f64 {
     }
 }
 
+pub fn default_layouts(word_length:usize) -> (f64,f64,f64) {
+    match word_length {
+        //word_radius, word_angle, word_dist
+        0|1 => (200.0,0.0,0.0),
+        2 => (80.0,std::f64::consts::PI,120.0),
+        phrase_len => (
+            50.0,
+            std::f64::consts::TAU/(phrase_len as f64),
+            150.0,
+        ),
+    }
+}
+
 pub fn string_parse(raw_word:String) -> String {
     let mut word = raw_word.to_lowercase();
     word = replace_double_char(word);
+    //add more fancy parsing bits here
     word
 }
 

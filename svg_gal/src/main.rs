@@ -98,7 +98,7 @@ impl gall_struct::GallWord<'_> {
         angle_list.push(std::f64::consts::TAU + first_angle_cache - angle1);
         angle_list
     }
-    fn distribute_letters(&mut self) -> Option<f64> {
+    fn distribute_step(&mut self) -> Option<f64> {
         let distribution = self.angular_distance_list();
         let mut success = None;
         let mut max = 0.0;
@@ -128,7 +128,26 @@ impl gall_struct::GallWord<'_> {
             None => None,
         }
     }
-
+    pub fn distribute(&mut self) {
+        let mut count = 0;
+        let mut max = self.distribute_step().unwrap();
+        loop {
+            count += 1;
+            let val = match self.distribute_step() {
+                Some(val0) => val0,
+                None => break
+            };
+            if val >= max {
+                break;
+            }
+            max = val;
+            println!("{}", max);
+            if count > 200 {
+                println!("Error! Distribute timeout");
+                break;
+            }
+        }
+    }
     fn skele_syl_split(&self) -> (Vec<&GallCircle>,Vec<&GallCircle>) {
         let mut skele_ltrs = Vec::new();
         let mut oth_ltrs = Vec::new();
@@ -141,7 +160,6 @@ impl gall_struct::GallWord<'_> {
         }
         (skele_ltrs,oth_ltrs)
     }
-
     fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Vec<Circle>, Path) {
         let mut attached_letters = Vec::new();
         //let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,self.radius);
@@ -238,7 +256,6 @@ impl gall_struct::GallWord<'_> {
             .set("d", closed_loop);
         (attached_letters, path)
     }
-
     pub fn render(&self, mut svg_doc:Document) -> SVG {
         let (skeleton_letters,other_letters) = self.skele_syl_split();
         if skeleton_letters.len() == 0 {
@@ -294,15 +311,7 @@ fn main() {
         filename += &raw_word;
         word_list.push(gall_fn::string_parse(raw_word));
     }
-    let (word_radius, word_angle, word_dist) = match word_list.len() {
-        0|1 => (200.0,0.0,0.0),
-        2 => (80.0,std::f64::consts::PI,120.0),
-        phrase_len => (
-            50.0,
-            std::f64::consts::TAU/(phrase_len as f64),
-            150.0,
-        ),
-    };
+    let (word_radius, word_angle, word_dist) = gall_fn::default_layouts(word_list.len());
     println!("Generating...");
     let mut phrase = Vec::new();
     for (num,words) in word_list.into_iter().enumerate() {
@@ -325,24 +334,7 @@ fn main() {
     }
 
     for word in &mut phrase {
-        let mut count = 0;
-        let mut max = word.distribute_letters().unwrap();
-        loop {
-            count += 1;
-            let val = match word.distribute_letters() {
-                Some(val0) => val0,
-                None => break
-            };
-            if val >= max {
-                break;
-            }
-            max = val;
-            println!("{}", max);
-            if count > 200 {
-                println!("Error! Distribute timeout");
-                break;
-            }
-        }
+        word.distribute();
     }
 
     //Now generate decorators - not rendered yet
