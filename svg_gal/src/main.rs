@@ -18,9 +18,9 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize
     let mut letter = text_iter.next();
     while letter.is_some() {
         count += 1;
-        let mut vowels =None;
         let char1 = letter.unwrap();
         let stem = gall_fn::stem_lookup(&char1);
+        let mut vowels =None;
         let (dot, decor_num) = gall_fn::decor_lookup(&char1);
         let mut decor_list = Vec::new();
         let letter_size = gall_fn::stem_size(&stem);
@@ -203,8 +203,10 @@ impl GallWord<'_> {
         (floating_circles,skele_ltrs,skele_ltrs2,oth_ltrs, decor_dash)
     }
     fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>, big_radius:f64, letter_props:fn(&GallCircle)->f64) -> Path {
-        //let mut thi_letter = thi_fn(&self, skeleton_letters[0]);
         let mut letter_radius = letter_props(skeleton_letters[0]);
+        if big_radius - skeleton_letters[0].loc.dist - letter_radius >= 0.0 {
+            panic!("Letter not touching skeleton");
+        }
         let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist, letter_radius, big_radius);
         let init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_letter);
         let mut tracker_loc = GallOrd::new(
@@ -217,14 +219,14 @@ impl GallWord<'_> {
 
         let mut first = true;
         let mut b_divot_flag = 0;
+        if skeleton_letters[0].stem == gall_struct::LetterType::BStem {
+            b_divot_flag = 1;
+        }
         let mut long_skeleton = 0;
         if skeleton_letters[0].loc.ang.unwrap() - thi_letter > std::f64::consts::PI {
             long_skeleton = 1;
         }
         let mut word_start_angle = skeleton_letters[0].loc.ang.unwrap() - thi_letter;
-        if skeleton_letters[0].stem == gall_struct::LetterType::BStem {
-            b_divot_flag = 1;
-        }
         tracker_loc.set_ang( word_start_angle);
         let mut letter_arc_start = tracker_loc.svg_ord();
         tracker_loc.c_clockwise(2.0 * thi_letter, true);
@@ -362,7 +364,7 @@ fn main() {
             text_to_gall(words.to_owned(),word_radius, &word_loc.svg_ord()),
             word_loc,
             word_radius,
-            2.0,
+            3.0,
             Vec::new(),
         );
         phrase.push(word_circle);

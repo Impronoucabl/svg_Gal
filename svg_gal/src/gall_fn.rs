@@ -2,7 +2,7 @@ use crate::gall_struct::LetterType;
 
 pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
     match stem {
-        LetterType::BStem => dist - 25.0,
+        LetterType::BStem => dist - 20.0,
         LetterType::JStem => dist - 35.0,
         LetterType::TStem => dist,
         LetterType::ZStem => dist,
@@ -10,7 +10,7 @@ pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
         LetterType::OVowel => dist - 20.0,
         LetterType::AVowel => dist + 20.0,
         LetterType::Digit => dist - 35.0,
-        _ => 0.0
+        _ => dist
     }
 }
 
@@ -19,6 +19,7 @@ pub fn stem_size(stem:&LetterType) -> f64 {
         LetterType::AVowel => 15.0,
         LetterType::StaticVowel => 15.0,
         LetterType::OVowel => 15.0,
+        LetterType::Punctuation => 0.0,
         _ => 30.0
     }
 }
