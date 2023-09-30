@@ -2,7 +2,7 @@ use crate::gall_struct::LetterType;
 
 pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
     match stem {
-        LetterType::BStem => dist - 25.0,
+        LetterType::BStem => dist - 20.0,
         LetterType::JStem => dist - 35.0,
         LetterType::TStem => dist,
         LetterType::ZStem => dist,

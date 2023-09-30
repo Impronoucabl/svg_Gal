@@ -50,7 +50,7 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize
             vowel, //for attached vowels only
             letter_loc,                    
             letter_size,
-            3.0,
+            2.0,
             decor_list,
         );
         syllable_list.push(syllable);
@@ -151,7 +151,8 @@ impl gall_struct::GallWord<'_> {
             }
         }
     }
-    fn skele_syl_split(&self) -> (Vec<&GallCircle>,Vec<&GallCircle>) {
+    fn skele_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>) {
+        let mut attached_letters = Vec::new();
         let mut skele_ltrs = Vec::new();
         let mut oth_ltrs = Vec::new();
         for letter in &self.syllables {
@@ -159,64 +160,6 @@ impl gall_struct::GallWord<'_> {
                 gall_struct::LetterType::BStem => skele_ltrs.push(letter),
                 gall_struct::LetterType::TStem => skele_ltrs.push(letter),
                 _ => oth_ltrs.push(letter),
-            } 
-        }
-        (skele_ltrs,oth_ltrs)
-    }
-    fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Vec<Circle>, Path) {
-        let mut attached_letters = Vec::new();
-        //let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,self.radius);
-        let mut thi_letter = self.thi(skeleton_letters[0]);
-        let init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_letter);
-        let mut tracker_loc = GallOrd::new(
-            Some(init_angle),
-            self.radius,
-            self.loc.svg_ord(),
-            None,
-        );
-        let continuum_pt = tracker_loc.svg_ord();
-
-        let mut first = true;
-        let mut b_divot_flag = 0;
-        let mut long_skeleton = 0;
-        if skeleton_letters[0].vowel.is_some() {
-            let circle_vowel = Circle::new()
-                .set("fill", "none")
-                .set("stroke", "black")
-                .set("stroke-width", 3)
-                .set("cx", skeleton_letters[0].loc.svg_x())
-                .set("cy", skeleton_letters[0].loc.svg_y())
-                .set("r", skeleton_letters[0].vowel.as_ref().unwrap().radius);
-            attached_letters.push(circle_vowel);
-        }
-        if skeleton_letters[0].loc.ang.unwrap() - thi_letter > std::f64::consts::PI {
-            long_skeleton = 1;
-        }
-        let mut word_start_angle = skeleton_letters[0].loc.ang.unwrap() - thi_letter;
-        if skeleton_letters[0].stem == gall_struct::LetterType::BStem {
-            b_divot_flag = 1;
-        }
-        tracker_loc.set_ang( word_start_angle);
-        let mut letter_arc_start = tracker_loc.svg_ord();
-        tracker_loc.c_clockwise(2.0 * thi_letter);
-        let mut letter_arc_finish = tracker_loc.svg_ord();
-        
-        //actually fill in data
-        let mut skele_data = Data::new()
-            .move_to(continuum_pt)
-            // x radius, y radius, rotation, large arc, sweep direction, end x, end y
-            .elliptical_arc_to((self.radius,self.radius, 0,long_skeleton,0,letter_arc_start.0,letter_arc_start.1))
-            .elliptical_arc_to((skeleton_letters[0].radius, skeleton_letters[0].radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
-
-        for letter in skeleton_letters {
-            if first {
-                first = false;
-                continue;
-            }
-            if letter.stem == gall_struct::LetterType::BStem {
-                b_divot_flag = 1
-            } else {
-                b_divot_flag = 0
             }
             if letter.vowel.is_some() {
                 let circle_vowel = Circle::new()
@@ -227,40 +170,137 @@ impl gall_struct::GallWord<'_> {
                     .set("cy", letter.loc.svg_y())
                     .set("r", letter.vowel.as_ref().unwrap().radius);
                 attached_letters.push(circle_vowel);
+            } 
+        }
+        (attached_letters,skele_ltrs,oth_ltrs)
+    }
+    fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Path,Path) {
+        let mut first = true;
+        let mut b_divot_flag = 0;
+        if skeleton_letters[0].stem == gall_struct::LetterType::BStem {
+            b_divot_flag = 1;
+        }
+        let mut thi_inner = self.inner_thi(skeleton_letters[0]);
+        let mut thi_outer = self.outer_thi(skeleton_letters[0]);
+        let (ang, inner_init_angle, outer_init_angle) = match skeleton_letters[0].loc.ang {
+            Some(angle) => (
+                angle,
+                0.0_f64.min(angle - thi_inner), 
+                0.0_f64.min(angle - thi_outer),
+            ),
+            None => ( f64::NAN,0.0,0.0,),
+        };
+        let mut inner_loc = GallOrd::new(
+            Some(inner_init_angle),
+            self.inner_radius,
+            self.loc.svg_ord(),
+            None,
+        );
+        let mut outer_loc = GallOrd::new(
+            Some(outer_init_angle),
+            self.outer_radius,
+            self.loc.svg_ord(),
+            None,
+        );
+        let inner_continuum = inner_loc.svg_ord();
+        let outer_continuum = outer_loc.svg_ord();
+        let mut inner_long_skeleton = 0;
+        let mut outer_long_skeleton = 0;
+        if ang - thi_inner > std::f64::consts::PI {
+            inner_long_skeleton = 1;
+        }
+        if ang - thi_outer > std::f64::consts::PI {
+            outer_long_skeleton = 1;
+        }
+        let mut inner_word_angle = ang - thi_inner;
+        let mut outer_word_angle = ang - thi_outer;
+        inner_loc.set_ang( inner_word_angle);
+        outer_loc.set_ang( outer_word_angle);
+        let mut inner_letter_arc_start = inner_loc.svg_ord();
+        let mut outer_letter_arc_start = outer_loc.svg_ord();
+        inner_loc.c_clockwise(2.0 * thi_inner);
+        outer_loc.c_clockwise(2.0 * thi_outer);
+        let mut inner_letter_arc_finish = inner_loc.svg_ord();
+        let mut outer_letter_arc_finish = outer_loc.svg_ord();
+        //actually fill in data
+        let mut inner_data = Data::new()
+            .move_to(inner_continuum)
+            // x radius, y radius, rotation, large arc, sweep direction, end x, end y
+            .elliptical_arc_to((self.inner_radius,self.inner_radius, 0,inner_long_skeleton,0,inner_letter_arc_start.0,inner_letter_arc_start.1))
+            .elliptical_arc_to((skeleton_letters[0].inner_radius, skeleton_letters[0].inner_radius,0,b_divot_flag,1,inner_letter_arc_finish.0,inner_letter_arc_finish.1));
+        let mut outer_data = Data::new()
+            .move_to(outer_continuum)
+            // x radius, y radius, rotation, large arc, sweep direction, end x, end y
+            .elliptical_arc_to((self.outer_radius,self.outer_radius, 0,outer_long_skeleton,0,outer_letter_arc_start.0,outer_letter_arc_start.1))
+            .elliptical_arc_to((skeleton_letters[0].outer_radius, skeleton_letters[0].outer_radius,0,b_divot_flag,1,outer_letter_arc_finish.0,outer_letter_arc_finish.1));        
+        for letter in skeleton_letters {
+            if first {
+                first = false;
+                continue;
             }
-            thi_letter = self.thi(letter);
-            word_start_angle = letter.loc.ang.unwrap() - thi_letter;
-            if word_start_angle - tracker_loc.ang.unwrap() > std::f64::consts::PI {
-                long_skeleton = 1
+            if letter.stem == gall_struct::LetterType::BStem {
+                b_divot_flag = 1
             } else {
-                long_skeleton = 0
+                b_divot_flag = 0
             }
-            tracker_loc.set_ang( word_start_angle);
-            letter_arc_start = tracker_loc.svg_ord();
-            tracker_loc.c_clockwise(2.0 * thi_letter);
-            letter_arc_finish = tracker_loc.svg_ord();
-            skele_data = skele_data
-                .elliptical_arc_to((self.radius,self.radius, 0,long_skeleton,0,letter_arc_start.0,letter_arc_start.1))
-                .elliptical_arc_to((letter.radius, letter.radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
+            thi_inner = self.inner_thi(letter);
+            thi_outer = self.outer_thi(letter);
+            inner_word_angle = letter.loc.ang.unwrap() - thi_inner;
+            outer_word_angle = letter.loc.ang.unwrap() - thi_outer;
+            if inner_word_angle - inner_loc.ang.unwrap() > std::f64::consts::PI {
+                inner_long_skeleton = 1
+            } else {
+                inner_long_skeleton = 0
+            }
+            if outer_word_angle - outer_loc.ang.unwrap() > std::f64::consts::PI {
+                outer_long_skeleton = 1
+            } else {
+                outer_long_skeleton = 0
+            }
+            inner_loc.set_ang( inner_word_angle);
+            outer_loc.set_ang( outer_word_angle);
+            inner_letter_arc_start = inner_loc.svg_ord();
+            outer_letter_arc_start = outer_loc.svg_ord();
+            inner_loc.c_clockwise(2.0 * thi_inner);
+            outer_loc.c_clockwise(2.0 * thi_outer);
+            inner_letter_arc_finish = inner_loc.svg_ord();
+            outer_letter_arc_finish = outer_loc.svg_ord();
+            inner_data = inner_data
+                .elliptical_arc_to((self.inner_radius,self.inner_radius, 0,inner_long_skeleton,0,inner_letter_arc_start.0,inner_letter_arc_start.1))
+                .elliptical_arc_to((letter.outer_radius, letter.outer_radius,0,b_divot_flag,1,inner_letter_arc_finish.0,inner_letter_arc_finish.1));
+            outer_data = outer_data
+                .elliptical_arc_to((self.outer_radius,self.outer_radius, 0,outer_long_skeleton,0,outer_letter_arc_start.0,outer_letter_arc_start.1))
+                .elliptical_arc_to((letter.inner_radius, letter.inner_radius,0,b_divot_flag,1,outer_letter_arc_finish.0,outer_letter_arc_finish.1));
         }
 
-        let mut final_sweep = 1;
-        if tracker_loc.ang.unwrap() - init_angle > std::f64::consts::PI {
-            final_sweep = 0
+        let mut final_inner_sweep = 1;
+        let mut final_outer_sweep = 1;
+        if inner_loc.ang.unwrap() - inner_init_angle > std::f64::consts::PI {
+            final_inner_sweep = 0
         }
-        let closed_loop = skele_data
-            .elliptical_arc_to((self.radius,self.radius,0,final_sweep,0,continuum_pt.0,continuum_pt.1))
+        if outer_loc.ang.unwrap() - outer_init_angle > std::f64::consts::PI {
+            final_outer_sweep = 0
+        }
+        let closed_inner_loop = inner_data
+            .elliptical_arc_to((self.inner_radius,self.inner_radius,0,final_inner_sweep,0,inner_continuum.0,inner_continuum.1))
             .close();
-
-        let path = Path::new()
+        let closed_outer_loop = outer_data
+            .elliptical_arc_to((self.outer_radius,self.outer_radius,0,final_outer_sweep,0,outer_continuum.0,outer_continuum.1))
+            .close();
+        let inner_path = Path::new()
+            .set("fill", "yellow")
+            .set("stroke", "black")
+            .set("stroke-width", 0)
+            .set("d", closed_inner_loop);
+        let outer_path = Path::new()
             .set("fill", "green")
             .set("stroke", "black")
-            .set("stroke-width", self.thickness)
-            .set("d", closed_loop);
-        (attached_letters, path)
+            .set("stroke-width", 0)
+            .set("d", closed_outer_loop);
+        (inner_path,outer_path)
     }
     pub fn render(&self, mut svg_doc:Document) -> SVG {
-        let (skeleton_letters,other_letters) = self.skele_syl_split();
+        let (attached_letters, skeleton_letters,other_letters) = self.skele_syl_split();
         if skeleton_letters.len() == 0 {
             let circle = Circle::new()
                 .set("fill", "none")
@@ -271,23 +311,22 @@ impl gall_struct::GallWord<'_> {
                 .set("r", self.radius);
             svg_doc = svg_doc.add(circle)
         } else {
-            let (attached_letters, path) = self.render_skele_path(skeleton_letters);
-            svg_doc = svg_doc.add(path);
-            for node in attached_letters {
-                svg_doc = svg_doc.add(node);
-            }
+            let (inner_path, outer_path) = self.render_skele_path(skeleton_letters);
+            svg_doc = svg_doc.add(outer_path);
+            svg_doc = svg_doc.add(inner_path);
         }
-        if other_letters.len() != 0 {
-            for letter in other_letters {
-                let circle = Circle::new()
-                    .set("fill", "blue")
-                    .set("stroke", "black")
-                    .set("stroke-width", 3)
-                    .set("cx", letter.loc.svg_x())
-                    .set("cy", letter.loc.svg_y())
-                    .set("r", gall_fn::stem_size(&letter.stem));
-                svg_doc = svg_doc.add(circle);
-            }
+        for letter in other_letters {
+            let circle = Circle::new()
+                .set("fill", "blue")
+                .set("stroke", "black")
+                .set("stroke-width", 3)
+                .set("cx", letter.loc.svg_x())
+                .set("cy", letter.loc.svg_y())
+                .set("r", gall_fn::stem_size(&letter.stem));
+            svg_doc = svg_doc.add(circle);
+        }
+        for node in attached_letters {
+            svg_doc = svg_doc.add(node);
         };
         svg_doc
     }

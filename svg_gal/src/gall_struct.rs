@@ -23,8 +23,8 @@ pub struct GallWord<'loc> {
     pub radius: f64,
     pub thickness:f64,
     pub decorators:Vec<Decor<'loc>>,
-    inner_radius: f64,
-    outer_radius: f64,
+    pub inner_radius: f64,
+    pub outer_radius: f64,
 }
 
 #[derive(PartialEq, Default)]
@@ -35,8 +35,8 @@ pub struct GallCircle<'loc> { //Syllable equivalent
     pub vowel:Option<VowCircle>,
     pub loc: GallOrd<'loc>,
     pub radius: f64,
-    inner_radius:f64,
-    outer_radius:f64,
+    pub inner_radius:f64,
+    pub outer_radius:f64,
     pub decorators:Vec<Decor<'loc>>
 }
 #[derive(PartialEq,Default)]
@@ -90,6 +90,9 @@ impl GallWord<'_> {
         } else {
             thi2
         }
+    }
+    pub fn thi(&self, letter:&GallCircle) -> f64 {
+        (self.inner_thi(letter) + self.outer_thi(letter))/2.0
     }
     fn update_kids(&mut self) {
         for circle in &mut self.syllables {
