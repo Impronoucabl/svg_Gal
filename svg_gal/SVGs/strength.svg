@@ -4,5 +4,8 @@
 <circle cx="146.8373760638021" cy="88.41861220480291" fill="blue" r="30" stroke="black" stroke-width="3"/>
 <circle cx="62.145202138873316" cy="305.196720888914" fill="blue" r="30" stroke="black" stroke-width="3"/>
 <circle cx="387.04978854688704" cy="104.91739702462036" fill="none" r="15" stroke="black" stroke-width="3"/>
+<circle cx="446.21130325903073" cy="224.19660112501052" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="463.84486082780495" cy="218.46711095625895" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="474.74299874788534" cy="203.46711095625895" fill="black" r="10" stroke="none" stroke-width="0"/>
 <circle cx="256" cy="256" fill="none" r="250" stroke="black" stroke-width="6"/>
 </svg>
