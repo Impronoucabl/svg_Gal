@@ -23,8 +23,8 @@ pub struct GallWord<'loc> {
     pub radius: f64,
     pub thickness:f64,
     pub decorators:Vec<Decor<'loc>>,
-    inner_radius: f64,
-    outer_radius: f64,
+    pub inner_radius: f64,
+    pub outer_radius: f64,
 }
 
 #[derive(PartialEq, Default)]
@@ -95,6 +95,24 @@ impl GallWord<'_> {
         for circle in &mut self.syllables {
             circle.loc.center = self.loc.svg_ord();
         }
+    }
+}
+
+pub fn inner_thi(word:&GallWord, letter:&GallCircle) -> f64 {
+    let thi1 = ((word.inner_radius.powf(2.0) + letter.loc.dist.powf(2.0) - letter.outer_radius.powf(2.0))/(2.0*letter.loc.dist*word.inner_radius)).acos();
+    if thi1.is_nan() {
+        0.0
+    } else {
+        thi1
+    }
+}
+
+pub fn outer_thi(word:&GallWord, letter:&GallCircle) -> f64 {
+    let thi2 = ((word.outer_radius.powf(2.0) + letter.loc.dist.powf(2.0) - letter.inner_radius.powf(2.0))/(2.0*letter.loc.dist*word.outer_radius)).acos();
+    if thi2.is_nan() {
+        0.0
+    } else {
+        thi2
     }
 }
 
