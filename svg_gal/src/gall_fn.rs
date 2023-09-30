@@ -124,8 +124,6 @@ pub fn decor_lookup(letter:&char) -> (Option<bool>,i8) {
     (dot, decor_num)
 }
 
-//below is python
-//math.acos((Wrd.inner_rad**2 + dist**2 - self.outer_rad**2)/(2*dist*Wrd.inner_rad))
 pub fn _thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
     let thi = ((big_radius.powf(2.0) + letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*big_radius)).acos();
     if thi == std::f64::NAN {
@@ -135,9 +133,7 @@ pub fn _thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
     }
 }
 
-//below is python
-//self.theta  = math.acos((Wrd.inner_rad**2 - dist**2 - self.outer_rad**2)/(2*dist*self.outer_rad))
-pub fn theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
+pub fn _theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
     let theta = ((big_radius.powf(2.0) - letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*letter_radius)).acos();
     if theta == std::f64::NAN {
         0.0 //could do math error?

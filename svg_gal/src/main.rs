@@ -34,24 +34,25 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize
             });
             letter = text_iter.next();
         }
-        let letter_loc = GallOrd { 
-            ang: Some(letter_sep_ang * count as f64), 
-            dist: gall_fn::stem_dist(&stem, word_radius), 
-            center: origin.to_owned(), 
-            parent: None
-        };
+        let letter_loc = GallOrd::new( 
+            Some(letter_sep_ang * count as f64), 
+            gall_fn::stem_dist(&stem, word_radius), 
+            origin.to_owned(), 
+            None
+        );
         
         //make mut later when doing dots & dashes
         let decor_list = Vec::new();
-        let syllable = GallCircle{
-            character: char1,
-            stem:stem,
-            repeat: false,
-            vowel: vowel, //for attached vowels only
-            loc:letter_loc,                    
-            radius: letter_size,
-            decorators: decor_list,
-        };
+        let syllable = GallCircle::new(
+            char1,
+            stem,
+            false,
+            vowel, //for attached vowels only
+            letter_loc,                    
+            letter_size,
+            3.0,
+            decor_list,
+        );
         syllable_list.push(syllable);
         
     }
@@ -62,12 +63,12 @@ impl GallCircle<'_> {
     fn generate_decor(&mut self) {
         let (dot, mut decor_num) = gall_fn::decor_lookup(&self.character);
         while decor_num > 0 {
-            let dec_loc = GallOrd{
-                ang:Some(0.2 * decor_num as f64),
-                dist:self.radius,
-                center: self.loc.svg_ord(),
-                parent: None //TODO fix
-            };
+            let dec_loc = GallOrd::new(
+                Some(0.2 * decor_num as f64),
+                self.radius,
+                self.loc.svg_ord(),
+                None //TODO fix
+            );
             let dec = gall_struct::Decor{
                 loc: dec_loc,
                 dot: dot.unwrap(),
@@ -85,14 +86,14 @@ impl gall_struct::GallWord<'_> {
         let mut angle1 = f64::NAN; //dummy value
         let mut first_angle_cache = f64::NAN;
         for letter in &self.syllables {
-            let angle2 = letter.loc.ang.unwrap() - self.thi(letter);
+            let angle2 = letter.loc.ang.unwrap() - self.inner_thi(letter);
             if angle1.is_nan() {
                 first_angle_cache = angle2;
-                angle1 = angle2 + 2.0 * self.thi(letter);
+                angle1 = angle2 + 2.0 * self.inner_thi(letter);
                 continue;
             }
             angle_list.push(angle2 - angle1);
-            angle1 = angle2 + 2.0 * self.thi(letter);
+            angle1 = angle2 + 2.0 * self.inner_thi(letter);
         }
         
         angle_list.push(std::f64::consts::TAU + first_angle_cache - angle1);
@@ -130,21 +131,23 @@ impl gall_struct::GallWord<'_> {
     }
     pub fn distribute(&mut self) {
         let mut count = 0;
-        let mut max = self.distribute_step().unwrap();
+        let mut max = match self.distribute_step() {
+            Some(high) => high,
+            None => return,
+        };
         loop {
             count += 1;
             let val = match self.distribute_step() {
                 Some(val0) => val0,
-                None => break
+                None => return
             };
             if val >= max {
-                break;
+                return;
             }
             max = val;
-            println!("{}", max);
             if count > 200 {
                 println!("Error! Distribute timeout");
-                break;
+                return;
             }
         }
     }
@@ -165,12 +168,12 @@ impl gall_struct::GallWord<'_> {
         //let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist,skeleton_letters[0].radius,self.radius);
         let mut thi_letter = self.thi(skeleton_letters[0]);
         let init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_letter);
-        let mut tracker_loc = GallOrd{
-            ang: Some(init_angle),
-            dist: self.radius,
-            center: self.loc.svg_ord(),
-            parent: None,
-        };
+        let mut tracker_loc = GallOrd::new(
+            Some(init_angle),
+            self.radius,
+            self.loc.svg_ord(),
+            None,
+        );
         let continuum_pt = tracker_loc.svg_ord();
 
         let mut first = true;
@@ -252,7 +255,7 @@ impl gall_struct::GallWord<'_> {
         let path = Path::new()
             .set("fill", "green")
             .set("stroke", "black")
-            .set("stroke-width", 3)
+            .set("stroke-width", self.thickness)
             .set("d", closed_loop);
         (attached_letters, path)
     }
@@ -293,12 +296,13 @@ impl gall_struct::GallWord<'_> {
 fn main() {
     static WIDTH:f64 = 512.0;
     static HEIGHT:f64 = 512.0;
-    static ORIGIN:GallOrd = GallOrd{
-        ang: None,
-        dist: 0.0,
-        center: (WIDTH/2.0,HEIGHT/2.0),
-        parent: None,
-    };
+    //maybe lazy static it in
+    let ORIGIN:GallOrd = GallOrd::new(
+        None,
+        0.0,
+        (WIDTH/2.0,HEIGHT/2.0),
+        None,
+    );
     println!("Initialising...");
     let args = env::args();
     let mut word_list = Vec::new();
@@ -315,28 +319,25 @@ fn main() {
     println!("Generating...");
     let mut phrase = Vec::new();
     for (num,words) in word_list.into_iter().enumerate() {
-        let word_loc = GallOrd {
-            ang: Some(word_angle * num as f64), 
-            dist:word_dist, 
-            center: ORIGIN.center, 
-            parent: None 
-        };
-        let (letter_count, all_letters) = text_to_gall(words.to_owned(),word_radius, &word_loc.svg_ord());
+        let word_loc = GallOrd::new(
+            Some(word_angle * num as f64), 
+            word_dist, 
+            ORIGIN.center, 
+            None 
+        );
         //parse letters more?
-        let word_circle = gall_struct::GallWord {
-            syllables: all_letters,
-            letter_count:letter_count,
-            loc: word_loc,
-            radius: word_radius,
-            decorators: Vec::new(),
-        };
+        let word_circle = gall_struct::GallWord::new(
+            text_to_gall(words.to_owned(),word_radius, &word_loc.svg_ord()),
+            word_loc,
+            word_radius,
+            9.0,
+            Vec::new(),
+        );
         phrase.push(word_circle);
     }
-
     for word in &mut phrase {
         word.distribute();
     }
-
     //Now generate decorators - not rendered yet
     for word in &mut phrase {
         for syllable in &mut word.syllables {
