@@ -100,8 +100,8 @@ pub fn stem_lookup(letter:&char) -> LetterType {
 pub fn decor_lookup(letter:&char) -> (Option<bool>,i8) {
     let dot = match letter {
         'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true),
-        'E'|'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'V'|'W'|'X'|'e'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'v'|'w'|'x' => Some(false),
-        'B'|'J'|'T'|'b'|'j'|'t' => None,
+        'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'V'|'W'|'X'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'v'|'w'|'x' => Some(false),
+        'A'|'B'|'E'|'J'|'O'|'T'|'a'|'b'|'e'|'j'|'o'|'t' => None,
         '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9' => None, //TODO
         '\u{e000}'..='\u{e0ff}' => None, // TH & variants
         '\u{e800}'..='\u{e9ff}' => Some(false), // QU, NG & variants

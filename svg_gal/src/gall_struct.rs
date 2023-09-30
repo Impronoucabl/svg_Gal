@@ -84,17 +84,18 @@ impl GallWord<'_> {
             thi1
         }
     }
-    pub fn outer_thi(&self, letter: &GallCircle) -> f64 {
+    /*pub fn outer_thi(&self, letter: &GallCircle) -> f64 {
         let thi2 = ((self.outer_radius.powf(2.0) + letter.loc.dist.powf(2.0) - letter.inner_radius.powf(2.0))/(2.0*letter.loc.dist*self.outer_radius)).acos();
         if thi2.is_nan() {
             0.0
         } else {
             thi2
         }
-    }
-    fn update_kids(&mut self) {
+    }*/
+    pub fn update_kids(&mut self) {
         for circle in &mut self.syllables {
             circle.loc.center = self.loc.svg_ord();
+            circle.update_kids();
         }
     }
 }
@@ -120,6 +121,12 @@ impl GallCircle<'_> {
             inner_radius: radius - thickness, 
             outer_radius: radius + thickness, 
             decorators,
+        }
+    }
+
+    fn update_kids(&mut self) {
+        for dec in &mut self.decorators {
+            dec.loc.center = self.loc.svg_ord()
         }
     }
     //below is python

@@ -1,7 +1,7 @@
 use std::env;
 
 use svg::Document;
-use svg::node::element::{Path, Circle, SVG};
+use svg::node::element::{Path, Circle, SVG, Line};
 use svg::node::element::path::Data;
 
 mod gall_fn;
@@ -52,6 +52,7 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize
             };
             let (vowel_dot, _) = gall_fn::decor_lookup(&vowel.character);
             if vowel_dot.is_some() {
+                println!("{}",&vowel.character);
                 let dec_loc = GallOrd::new(
                     Some(0.0),
                     vowel.radius,
@@ -74,7 +75,7 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize
             vowels, //for attached vowels only
             letter_loc,                    
             letter_size,
-            1.0,
+            3.0,
             decor_list,
         );
         syllable_list.push(syllable);
@@ -154,12 +155,11 @@ impl GallWord<'_> {
             }
         }
     }
-    fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<&GallCircle>, Vec<Circle>,Vec<&Decor>) {
+    fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<Path>) {
         let mut skele_ltrs = Vec::new();
         let mut skele_ltrs2 = Vec::new();
         let mut oth_ltrs = Vec::new();
-        let mut attached_letters = Vec::new();
-        let mut decor_dot = Vec::new();
+        let mut floating_circles = Vec::new();
         let mut decor_dash = Vec::new();
         for letter in &self.syllables {
             match letter.stem {
@@ -175,7 +175,7 @@ impl GallWord<'_> {
                     .set("cx", letter.loc.svg_x())
                     .set("cy", letter.loc.svg_y())
                     .set("r", letter.vowel.as_ref().unwrap().radius);
-                attached_letters.push(circle_vowel);
+                floating_circles.push(circle_vowel);
             }
             for decor in &letter.decorators {
                 if decor.dot {
@@ -186,13 +186,21 @@ impl GallWord<'_> {
                         .set("cx", decor.loc.svg_x())
                         .set("cy", decor.loc.svg_y())
                         .set("r", 10);
-                    decor_dot.push(circle_dot);
+                    floating_circles.push(circle_dot);
                 } else {
-                    decor_dash.push(decor);
+                    let line_path = Data::new()
+                        .move_to(decor.loc.svg_ord())
+                        .line_to((256,256));
+                    let dash = Path::new()
+                        .set("fill", "none")
+                        .set("stroke", "black")
+                        .set("stroke-width", 1)
+                        .set("d", line_path);
+                    decor_dash.push(dash);
                 }
             }
         }
-        (attached_letters,skele_ltrs,skele_ltrs2,oth_ltrs, decor_dot, decor_dash)
+        (floating_circles,skele_ltrs,skele_ltrs2,oth_ltrs, decor_dash)
     }
     fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>, big_radius:f64, letter_props:fn(&GallCircle)->f64) -> Path {
         //let mut thi_letter = thi_fn(&self, skeleton_letters[0]);
@@ -273,7 +281,6 @@ impl GallWord<'_> {
             skeleton_letters1, 
             skeleton_letters2, 
             other_letters,
-            decor_dots,
             decor_dash
         ) = self.render_syl_split();
         if skeleton_letters1.is_empty() {
@@ -310,9 +317,10 @@ impl GallWord<'_> {
         for node in attached_letters {
             svg_doc = svg_doc.add(node);
         }
-        for node in decor_dots {
+        for node in decor_dash {
             svg_doc = svg_doc.add(node);
         }
+
         svg_doc
     }
 }
@@ -361,13 +369,8 @@ fn main() {
     }
     for word in &mut phrase {
         word.distribute();
+        word.update_kids();
     }
-    //Now generate decorators - not rendered yet
-    /*for word in &mut phrase {
-        for syllable in &mut word.syllables {
-            syllable.generate_decor();
-        }
-    }*/
     
     println!("Rendering...");
     let document = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
