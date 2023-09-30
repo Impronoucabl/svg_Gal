@@ -113,7 +113,7 @@ impl GallWord<'_> {
             let right_dist_weight = distribution[index] - distribution[prev];
             if right_dist_weight.abs() > std::f64::consts::FRAC_PI_8/10.0{
                 if right_dist_weight.abs() > 0.1 {
-                    success = self.syllables[index].loc.c_clockwise(right_dist_weight/3.0);
+                    success = self.syllables[index].loc.c_clockwise(right_dist_weight/3.0, false);
                 } else {
                     success = match right_dist_weight.signum() {
                         1.0 => self.syllables[index].loc.ccw_step(),
@@ -175,8 +175,10 @@ impl GallWord<'_> {
         }
         (attached_letters,skele_ltrs,skele_ltrs2,oth_ltrs)
     }
-    fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>, big_radius:f64, thi_fn:fn(&GallWord,&GallCircle)->f64) -> Path {
-        let mut thi_letter = thi_fn(&self, skeleton_letters[0]);
+    fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>, big_radius:f64, letter_props:fn(&GallCircle)->f64) -> Path {
+        //let mut thi_letter = thi_fn(&self, skeleton_letters[0]);
+        let mut letter_radius = letter_props(skeleton_letters[0]);
+        let mut thi_letter = gall_fn::thi(skeleton_letters[0].loc.dist, letter_radius, big_radius);
         let init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_letter);
         let mut tracker_loc = GallOrd::new(
             Some(init_angle),
@@ -198,7 +200,7 @@ impl GallWord<'_> {
         }
         tracker_loc.set_ang( word_start_angle);
         let mut letter_arc_start = tracker_loc.svg_ord();
-        tracker_loc.c_clockwise(2.0 * thi_letter);
+        tracker_loc.c_clockwise(2.0 * thi_letter, true);
         let mut letter_arc_finish = tracker_loc.svg_ord();
         
         //actually fill in data
@@ -206,7 +208,7 @@ impl GallWord<'_> {
             .move_to(continuum_pt)
             // x radius, y radius, rotation, large arc, sweep direction, end x, end y
             .elliptical_arc_to((big_radius,big_radius, 0,long_skeleton,0,letter_arc_start.0,letter_arc_start.1))
-            .elliptical_arc_to((skeleton_letters[0].radius, skeleton_letters[0].radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
+            .elliptical_arc_to((letter_radius, letter_radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
 
         for letter in skeleton_letters {
             if first {
@@ -218,7 +220,8 @@ impl GallWord<'_> {
             } else {
                 b_divot_flag = 0
             }
-            thi_letter = thi_fn(&self, letter);
+            letter_radius = letter_props(letter);
+            thi_letter = gall_fn::thi(letter.loc.dist, letter_radius, big_radius);
             word_start_angle = letter.loc.ang.unwrap() - thi_letter;
             if word_start_angle - tracker_loc.ang.unwrap() > std::f64::consts::PI {
                 long_skeleton = 1
@@ -227,11 +230,11 @@ impl GallWord<'_> {
             }
             tracker_loc.set_ang( word_start_angle);
             letter_arc_start = tracker_loc.svg_ord();
-            tracker_loc.c_clockwise(2.0 * thi_letter);
+            tracker_loc.c_clockwise(2.0 * thi_letter, true);
             letter_arc_finish = tracker_loc.svg_ord();
             skele_data = skele_data
                 .elliptical_arc_to((big_radius,big_radius, 0,long_skeleton,0,letter_arc_start.0,letter_arc_start.1))
-                .elliptical_arc_to((letter.radius, letter.radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
+                .elliptical_arc_to((letter_radius, letter_radius,0,b_divot_flag,1,letter_arc_finish.0,letter_arc_finish.1));
         }
 
         let mut final_sweep = 1;
@@ -242,7 +245,6 @@ impl GallWord<'_> {
             .elliptical_arc_to((big_radius,big_radius,0,final_sweep,0,continuum_pt.0,continuum_pt.1))
             .close();
         let path = Path::new()
-            
             .set("d", closed_loop);
         path
     }
@@ -263,11 +265,11 @@ impl GallWord<'_> {
                 .set("r", self.radius);
             svg_doc = svg_doc.add(circle)
         } else {
-            let inner_path = self.render_skele_path(skeleton_letters1,self.inner_radius, gall_struct::inner_thi)
+            let inner_path = self.render_skele_path(skeleton_letters1,self.inner_radius, gall_struct::outer_rad)
                 .set("fill", "yellow")
                 .set("stroke-width", 0)
                 .set("stroke", "none");
-            let outer_path = self.render_skele_path(skeleton_letters2,self.outer_radius, gall_struct::outer_thi)
+            let outer_path = self.render_skele_path(skeleton_letters2,self.outer_radius, gall_struct::inner_rad)
                 .set("fill", "green")
                 .set("stroke-width", 0)
                 .set("stroke", "none");

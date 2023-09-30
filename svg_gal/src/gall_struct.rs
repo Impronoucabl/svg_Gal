@@ -35,6 +35,7 @@ pub struct GallCircle<'loc> { //Syllable equivalent
     pub vowel:Option<VowCircle>,
     pub loc: GallOrd<'loc>,
     pub radius: f64,
+    pub thickness: f64,
     inner_radius:f64,
     outer_radius:f64,
     pub decorators:Vec<Decor<'loc>>
@@ -98,22 +99,12 @@ impl GallWord<'_> {
     }
 }
 
-pub fn inner_thi(word:&GallWord, letter:&GallCircle) -> f64 {
-    let thi1 = ((word.inner_radius.powf(2.0) + letter.loc.dist.powf(2.0) - letter.outer_radius.powf(2.0))/(2.0*letter.loc.dist*word.inner_radius)).acos();
-    if thi1.is_nan() {
-        0.0
-    } else {
-        thi1
-    }
+pub fn outer_rad(letter: &GallCircle) -> f64 {
+    letter.outer_radius
 }
 
-pub fn outer_thi(word:&GallWord, letter:&GallCircle) -> f64 {
-    let thi2 = ((word.outer_radius.powf(2.0) + letter.loc.dist.powf(2.0) - letter.inner_radius.powf(2.0))/(2.0*letter.loc.dist*word.outer_radius)).acos();
-    if thi2.is_nan() {
-        0.0
-    } else {
-        thi2
-    }
+pub fn inner_rad(letter: &GallCircle) -> f64 {
+    letter.inner_radius
 }
 
 impl GallCircle<'_> {
@@ -125,6 +116,7 @@ impl GallCircle<'_> {
             vowel, 
             loc, 
             radius, 
+            thickness,
             inner_radius: radius - thickness, 
             outer_radius: radius + thickness, 
             decorators,
@@ -178,21 +170,25 @@ impl GallOrd<'_> {
         };
         self.update_xy();
     }
-    pub fn c_clockwise(&mut self, radians:f64) -> Option<()> {
+    pub fn c_clockwise(&mut self, radians:f64, force:bool) -> Option<()> {
         let new_angle = (self.ang? + radians).max(0.0);
-        static READABILITY_ANGLE:f64 = std::f64::consts::TAU - 0.35;
-        if new_angle == READABILITY_ANGLE {
-            return None
+        if force {
+            self.ang = Some(new_angle);
+        } else {
+            static READABILITY_ANGLE:f64 = std::f64::consts::TAU - 0.35;
+            if new_angle == READABILITY_ANGLE {
+                return None
+            }
+            self.ang = Some(new_angle.min(READABILITY_ANGLE));
         }
-        self.ang = Some(new_angle.min(READABILITY_ANGLE));
         self.update_xy();
         Some(())
     }
     pub fn cw_step(&mut self) -> Option<()> {
-        self.c_clockwise(-self.ang?.min(FRAC_PI_8/8.0))
+        self.c_clockwise(-self.ang?.min(FRAC_PI_8/8.0), false)
     }
     pub fn ccw_step(&mut self) -> Option<()>{
-        self.c_clockwise(FRAC_PI_8/8.0)
+        self.c_clockwise(FRAC_PI_8/8.0, false)
     }
     pub fn set_dist(&mut self, new_dist:f64) {
         self.dist = new_dist;
