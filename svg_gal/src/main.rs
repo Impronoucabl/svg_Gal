@@ -6,82 +6,7 @@ use svg::node::element::path::Data;
 
 mod gall_fn;
 mod gall_struct;
-use gall_struct::{GallCircle, GallOrd, GallWord, Decor};
-
-
-fn word_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize, Vec<GallCircle<'a>>) {
-    let count_guess = text.len(); //len() is byte len, not # of chars
-    let mut syllable_list = Vec::with_capacity(count_guess);
-    let mut count:usize = 0;
-    let letter_sep_ang = std::f64::consts::TAU/(count_guess as f64);
-    let mut text_iter = text.chars(); 
-    let mut letter = text_iter.next();
-    while letter.is_some() {
-        count += 1;
-        let char1 = letter.unwrap();
-        let stem = gall_fn::stem_lookup(&char1);
-        let mut vowels =None;
-        let (dot, decor_num) = gall_fn::decor_lookup(&char1);
-        let mut decor_list = Vec::new();
-        let letter_size = gall_fn::stem_size(&stem);
-        let letter_loc = GallOrd::new( 
-            Some(letter_sep_ang * count as f64), 
-            gall_fn::stem_dist(&stem, word_radius), 
-            origin.to_owned(), 
-            None
-        );
-        for num in 0..decor_num {
-            let dec_loc = GallOrd::new(
-                Some(letter_sep_ang * num as f64),
-                letter_size,
-                letter_loc.svg_ord(),
-                None,
-            );
-            let dec = Decor { 
-                loc: dec_loc,
-                dot: dot.unwrap(),
-            };
-            decor_list.push(dec)
-        }
-        letter = text_iter.next();
-        if letter.is_some() && gall_fn::stem_lookup(&letter.unwrap()) == gall_struct::LetterType::StaticVowel {
-            let vowel = gall_struct::VowCircle {
-                character: letter.unwrap(),
-                repeat: false,
-                radius: letter_size/2.0
-            };
-            let (vowel_dot, _) = gall_fn::decor_lookup(&vowel.character);
-            if vowel_dot.is_some() {
-                println!("{}",&vowel.character);
-                let dec_loc = GallOrd::new(
-                    Some(0.0),
-                    vowel.radius,
-                    letter_loc.svg_ord(),
-                    None,
-                );
-                let dec = Decor { 
-                    loc: dec_loc,
-                    dot: false,
-                };
-                decor_list.push(dec)
-            }
-            vowels = Some(vowel);
-            letter = text_iter.next();
-        }
-        let syllable = GallCircle::new(
-            char1,
-            stem,
-            false,
-            vowels, //for attached vowels only
-            letter_loc,                    
-            letter_size,
-            3.0,
-            decor_list,
-        );
-        syllable_list.push(syllable);
-    }
-    (count, syllable_list)
-}
+use gall_struct::{GallCircle, GallOrd, GallWord};
 
 impl GallWord<'_> {
     fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<Path>) {
@@ -301,6 +226,15 @@ fn main() {
     for word in &mut phrase {
         word.distribute();
         word.update_kids();
+    }
+    let mut point_list = Vec::new();
+    let mut dash_list = Vec::new();
+    for word in &phrase {
+        word.collect_points(&mut point_list);
+        word.collect_dashes(&mut dash_list);
+    }
+    for dec in dash_list {
+        println!("{}, {}", dec.loc.svg_x(), dec.loc.svg_y())
     }
     
     println!("Rendering...");

@@ -50,8 +50,11 @@ pub struct VowCircle { //for attached vowels only
 }
 #[derive(PartialEq,Default)]
 pub struct Decor<'loc> {
+    //position relative to syllable
     pub loc: GallOrd<'loc>,
     pub dot: bool,
+    pub pair_syllable: Option<&'loc GallOrd<'loc>>,
+    pub free: bool,
 }
 
 #[derive(PartialEq,Default)]
@@ -96,6 +99,8 @@ impl GallWord<'_> {
                 let dec = Decor { 
                     loc: dec_loc,
                     dot: dot.unwrap(),
+                    pair_syllable: None,
+                    free:std::ops::Not::not(dot.unwrap_or(true)),
                 };
                 decor_list.push(dec)
             }
@@ -136,7 +141,7 @@ impl GallWord<'_> {
     
     //generates a list of angles between letters, as measured by thi 
     fn angular_distance_list(&self) -> Vec<f64> {
-        let mut angle_list = Vec::new();
+        let mut angle_list = Vec::with_capacity(self.letter_count);
         let mut angle1 = f64::NAN; //dummy value
         let mut first_angle_cache = f64::NAN;
         for letter in &self.syllables {
@@ -169,10 +174,9 @@ impl GallWord<'_> {
                 if right_dist_weight.abs() > 0.1 {
                     success = self.syllables[index].loc.c_clockwise(right_dist_weight/3.0, false);
                 } else {
-                    success = match right_dist_weight.signum() {
-                        1.0 => self.syllables[index].loc.ccw_step(),
-                        -1.0 => self.syllables[index].loc.cw_step(),
-                        _ => success
+                    success = match right_dist_weight.is_sign_positive() {
+                        true => self.syllables[index].loc.ccw_step(),
+                        false => self.syllables[index].loc.cw_step(),
                     }
                 }
                 max = f64::max(max, right_dist_weight.abs());
@@ -205,6 +209,23 @@ impl GallWord<'_> {
             }
         }
     }
+
+    pub fn collect_points<'a>(&'a self, point_vec: &mut Vec<&GallOrd<'a>>) {
+        for syllable in &self.syllables {
+            point_vec.push(&syllable.loc)
+        }
+        point_vec.push(&self.loc)
+    }
+    pub fn collect_dashes<'a>(&'a self, dash_vec: &mut Vec<&Decor<'a>>) {
+        for syllable in &self.syllables {
+            for dec in &syllable.decorators {
+                if dec.free {
+                    dash_vec.push(&dec)
+                }
+            }
+        }
+    }
+
     pub fn inner_thi(&self, letter: &GallCircle) -> f64 {
         let thi1 = ((self.inner_radius.powf(2.0) + letter.loc.dist.powf(2.0) - letter.outer_radius.powf(2.0))/(2.0*letter.loc.dist*self.inner_radius)).acos();
         if thi1.is_nan() {
@@ -254,6 +275,8 @@ impl VowCircle {
                 let dec = Decor { 
                     loc: dec_loc,
                     dot: false,
+                    pair_syllable: None,
+                    free: true,
                 };
                 syllable.decorators.push(dec)
             }
