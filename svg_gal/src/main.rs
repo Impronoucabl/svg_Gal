@@ -9,7 +9,7 @@ mod gall_struct;
 use gall_struct::{GallCircle, GallOrd, GallWord, Decor};
 
 
-fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize, Vec<GallCircle<'a>>) {
+fn word_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize, Vec<GallCircle<'a>>) {
     let count_guess = text.len(); //len() is byte len, not # of chars
     let mut syllable_list = Vec::with_capacity(count_guess);
     let mut count:usize = 0;
@@ -84,77 +84,6 @@ fn text_to_gall<'a>(text: String, word_radius:f64, origin: &(f64,f64)) -> (usize
 }
 
 impl GallWord<'_> {
-    //generates a list of angles between letters, as measured by thi 
-    fn angular_distance_list(&self) -> Vec<f64> {
-        let mut angle_list = Vec::new();
-        let mut angle1 = f64::NAN; //dummy value
-        let mut first_angle_cache = f64::NAN;
-        for letter in &self.syllables {
-            let angle2 = letter.loc.ang.unwrap() - self.inner_thi(letter);
-            if angle1.is_nan() {
-                first_angle_cache = angle2;
-                angle1 = angle2 + 2.0 * self.inner_thi(letter);
-                continue;
-            }
-            angle_list.push(angle2 - angle1);
-            angle1 = angle2 + 2.0 * self.inner_thi(letter);
-        }
-        
-        angle_list.push(std::f64::consts::TAU + first_angle_cache - angle1);
-        angle_list
-    }
-    fn distribute_step(&mut self) -> Option<f64> {
-        let distribution = self.angular_distance_list();
-        let mut success = None;
-        let mut max = 0.0;
-        for index in 0..self.letter_count {
-            let prev:usize; 
-            if index == 0 {
-                prev = self.letter_count - 1;
-            } else {
-                prev = index - 1;
-            }
-            let right_dist_weight = distribution[index] - distribution[prev];
-            if right_dist_weight.abs() > std::f64::consts::FRAC_PI_8/10.0{
-                if right_dist_weight.abs() > 0.1 {
-                    success = self.syllables[index].loc.c_clockwise(right_dist_weight/3.0, false);
-                } else {
-                    success = match right_dist_weight.signum() {
-                        1.0 => self.syllables[index].loc.ccw_step(),
-                        -1.0 => self.syllables[index].loc.cw_step(),
-                        _ => success
-                    }
-                }
-                max = f64::max(max, right_dist_weight.abs());
-            };
-        };
-        match success {
-            Some(_) => Some(max),
-            None => None,
-        }
-    }
-    pub fn distribute(&mut self) {
-        let mut count = 0;
-        let mut max = match self.distribute_step() {
-            Some(high) => high,
-            None => return,
-        };
-        loop {
-            count += 1;
-            let val = match self.distribute_step() {
-                Some(val0) => val0,
-                None => return
-            };
-            if val >= max {
-                return;
-            }
-            max = val;
-            if count > 200 {
-                println!("Error! Distribute timeout");
-                return;
-            }
-        }
-    }
     fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<Path>) {
         let mut skele_ltrs = Vec::new();
         let mut skele_ltrs2 = Vec::new();
@@ -360,8 +289,8 @@ fn main() {
             None 
         );
         //parse letters more?
-        let word_circle = gall_struct::GallWord::new(
-            text_to_gall(words.to_owned(),word_radius, &word_loc.svg_ord()),
+        let word_circle = GallWord::new(
+            words.to_owned(),
             word_loc,
             word_radius,
             3.0,

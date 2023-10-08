@@ -1,0 +1,15 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<circle cx="256" cy="256" fill="none" r="200" stroke="black" stroke-width="3"/>
+<circle cx="398.8941916244324" cy="338.5" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="256" cy="91" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="113.10580837556762" cy="338.5" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="398.8941916244324" cy="338.5" fill="none" r="15" stroke="black" stroke-width="3"/>
+<circle cx="398.8941916244324" cy="368.5" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="428.8941916244324" cy="338.5" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="398.8941916244324" cy="308.5" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="113.10580837556762" cy="368.5" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="143.10580837556762" cy="338.5" fill="black" r="10" stroke="none" stroke-width="0"/>
+<path d="M398.8942,323.5 L256,256" fill="none" stroke="black" stroke-width="1"/>
+<path d="M256,121 L256,256" fill="none" stroke="black" stroke-width="1"/>
+<circle cx="256" cy="256" fill="none" r="250" stroke="black" stroke-width="6"/>
+</svg>
