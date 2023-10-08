@@ -249,7 +249,7 @@ impl GallWord<'_> {
         }
     }
 }
-
+/* 
 pub fn outer_rad(letter: &GallCircle) -> f64 {
     letter.outer_radius
 }
@@ -257,6 +257,7 @@ pub fn outer_rad(letter: &GallCircle) -> f64 {
 pub fn inner_rad(letter: &GallCircle) -> f64 {
     letter.inner_radius
 }
+*/
 
 impl VowCircle {
     pub fn new(text:char, repeat: bool, radius: f64, syllable: &mut GallCircle) -> VowCircle {
@@ -299,7 +300,12 @@ impl GallCircle<'_> {
             decorators,
         }
     }
-
+    pub fn outer_rad(&self) -> f64 {
+        self.outer_radius
+    }
+    pub fn inner_rad(&self) -> f64 {
+        self.inner_radius
+    }
     fn update_kids(&mut self) {
         for dec in &mut self.decorators {
             dec.loc.center = self.loc.svg_ord()
