@@ -40,7 +40,8 @@ pub struct GallCircle<'loc> { //Syllable equivalent
     pub thickness: f64,
     inner_radius:f64,
     outer_radius:f64,
-    pub decorators:Vec<Decor<'loc>>
+    pub decorators:Vec<Decor<'loc>>,
+    pub index: usize,
 }
 #[derive(PartialEq,Default)]
 pub struct VowCircle { //for attached vowels only
@@ -55,6 +56,7 @@ pub struct Decor<'loc> {
     pub dot: bool,
     pub pair_syllable: Option<&'loc GallOrd<'loc>>,
     pub free: bool,
+    pub address: (usize,usize),
 }
 
 #[derive(PartialEq,Default)]
@@ -101,6 +103,7 @@ impl GallWord<'_> {
                     dot: dot.unwrap(),
                     pair_syllable: None,
                     free:std::ops::Not::not(dot.unwrap_or(true)),
+                    address: (count,num),
                 };
                 decor_list.push(dec)
             }
@@ -113,6 +116,7 @@ impl GallWord<'_> {
                 letter_size,
                 3.0,
                 decor_list,
+                count,
             );
             letter = text_iter.next();
             if letter.is_some() && gall_fn::stem_lookup(&letter.unwrap()) == LetterType::StaticVowel {
@@ -209,21 +213,28 @@ impl GallWord<'_> {
             }
         }
     }
-
+    //might not need this
     pub fn collect_points<'a>(&'a self, point_vec: &mut Vec<&GallOrd<'a>>) {
         for syllable in &self.syllables {
             point_vec.push(&syllable.loc)
         }
         point_vec.push(&self.loc)
     }
-    pub fn collect_dashes<'a>(&'a self, dash_vec: &mut Vec<&Decor<'a>>) {
+
+    pub fn collect_dashes(&self) -> Vec<(usize,usize)> {
+        let mut list = Vec::new();
+        let mut syl_index = 0;
         for syllable in &self.syllables {
+            let mut dec_index = 0;
             for dec in &syllable.decorators {
-                if dec.free {
-                    dash_vec.push(&dec)
+                if dec.free & !dec.dot {
+                    list.push((syl_index, dec_index));
                 }
+                dec_index += 1;
             }
+            syl_index += 1;
         }
+        list
     }
 
     pub fn inner_thi(&self, letter: &GallCircle) -> f64 {
@@ -249,15 +260,6 @@ impl GallWord<'_> {
         }
     }
 }
-/* 
-pub fn outer_rad(letter: &GallCircle) -> f64 {
-    letter.outer_radius
-}
-
-pub fn inner_rad(letter: &GallCircle) -> f64 {
-    letter.inner_radius
-}
-*/
 
 impl VowCircle {
     pub fn new(text:char, repeat: bool, radius: f64, syllable: &mut GallCircle) -> VowCircle {
@@ -278,6 +280,7 @@ impl VowCircle {
                     dot: false,
                     pair_syllable: None,
                     free: true,
+                    address: (syllable.index,syllable.decorators.len())
                 };
                 syllable.decorators.push(dec)
             }
@@ -286,7 +289,7 @@ impl VowCircle {
 }
 
 impl GallCircle<'_> {
-    pub fn new<'a>(character: char,stem: LetterType,repeat: bool,vowel: Option<VowCircle>,loc: GallOrd<'a>,radius: f64,thickness:f64, decorators: Vec<Decor<'a>>) -> GallCircle<'a>{
+    pub fn new<'a>(character: char,stem: LetterType,repeat: bool,vowel: Option<VowCircle>,loc: GallOrd<'a>,radius: f64,thickness:f64, decorators: Vec<Decor<'a>>, index:usize) -> GallCircle<'a>{
         GallCircle { 
             character, 
             stem, 
@@ -298,6 +301,7 @@ impl GallCircle<'_> {
             inner_radius: radius - thickness, 
             outer_radius: radius + thickness, 
             decorators,
+            index,
         }
     }
     pub fn outer_rad(&self) -> f64 {

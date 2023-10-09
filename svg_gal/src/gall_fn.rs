@@ -98,7 +98,7 @@ pub fn stem_lookup(letter:&char) -> LetterType {
     }
 }
 
-pub fn decor_lookup(letter:&char) -> (Option<bool>,i8) {
+pub fn decor_lookup(letter:&char) -> (Option<bool>,usize) {
     let dot = match letter {
         'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true),
         'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'V'|'W'|'X'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'v'|'w'|'x' => Some(false),

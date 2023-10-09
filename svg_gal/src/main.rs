@@ -6,7 +6,7 @@ use svg::node::element::path::Data;
 
 mod gall_fn;
 mod gall_struct;
-use gall_struct::{GallCircle, GallOrd, GallWord};
+use gall_struct::{GallCircle, GallOrd, GallWord, Decor};
 
 impl GallWord<'_> {
     fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<Path>) {
@@ -43,7 +43,7 @@ impl GallWord<'_> {
                 } else {
                     let line_path = Data::new()
                         .move_to(decor.loc.svg_ord())
-                        .line_to((256,256));
+                        .line_to((300,300));
                     let dash = Path::new()
                         .set("fill", "none")
                         .set("stroke", "black")
@@ -58,7 +58,6 @@ impl GallWord<'_> {
     fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Path, Path) {
         let mut first = true;
         let mut b_divot_flag = 0;
-        //let mut letter_radius = letter_props(skeleton_letters[0]);
         let mut letter_dist = skeleton_letters[0].loc.dist;
         if skeleton_letters[0].stem == gall_struct::LetterType::BStem {
             b_divot_flag = 1;
@@ -318,6 +317,28 @@ impl GallWord<'_> {
     }
 }
 
+struct GallPhrase<'a> {
+    words:Vec<GallWord<'a>>
+}
+impl GallPhrase<'_> {
+    fn dash_list(&self) -> (usize, Vec<(usize,(usize,usize))>) {
+        let mut dashes = Vec::new();
+        let mut word_index = 0;
+        let mut count:usize = 0;
+        for word in &self.words {
+            for dash in word.collect_dashes() {
+                dashes.push((word_index, dash));
+                count += 1;
+            }
+            word_index += 1;
+        }
+        (count, dashes)
+    }
+    fn get_dash(&self, address:(usize,(usize,usize))) -> &Decor {
+        &self.words[address.0].syllables[address.1.0].decorators[address.1.1]
+    }
+}
+
 fn main() {
     static WIDTH:f64 = 512.0;
     static HEIGHT:f64 = 512.0;
@@ -342,7 +363,7 @@ fn main() {
     }
     let (word_radius, word_angle, word_dist) = gall_fn::default_layouts(word_list.len());
     println!("Generating...");
-    let mut phrase = Vec::new();
+    let mut sentence = GallPhrase{words:Vec::new()};
     for (num,words) in word_list.into_iter().enumerate() {
         let word_loc = GallOrd::new(
             Some(word_angle * num as f64), 
@@ -358,26 +379,43 @@ fn main() {
             3.0,
             Vec::new(),
         );
-        phrase.push(word_circle);
+        sentence.words.push(word_circle);
     }
-    for word in &mut phrase {
+    for word in &mut sentence.words {
         word.distribute();
         word.update_kids();
     }
     let mut point_list = Vec::new();
-    let mut dash_list = Vec::new();
-    for word in &phrase {
+    for word in &sentence.words {
         word.collect_points(&mut point_list);
-        word.collect_dashes(&mut dash_list);
     }
-    for dec in dash_list {
-        println!("{}, {}", dec.loc.svg_x(), dec.loc.svg_y())
+    let (syl_count, list_dash) = sentence.dash_list();
+    let mut spare_dash = Vec::<(usize,usize,usize)>::new(); 
+    let mut dashes = list_dash.into_iter();
+    loop {
+        let dash1 = match dashes.next() {
+            Some(dec) => sentence.get_dash(dec),
+            None => break,
+        };
+        let dash2 = match dashes.next() {
+            Some(dec) => sentence.get_dash(dec),
+            None => break,
+        };
+        if dash1.loc == dash2.loc {
+            
+        }
     }
+    
+    /*for dash in list_dash {
+        let dec = &phrase[dash.0].syllables[dash.1].decorators[dash.2];
+        println!("{}, {}", dec.loc.svg_x(), dec.loc.svg_y());
+    }*/
+    //println!("{},{}",count,dash_list.len());
     
     println!("Rendering...");
     let document = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
     let mut drawn = document;
-    for word in phrase {
+    for word in sentence.words {
         drawn = word.render(drawn);
     }
     //Draw sentence circle
