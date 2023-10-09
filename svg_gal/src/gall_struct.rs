@@ -17,30 +17,35 @@ pub enum  LetterType {
     #[default]
     Punctuation, //more for error case than anything
 }
+#[derive(Eq,Ord,PartialEq, PartialOrd)]
+pub struct DecPair {
+    pub pair_a: (usize,usize,usize),
+    pub pair_b: (usize,usize,usize),
+} 
 #[derive(PartialEq, Default)]
-pub struct GallWord<'loc> {
-    pub syllables: Vec<GallCircle<'loc>>,
+pub struct GallWord {
+    pub syllables: Vec<GallCircle>,
     pub letter_count: usize,
-    pub loc: GallOrd<'loc>,
+    pub loc: GallOrd,
     pub radius: f64,
     pub thickness:f64,
-    pub decorators:Vec<Decor<'loc>>,
+    pub decorators:Vec<Decor>,
     pub inner_radius: f64,
     pub outer_radius: f64,
 }
 
 #[derive(PartialEq, Default)]
-pub struct GallCircle<'loc> { //Syllable equivalent
+pub struct GallCircle { //Syllable equivalent
     pub character: char,
     pub stem:LetterType,
     pub repeat: bool,
     pub vowel:Option<VowCircle>,
-    pub loc: GallOrd<'loc>,
+    pub loc: GallOrd,
     pub radius: f64,
     pub thickness: f64,
     inner_radius:f64,
     outer_radius:f64,
-    pub decorators:Vec<Decor<'loc>>,
+    pub decorators:Vec<Decor>,
     pub index: usize,
 }
 #[derive(PartialEq,Default)]
@@ -50,28 +55,39 @@ pub struct VowCircle { //for attached vowels only
     pub radius: f64,
 }
 #[derive(PartialEq,Default)]
-pub struct Decor<'loc> {
+pub struct Decor {
     //position relative to syllable
-    pub loc: GallOrd<'loc>,
+    pub loc: GallOrd,
     pub dot: bool,
-    pub pair_syllable: Option<&'loc GallOrd<'loc>>,
+    pub pair_syllable: Option<(usize,usize,usize)>,
     pub free: bool,
     pub address: (usize,usize),
 }
 
-#[derive(PartialEq,Default)]
-pub struct GallOrd <'parent> {
+#[derive(PartialEq,Default,Clone, Copy)]
+pub struct GallOrd {
     //ang is undefined if dist == 0.0
     pub ang: Option<f64>,
     pub dist: f64,
     pub center: (f64,f64), // abs xy
-    pub parent: Option<&'parent GallOrd<'parent>>,
     rel_svg_x:f64,
     rel_svg_y:f64,
 }
 
-impl GallWord<'_> {
-    pub fn new<'a>(text: String, loc: GallOrd<'a>,word_radius: f64,thickness: f64,decorators: Vec<Decor<'a>>) -> GallWord<'a> {
+impl DecPair {
+    pub fn unpack(&self) -> ((usize,usize,usize),(usize,usize,usize)) {
+        (self.pair_a,self.pair_b)
+    }
+}
+
+impl Decor {
+    pub fn add_syl_pair(&mut self, pair: (usize,usize,usize)) {
+        self.pair_syllable = Some(pair)
+    }
+}
+
+impl GallWord{
+    pub fn new<'a>(text: String, loc: GallOrd,word_radius: f64,thickness: f64,decorators: Vec<Decor>) -> GallWord {
         let count_guess = text.len(); //len() is byte len, not # of chars
         let mut syllable_list = Vec::with_capacity(count_guess);
         let mut count:usize = 0;
@@ -89,21 +105,19 @@ impl GallWord<'_> {
                 Some(letter_sep_ang * count as f64), 
                 gall_fn::stem_dist(&stem, word_radius), 
                 loc.svg_ord(), 
-                None
             );
             for num in 0..decor_num {
                 let dec_loc = GallOrd::new(
                     Some(letter_sep_ang * num as f64),
                     letter_size,
                     letter_loc.svg_ord(),
-                    None,
                 );
                 let dec = Decor { 
                     loc: dec_loc,
                     dot: dot.unwrap(),
                     pair_syllable: None,
-                    free:std::ops::Not::not(dot.unwrap_or(true)),
-                    address: (count,num),
+                    free:!dot.unwrap_or(true),
+                    address: (count-1,num),
                 };
                 decor_list.push(dec)
             }
@@ -214,12 +228,12 @@ impl GallWord<'_> {
         }
     }
     //might not need this
-    pub fn collect_points<'a>(&'a self, point_vec: &mut Vec<&GallOrd<'a>>) {
+    /*pub fn collect_points(&self, point_vec: &mut Vec<&GallOrd>) {
         for syllable in &self.syllables {
             point_vec.push(&syllable.loc)
         }
         point_vec.push(&self.loc)
-    }
+    }*/
 
     pub fn collect_dashes(&self) -> Vec<(usize,usize)> {
         let mut list = Vec::new();
@@ -273,7 +287,6 @@ impl VowCircle {
                     Some(angle),
                     radius,
                     syllable.loc.svg_ord(),
-                    None,
                 );
                 let dec = Decor { 
                     loc: dec_loc,
@@ -288,8 +301,8 @@ impl VowCircle {
     }
 }
 
-impl GallCircle<'_> {
-    pub fn new<'a>(character: char,stem: LetterType,repeat: bool,vowel: Option<VowCircle>,loc: GallOrd<'a>,radius: f64,thickness:f64, decorators: Vec<Decor<'a>>, index:usize) -> GallCircle<'a>{
+impl GallCircle {
+    pub fn new<'a>(character: char,stem: LetterType,repeat: bool,vowel: Option<VowCircle>,loc: GallOrd,radius: f64,thickness:f64, decorators: Vec<Decor>, index:usize) -> GallCircle{
         GallCircle { 
             character, 
             stem, 
@@ -327,8 +340,8 @@ impl GallCircle<'_> {
     }
 }
 
-impl GallOrd<'_> {
-    pub fn new<'a>(angle: Option<f64>,dist: f64,center: (f64, f64),parent: Option<&'a GallOrd<'a>>) -> GallOrd<'a> {
+impl GallOrd {
+    pub fn new(angle: Option<f64>,dist: f64,center: (f64, f64)) -> GallOrd {
         let (rel_y,rel_x) = match angle {
             Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
             None => (0.0,0.0)
@@ -336,8 +349,7 @@ impl GallOrd<'_> {
         GallOrd { 
             ang: angle,
             dist,
-            center, 
-            parent, 
+            center,  
             rel_svg_x: dist*rel_x,
             rel_svg_y: dist*rel_y,
         }

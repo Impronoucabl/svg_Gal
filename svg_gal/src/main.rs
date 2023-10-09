@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::env;
 
 use svg::Document;
@@ -8,7 +9,9 @@ mod gall_fn;
 mod gall_struct;
 use gall_struct::{GallCircle, GallOrd, GallWord, Decor};
 
-impl GallWord<'_> {
+use crate::gall_struct::DecPair;
+
+impl GallWord {
     fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<Path>) {
         let mut skele_ltrs = Vec::new();
         let mut oth_ltrs = Vec::new();
@@ -41,9 +44,14 @@ impl GallWord<'_> {
                         .set("r", 10);
                     floating_circles.push(circle_dot);
                 } else {
+                    //TODO move node rendering to sentence?
+                    let destination = match decor.pair_syllable {
+                        Some(addr) =>(256,256),
+                        None => (300,300),
+                    };
                     let line_path = Data::new()
                         .move_to(decor.loc.svg_ord())
-                        .line_to((300,300));
+                        .line_to(destination);
                     let dash = Path::new()
                         .set("fill", "none")
                         .set("stroke", "black")
@@ -86,13 +94,11 @@ impl GallWord<'_> {
             Some(inner_init_angle),
             self.inner_radius,
             self.loc.svg_ord(),
-            None,
         );
         let mut outer_tracker = GallOrd::new(
             Some(outer_init_angle),
             self.outer_radius,
             self.loc.svg_ord(),
-            None,
         );
         let inner_continuum = inner_tracker.svg_ord();
         let outer_continuum = outer_tracker.svg_ord();
@@ -317,10 +323,10 @@ impl GallWord<'_> {
     }
 }
 
-struct GallPhrase<'a> {
-    words:Vec<GallWord<'a>>
+struct GallPhrase {
+    words:Vec<GallWord>
 }
-impl GallPhrase<'_> {
+impl GallPhrase {
     fn dash_list(&self) -> (usize, Vec<(usize,(usize,usize))>) {
         let mut dashes = Vec::new();
         let mut word_index = 0;
@@ -334,8 +340,11 @@ impl GallPhrase<'_> {
         }
         (count, dashes)
     }
-    fn get_dash(&self, address:(usize,(usize,usize))) -> &Decor {
+    fn get_dash(&mut self, address:(usize,(usize,usize))) ->  &Decor {
         &self.words[address.0].syllables[address.1.0].decorators[address.1.1]
+    }
+    fn get_syl(&self, address:(usize,usize)) -> &GallCircle {
+        &self.words[address.0].syllables[address.1]
     }
 }
 
@@ -343,11 +352,10 @@ fn main() {
     static WIDTH:f64 = 512.0;
     static HEIGHT:f64 = 512.0;
     //maybe lazy static it in
-    let ORIGIN:GallOrd = GallOrd::new(
+    let ORIGIN: GallOrd = GallOrd::new(
         None,
         0.0,
         (WIDTH/2.0,HEIGHT/2.0),
-        None,
     );
     println!("Initialising...");
     let args = env::args();
@@ -369,7 +377,6 @@ fn main() {
             Some(word_angle * num as f64), 
             word_dist, 
             ORIGIN.center, 
-            None 
         );
         //parse letters more?
         let word_circle = GallWord::new(
@@ -385,32 +392,68 @@ fn main() {
         word.distribute();
         word.update_kids();
     }
-    let mut point_list = Vec::new();
-    for word in &sentence.words {
-        word.collect_points(&mut point_list);
-    }
     let (syl_count, list_dash) = sentence.dash_list();
-    let mut spare_dash = Vec::<(usize,usize,usize)>::new(); 
+    let mut spare_dash = VecDeque::new(); 
+    let mut pair_list = Vec::new();
     let mut dashes = list_dash.into_iter();
-    loop {
-        let dash1 = match dashes.next() {
-            Some(dec) => sentence.get_dash(dec),
+    for _ in 0..3 {
+        let (word1, addr1) = match dashes.next() {
+            Some(dec) => dec,
             None => break,
         };
-        let dash2 = match dashes.next() {
-            Some(dec) => sentence.get_dash(dec),
-            None => break,
+        let (word2, addr2) = match dashes.next() {
+            Some(dec) => dec,
+            None => {spare_dash.push_front((word1,addr1));break},
         };
-        if dash1.loc == dash2.loc {
-            
+        if word1 == word2 && addr1.0 == addr2.0 {
+            //reverse the order
+            spare_dash.push_back((word2,addr2));
+            spare_dash.push_back((word1,addr1));
+            println!("Spare!");
+            continue
+        }
+        pair_list.push(DecPair{
+            pair_a:(word1,addr1.0,addr1.1),
+            pair_b:(word2,addr2.0,addr2.1)
+        });
+        pair_list.push(DecPair{
+            pair_b:(word1,addr1.0,addr1.1),
+            pair_a:(word2,addr2.0,addr2.1)
+        });
+    }
+    pair_list.sort();
+    //println!("{}",pair_list[0].pair_a.2);
+
+    let mut pair_iter = pair_list.iter();
+    let mut pair = pair_iter.next();
+    if pair.is_some() {
+        let (mut pair_a, mut pair_b) = pair.unwrap().unpack();
+        let mut count = 0;
+        for word in &mut sentence.words {
+            if pair_a.0 > count {
+                continue;
+            }
+            for syllable in &mut word.syllables {
+                if pair_a.1 > syllable.index {
+                    continue;
+                }
+                for decorator in &mut syllable.decorators{
+                    println!("{},{}:{},{}", decorator.address.0, decorator.address.1, pair_a.1, pair_a.2);
+                    if decorator.address == (pair_a.1,pair_a.2) {
+                        decorator.add_syl_pair(pair_b);
+                        println!("{}",decorator.pair_syllable.is_some());
+                        pair = pair_iter.next();
+                        (pair_a,pair_b) = match pair {
+                            Some(addr) => (addr.pair_a,addr.pair_b),
+                            None => break,
+                        };
+                    }
+                }
+            }
+            count += 1;
         }
     }
-    
-    /*for dash in list_dash {
-        let dec = &phrase[dash.0].syllables[dash.1].decorators[dash.2];
-        println!("{}, {}", dec.loc.svg_x(), dec.loc.svg_y());
-    }*/
-    //println!("{},{}",count,dash_list.len());
+
     
     println!("Rendering...");
     let document = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
