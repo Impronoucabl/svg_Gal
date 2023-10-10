@@ -340,8 +340,8 @@ impl GallPhrase {
         }
         (count, dashes)
     }
-    fn get_dash(&mut self, address:(usize,(usize,usize))) ->  &Decor {
-        &self.words[address.0].syllables[address.1.0].decorators[address.1.1]
+    fn get_mut_dash(&mut self, address:(usize,usize,usize)) ->  &mut Decor {
+        &mut self.words[address.0].syllables[address.1].decorators[address.2]
     }
     fn get_syl(&self, address:(usize,usize)) -> &GallCircle {
         &self.words[address.0].syllables[address.1]
@@ -392,6 +392,8 @@ fn main() {
         word.distribute();
         word.update_kids();
     }
+    let dash0 = sentence.get_mut_dash((0,1,2));
+    dash0.free = false;
     let (syl_count, list_dash) = sentence.dash_list();
     let mut spare_dash = VecDeque::new(); 
     let mut pair_list = Vec::new();
@@ -441,7 +443,6 @@ fn main() {
                     println!("{},{}:{},{}", decorator.address.0, decorator.address.1, pair_a.1, pair_a.2);
                     if decorator.address == (pair_a.1,pair_a.2) {
                         decorator.add_syl_pair(pair_b);
-                        println!("{}",decorator.pair_syllable.is_some());
                         pair = pair_iter.next();
                         (pair_a,pair_b) = match pair {
                             Some(addr) => (addr.pair_a,addr.pair_b),
