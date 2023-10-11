@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+//use std::collections::VecDeque;
 use std::env;
 
 use svg::Document;
@@ -7,9 +7,11 @@ use svg::node::element::path::Data;
 
 mod gall_fn;
 mod gall_struct;
-use gall_struct::{GallCircle, GallOrd, GallWord, Decor};
-
-use crate::gall_struct::DecPair;
+mod gall_ord;
+mod gall_phrase;
+use gall_ord::GallOrd;
+use gall_phrase::GallPhrase;
+use gall_struct::{GallCircle, GallWord, Decor};
 
 impl GallWord {
     fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<Path>) {
@@ -43,22 +45,7 @@ impl GallWord {
                         .set("cy", decor.loc.svg_y())
                         .set("r", 10);
                     floating_circles.push(circle_dot);
-                } else {
-                    //TODO move node rendering to sentence?
-                    let destination = match decor.pair_syllable {
-                        Some(addr) =>(256,256),
-                        None => (300,300),
-                    };
-                    let line_path = Data::new()
-                        .move_to(decor.loc.svg_ord())
-                        .line_to(destination);
-                    let dash = Path::new()
-                        .set("fill", "none")
-                        .set("stroke", "black")
-                        .set("stroke-width", 1)
-                        .set("d", line_path);
-                    decor_dash.push(dash);
-                }
+                } //dashes are rendered by sentence
             }
         }
         (floating_circles,skele_ltrs,oth_ltrs, decor_dash)
@@ -323,31 +310,6 @@ impl GallWord {
     }
 }
 
-struct GallPhrase {
-    words:Vec<GallWord>
-}
-impl GallPhrase {
-    fn dash_list(&self) -> (usize, Vec<(usize,(usize,usize))>) {
-        let mut dashes = Vec::new();
-        let mut word_index = 0;
-        let mut count:usize = 0;
-        for word in &self.words {
-            for dash in word.collect_dashes() {
-                dashes.push((word_index, dash));
-                count += 1;
-            }
-            word_index += 1;
-        }
-        (count, dashes)
-    }
-    fn get_mut_dash(&mut self, address:(usize,usize,usize)) ->  &mut Decor {
-        &mut self.words[address.0].syllables[address.1].decorators[address.2]
-    }
-    fn get_syl(&self, address:(usize,usize)) -> &GallCircle {
-        &self.words[address.0].syllables[address.1]
-    }
-}
-
 fn main() {
     static WIDTH:f64 = 512.0;
     static HEIGHT:f64 = 512.0;
@@ -371,7 +333,7 @@ fn main() {
     }
     let (word_radius, word_angle, word_dist) = gall_fn::default_layouts(word_list.len());
     println!("Generating...");
-    let mut sentence = GallPhrase{words:Vec::new()};
+    let mut sentence = GallPhrase{words:Vec::new(),radius:250.0};
     for (num,words) in word_list.into_iter().enumerate() {
         let word_loc = GallOrd::new(
             Some(word_angle * num as f64), 
@@ -392,85 +354,13 @@ fn main() {
         word.distribute();
         word.update_kids();
     }
-    let dash0 = sentence.get_mut_dash((0,1,2));
-    dash0.free = false;
-    let (syl_count, list_dash) = sentence.dash_list();
-    let mut spare_dash = VecDeque::new(); 
-    let mut pair_list = Vec::new();
-    let mut dashes = list_dash.into_iter();
-    for _ in 0..3 {
-        let (word1, addr1) = match dashes.next() {
-            Some(dec) => dec,
-            None => break,
-        };
-        let (word2, addr2) = match dashes.next() {
-            Some(dec) => dec,
-            None => {spare_dash.push_front((word1,addr1));break},
-        };
-        if word1 == word2 && addr1.0 == addr2.0 {
-            //reverse the order
-            spare_dash.push_back((word2,addr2));
-            spare_dash.push_back((word1,addr1));
-            println!("Spare!");
-            continue
-        }
-        pair_list.push(DecPair{
-            pair_a:(word1,addr1.0,addr1.1),
-            pair_b:(word2,addr2.0,addr2.1)
-        });
-        pair_list.push(DecPair{
-            pair_b:(word1,addr1.0,addr1.1),
-            pair_a:(word2,addr2.0,addr2.1)
-        });
-    }
-    pair_list.sort();
-    //println!("{}",pair_list[0].pair_a.2);
-
-    let mut pair_iter = pair_list.iter();
-    let mut pair = pair_iter.next();
-    if pair.is_some() {
-        let (mut pair_a, mut pair_b) = pair.unwrap().unpack();
-        let mut count = 0;
-        for word in &mut sentence.words {
-            if pair_a.0 > count {
-                continue;
-            }
-            for syllable in &mut word.syllables {
-                if pair_a.1 > syllable.index {
-                    continue;
-                }
-                for decorator in &mut syllable.decorators{
-                    println!("{},{}:{},{}", decorator.address.0, decorator.address.1, pair_a.1, pair_a.2);
-                    if decorator.address == (pair_a.1,pair_a.2) {
-                        decorator.add_syl_pair(pair_b);
-                        pair = pair_iter.next();
-                        (pair_a,pair_b) = match pair {
-                            Some(addr) => (addr.pair_a,addr.pair_b),
-                            None => break,
-                        };
-                    }
-                }
-            }
-            count += 1;
-        }
-    }
-
+    sentence.dash_pair_loop_step();
     
     println!("Rendering...");
-    let document = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
-    let mut drawn = document;
-    for word in sentence.words {
-        drawn = word.render(drawn);
-    }
+    let mut drawn = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
+    drawn = sentence.render(drawn, ORIGIN);
     //Draw sentence circle
-    let circle = Circle::new()
-        .set("fill", "none")
-        .set("stroke", "black")
-        .set("stroke-width", 6)
-        .set("cx", ORIGIN.svg_x())
-        .set("cy", ORIGIN.svg_y())
-        .set("r", 250);
-    drawn = drawn.add(circle);
+    
     println!("Saving under {}", filename);
     match svg::save(filename + ".svg", &drawn) {
         Ok(_) => println!("Done!"),
