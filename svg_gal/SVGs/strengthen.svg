@@ -9,9 +9,9 @@
 <circle cx="451.31345814496126" cy="195.45298153523964" fill="black" r="10" stroke="none" stroke-width="0"/>
 <circle cx="462.2942202584944" cy="184.47221942170648" fill="black" r="10" stroke="none" stroke-width="0"/>
 <circle cx="79.8065677010508" cy="161.3645182042401" fill="none" r="15" stroke="black" stroke-width="3"/>
-<path d="M256,486 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M271,481.98077 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M281.98077,471 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M110.14834,363.1511 L256,256" fill="none" stroke="black" stroke-width="1"/>
+<path d="M256,486 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M271,481.98077 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M281.98077,471 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M110.14834,363.1511 L250,250" fill="none" stroke="black" stroke-width="1"/>
 <circle cx="256" cy="256" fill="none" r="250" stroke="black" stroke-width="6"/>
 </svg>

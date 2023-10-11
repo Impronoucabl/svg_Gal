@@ -214,6 +214,18 @@ impl GallWord{
         point_vec.push(&self.loc)
     }*/
 
+    pub fn collect_t_stem(&self) -> Vec<usize> {
+        let mut list = Vec::new();
+        let mut count = 0;
+        for syllable in &self.syllables {
+            if syllable.stem == LetterType::TStem {
+                list.push(count)
+            }
+            count += 1;
+        }
+        list
+    }
+
     pub fn collect_dashes(&self) -> Vec<(usize,usize)> {
         let mut list = Vec::new();
         let mut syl_index = 0;

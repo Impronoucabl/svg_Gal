@@ -2,7 +2,7 @@
 use std::env;
 
 use svg::Document;
-use svg::node::element::{Path, Circle, SVG, Line};
+use svg::node::element::{Path, Circle, SVG};
 use svg::node::element::path::Data;
 
 mod gall_fn;
@@ -11,14 +11,13 @@ mod gall_ord;
 mod gall_phrase;
 use gall_ord::GallOrd;
 use gall_phrase::GallPhrase;
-use gall_struct::{GallCircle, GallWord, Decor};
+use gall_struct::{GallCircle, GallWord};
 
 impl GallWord {
-    fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>,Vec<Path>) {
+    fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>) {
         let mut skele_ltrs = Vec::new();
         let mut oth_ltrs = Vec::new();
         let mut floating_circles = Vec::new();
-        let mut decor_dash = Vec::new();
         for letter in &self.syllables {
             match letter.stem {
                 gall_struct::LetterType::BStem => skele_ltrs.push(letter),
@@ -48,7 +47,7 @@ impl GallWord {
                 } //dashes are rendered by sentence
             }
         }
-        (floating_circles,skele_ltrs,oth_ltrs, decor_dash)
+        (floating_circles,skele_ltrs,oth_ltrs)
     }
     fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Path, Path) {
         let mut first = true;
@@ -264,8 +263,7 @@ impl GallWord {
         let (
             attached_letters, 
             skeleton_letters, 
-            other_letters,
-            decor_dash
+            other_letters
         ) = self.render_syl_split();
         if skeleton_letters.is_empty() {
             let circle = Circle::new()
@@ -302,10 +300,6 @@ impl GallWord {
         for node in attached_letters {
             svg_doc = svg_doc.add(node);
         }
-        for node in decor_dash {
-            svg_doc = svg_doc.add(node);
-        }
-
         svg_doc
     }
 }
@@ -333,7 +327,7 @@ fn main() {
     }
     let (word_radius, word_angle, word_dist) = gall_fn::default_layouts(word_list.len());
     println!("Generating...");
-    let mut sentence = GallPhrase{words:Vec::new(),radius:250.0};
+    let mut sentence = GallPhrase{words:Vec::new(),radius:WIDTH - 6.0};
     for (num,words) in word_list.into_iter().enumerate() {
         let word_loc = GallOrd::new(
             Some(word_angle * num as f64), 
@@ -354,13 +348,13 @@ fn main() {
         word.distribute();
         word.update_kids();
     }
-    sentence.dash_pair_loop_step();
+    sentence.dock_words();
+    //TODO: Layout stuff here?
+    sentence.dash_pair_loop(); //create dash pair paths here?
     
     println!("Rendering...");
     let mut drawn = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
-    drawn = sentence.render(drawn, ORIGIN);
-    //Draw sentence circle
-    
+    drawn = sentence.render(drawn, ORIGIN);    
     println!("Saving under {}", filename);
     match svg::save(filename + ".svg", &drawn) {
         Ok(_) => println!("Done!"),

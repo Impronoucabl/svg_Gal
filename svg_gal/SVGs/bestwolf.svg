@@ -9,13 +9,13 @@
 <circle cx="212.21219925291683" cy="155.62558407746522" fill="black" r="10" stroke="none" stroke-width="0"/>
 <circle cx="242.21219925291683" cy="125.62558407746522" fill="black" r="10" stroke="none" stroke-width="0"/>
 <circle cx="212.21219925291683" cy="95.62558407746522" fill="black" r="10" stroke="none" stroke-width="0"/>
-<path d="M256,326 L300,300" fill="none" stroke="black" stroke-width="1"/>
-<path d="M286,296 L300,300" fill="none" stroke="black" stroke-width="1"/>
-<path d="M256,266 L335.84338,160.99658" fill="none" stroke="black" stroke-width="1"/>
-<path d="M335.84338,160.99658 L256,266" fill="none" stroke="black" stroke-width="1"/>
-<path d="M365.84338,130.99658 L235.42613,222.36237" fill="none" stroke="black" stroke-width="1"/>
-<path d="M235.42613,222.36237 L365.84338,130.99658" fill="none" stroke="black" stroke-width="1"/>
-<path d="M265.42612,192.36237 L300,300" fill="none" stroke="black" stroke-width="1"/>
-<path d="M235.42613,162.36237 L300,300" fill="none" stroke="black" stroke-width="1"/>
-<circle cx="256" cy="256" fill="none" r="250" stroke="black" stroke-width="6"/>
+<path d="M256,326 L265.42612,192.36237" fill="none" stroke="black" stroke-width="1"/>
+<path d="M286,296 L365.84338,130.99658" fill="none" stroke="black" stroke-width="1"/>
+<path d="M256,266 L235.42613,162.36237" fill="none" stroke="black" stroke-width="1"/>
+<path d="M335.84338,160.99658 L235.42613,222.36237" fill="none" stroke="black" stroke-width="1"/>
+<path d="M365.84338,130.99658 L286,296" fill="none" stroke="black" stroke-width="1"/>
+<path d="M235.42613,222.36237 L335.84338,160.99658" fill="none" stroke="black" stroke-width="1"/>
+<path d="M265.42612,192.36237 L256,326" fill="none" stroke="black" stroke-width="1"/>
+<path d="M235.42613,162.36237 L256,266" fill="none" stroke="black" stroke-width="1"/>
+<circle cx="256" cy="256" fill="none" r="506" stroke="black" stroke-width="6"/>
 </svg>
