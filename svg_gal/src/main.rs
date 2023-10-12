@@ -49,33 +49,41 @@ impl GallWord {
         }
         (floating_circles,skele_ltrs,oth_ltrs)
     }
-    fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Path, Path) {
+    fn render_skele_path(&self, skeleton_letters:Vec<&GallCircle>) -> (Path, Path, Vec<Path>) {
+        let mut repeat_circles = Vec::new();
         let mut first = true;
         let mut b_divot_flag = 0;
         let mut letter_dist = skeleton_letters[0].loc.dist;
+        let mut letter_smaller_radius = skeleton_letters[0].inner_rad();
+        let mut letter_larger_radius = skeleton_letters[0].outer_rad();
+        if skeleton_letters[0].repeat {
+            letter_larger_radius -= 4.0*skeleton_letters[0].thickness;
+        }
         if skeleton_letters[0].stem == gall_struct::LetterType::BStem {
             b_divot_flag = 1;
         } else {
             letter_dist += skeleton_letters[0].thickness
         }
-        if self.inner_radius - letter_dist - skeleton_letters[0].outer_rad() >= 0.0 {
+        if self.inner_radius - letter_dist - letter_larger_radius >= 0.0 {
             panic!("Letter not touching outer skeleton");
         }
-        if self.outer_radius - letter_dist - skeleton_letters[0].inner_rad() >= 0.0 {
+        if self.outer_radius - letter_dist - letter_smaller_radius >= 0.0 {
             panic!("Letter not touching inner skeleton");
         }
         let mut thi_inner = gall_fn::thi(
             letter_dist,
-            skeleton_letters[0].outer_rad(), 
+            letter_larger_radius, 
             self.inner_radius
         );
         let mut thi_outer = gall_fn::thi(
             letter_dist,
-            skeleton_letters[0].inner_rad(), 
+            letter_smaller_radius, 
             self.outer_radius
         );
-        let inner_init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_inner);
-        let outer_init_angle = 0.0_f64.min(skeleton_letters[0].loc.ang.unwrap() - thi_outer);
+        let mut inner_word_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_inner;
+        let mut outer_word_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_outer;
+        let inner_init_angle = 0.0_f64.min(inner_word_end_angle);
+        let outer_init_angle = 0.0_f64.min(outer_word_end_angle);
         let mut inner_tracker = GallOrd::new(
             Some(inner_init_angle),
             self.inner_radius,
@@ -89,16 +97,85 @@ impl GallWord {
         let inner_continuum = inner_tracker.svg_ord();
         let outer_continuum = outer_tracker.svg_ord();
 
+        if skeleton_letters[0].repeat {
+            let small_radius = skeleton_letters[0].outer_rad() - 2.0*skeleton_letters[0].thickness;
+            let big_radius = skeleton_letters[0].outer_rad();
+            let thi_inner_repeat = gall_fn::thi(
+                letter_dist,
+                big_radius, 
+                self.inner_radius
+            );
+            let thi_outer_repeat = gall_fn::thi(
+                letter_dist,
+                small_radius, 
+                self.inner_radius
+            );
+            let inner_repeat_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_inner_repeat;
+            let outer_repeat_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_outer_repeat;
+            inner_tracker.set_ang( inner_repeat_end_angle);
+            let inner_letter_start = inner_tracker.svg_ord();
+            inner_tracker.c_clockwise(2.0 * thi_inner_repeat, true);
+            let inner_letter_finish = inner_tracker.svg_ord();
+
+            inner_tracker.set_ang( outer_repeat_end_angle);
+            let outer_letter_start = inner_tracker.svg_ord();
+            inner_tracker.c_clockwise(2.0 * thi_outer_repeat, true);
+            let outer_letter_finish = inner_tracker.svg_ord();
+
+            let repeat_data = Data::new()
+                .move_to(inner_letter_start)
+                .elliptical_arc_to(
+                        (
+                        self.inner_radius,
+                        self.inner_radius,
+                        0,
+                        0,
+                        0,
+                        outer_letter_start.0,
+                        outer_letter_start.1,
+                    ))
+                .elliptical_arc_to(
+                    (
+                        small_radius,
+                        small_radius,
+                        0,
+                        b_divot_flag,
+                        1,
+                        outer_letter_finish.0,
+                        outer_letter_finish.1,
+                    ))
+                .elliptical_arc_to(
+                    (
+                        self.inner_radius,
+                        self.inner_radius,
+                        0,
+                        0,
+                        0,
+                        inner_letter_finish.0,
+                        inner_letter_finish.1,
+                    ))
+                .elliptical_arc_to(
+                    (
+                        big_radius,
+                        big_radius,
+                        0,
+                        b_divot_flag,
+                        0,
+                        inner_letter_start.0,
+                        inner_letter_start.1,
+                    ))
+                .close();
+            repeat_circles.push(Path::new().set("d", repeat_data));
+        }
+
         let mut long_inner_skeleton = 0;
         let mut long_outer_skeleton = 0;
-        if skeleton_letters[0].loc.ang.unwrap() - thi_inner > std::f64::consts::PI {
+        if inner_word_end_angle > std::f64::consts::PI {
             long_inner_skeleton = 1;
         }
-        if skeleton_letters[0].loc.ang.unwrap() - thi_outer > std::f64::consts::PI {
+        if outer_word_end_angle > std::f64::consts::PI {
             long_outer_skeleton = 1;
         }
-        let mut inner_word_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_inner;
-        let mut outer_word_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_outer;
         inner_tracker.set_ang( inner_word_end_angle);
         outer_tracker.set_ang( outer_word_end_angle);
         let mut inner_letter_start = inner_tracker.svg_ord();
@@ -122,8 +199,8 @@ impl GallWord {
                 inner_letter_start.1
             ))
             .elliptical_arc_to((
-                skeleton_letters[0].outer_rad(), 
-                skeleton_letters[0].outer_rad(), 
+                letter_larger_radius, 
+                letter_larger_radius, 
                 0,
                 b_divot_flag,
                 1,
@@ -144,8 +221,8 @@ impl GallWord {
                 outer_letter_start.1
             ))
             .elliptical_arc_to((
-                skeleton_letters[0].inner_rad(),
-                skeleton_letters[0].inner_rad(), 
+                letter_smaller_radius,
+                letter_smaller_radius, 
                 0,
                 b_divot_flag,
                 1,
@@ -257,7 +334,7 @@ impl GallWord {
             .set("d", closed_inner_loop);
         let outer_path = Path::new()
             .set("d", closed_outer_loop);
-        (inner_path, outer_path)
+        (inner_path, outer_path, repeat_circles)
     }
     pub fn render(&self, mut svg_doc:Document) -> SVG {
         let (
@@ -275,7 +352,7 @@ impl GallWord {
                 .set("r", self.radius);
             svg_doc = svg_doc.add(circle)
         } else {
-            let (inner_path, outer_path) = self.render_skele_path(skeleton_letters);
+            let (inner_path, outer_path, repeats) = self.render_skele_path(skeleton_letters);
             svg_doc = svg_doc.add(outer_path
                 .set("fill", "green")
                 .set("stroke-width", 0)
@@ -286,6 +363,13 @@ impl GallWord {
                 .set("stroke-width", 0)
                 .set("stroke", "none")
             );
+            for extra_letter in repeats {
+                svg_doc = svg_doc.add(extra_letter
+                    .set("fill", "red")
+                    .set("stroke-width", 0)
+                    .set("stroke", "none")
+                );
+            }
         }
         for letter in other_letters {
             let circle = Circle::new()
@@ -327,7 +411,7 @@ fn main() {
     }
     let (word_radius, word_angle, word_dist) = gall_fn::default_layouts(word_list.len());
     println!("Generating...");
-    let mut sentence = GallPhrase{words:Vec::new(),radius:WIDTH - 6.0};
+    let mut sentence = GallPhrase{words:Vec::new(),radius:WIDTH/2.0 - 6.0};
     for (num,words) in word_list.into_iter().enumerate() {
         let word_loc = GallOrd::new(
             Some(word_angle * num as f64), 

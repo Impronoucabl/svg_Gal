@@ -76,7 +76,7 @@ impl GallWord{
         while letter.is_some() {
             count += 1;
             let char1 = letter.unwrap();
-            let stem = gall_fn::stem_lookup(&char1);
+            let (stem, repeat) = gall_fn::stem_lookup(&char1);
             let (dot, decor_num) = gall_fn::decor_lookup(&char1);
             let mut decor_list = Vec::new();
             let letter_size = gall_fn::stem_size(&stem);
@@ -103,7 +103,7 @@ impl GallWord{
             let mut syllable = GallCircle::new(
                 char1,
                 stem,
-                false,
+                repeat,
                 None, //for attached vowels only
                 letter_loc,                    
                 letter_size,
@@ -111,16 +111,21 @@ impl GallWord{
                 decor_list,
                 count,
             );
-            letter = text_iter.next();
-            if letter.is_some() && gall_fn::stem_lookup(&letter.unwrap()) == LetterType::StaticVowel {
-                let vowel = VowCircle::new(
-                    letter.unwrap(),
-                    false,
-                    letter_size/2.0,
-                    &mut syllable
-                );
-                syllable.vowel = Some(vowel);
-                letter = text_iter.next();
+            match syllable.stem {
+                LetterType::AVowel|LetterType::OVowel|LetterType::StaticVowel => {},
+                _ => {
+                    letter = text_iter.next();
+                    if letter.is_some() && gall_fn::stem_lookup(&letter.unwrap()) == (LetterType::StaticVowel, false) {
+                        let vowel = VowCircle::new(
+                            letter.unwrap(),
+                            false,
+                            letter_size/2.0,
+                            &mut syllable
+                        );
+                        syllable.vowel = Some(vowel);
+                        letter = text_iter.next();
+                    }
+                }
             }
             syllable_list.push(syllable);
         }       
@@ -294,6 +299,10 @@ impl VowCircle {
 
 impl GallCircle {
     pub fn new<'a>(character: char,stem: LetterType,repeat: bool,vowel: Option<VowCircle>,loc: GallOrd,radius: f64,thickness:f64, decorators: Vec<Decor>, index:usize) -> GallCircle{
+        let (inner_radius, outer_radius) = match repeat {
+            true  => (radius - 3.0*thickness, radius + 3.0*thickness),
+            false => (radius -     thickness, radius +     thickness)
+        };
         GallCircle { 
             character, 
             stem, 
@@ -302,8 +311,8 @@ impl GallCircle {
             loc, 
             radius, 
             thickness,
-            inner_radius: radius - thickness, 
-            outer_radius: radius + thickness, 
+            inner_radius, 
+            outer_radius, 
             decorators,
             index,
         }
