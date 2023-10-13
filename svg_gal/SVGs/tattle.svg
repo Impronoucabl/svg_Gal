@@ -1,0 +1,12 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M229.05977,457.20444 A203,203,0,0,0,229.05977,457.20444 A27,27,0,0,1,282.94022,457.20444 A203,203,0,0,0,302.65332,58.43364 A21,21,0,0,1,261.0548,53.062943 A203,203,0,0,0,229.05977,457.20444 z" fill="green" stroke="none" stroke-width="0"/>
+<path d="M224.13858,450.4064 A197,197,0,0,0,224.13858,450.4064 A33,33,0,0,1,287.86142,450.4064 A197,197,0,0,0,306.67,65.62787 A27,27,0,0,1,255.34264,59.0011 A197,197,0,0,0,224.13858,450.4064 z" fill="yellow" stroke="none" stroke-width="0"/>
+<path d="M318.23083,69.08739 A197,197,0,0,0,312.49194,67.27358 A33,33,0,0,1,249.29364,59.11418 A197,197,0,0,0,243.28227,59.41094 A39,39,0,0,0,318.23083,69.08739 z" fill="red" stroke="none" stroke-width="0"/>
+<circle cx="475.7543729771038" cy="266.39305332613884" fill="blue" r="15" stroke="black" stroke-width="3"/>
+<circle cx="91.02463501756594" cy="253.14886883629097" fill="blue" r="30" stroke="black" stroke-width="3"/>
+<circle cx="91.02463501756594" cy="253.14886883629097" fill="none" r="15" stroke="black" stroke-width="3"/>
+<circle cx="91.02463501756594" cy="283.14886883629094" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="114.47957949160684" cy="271.853562892053" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="120.27247238302064" cy="246.47324081760155" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="256" cy="256" fill="none" r="250" stroke="black" stroke-width="6"/>
+</svg>

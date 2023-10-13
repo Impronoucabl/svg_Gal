@@ -1,5 +1,8 @@
 use std::f64::consts::FRAC_PI_2;
 
+use svg::node::element::Path;
+use svg::node::element::path::Data;
+
 use crate::gall_ord::GallOrd;
 use crate::gall_fn;
 //use std::result::Result::{Err, Ok};
@@ -111,10 +114,10 @@ impl GallWord{
                 decor_list,
                 count,
             );
+            letter = text_iter.next();
             match syllable.stem {
                 LetterType::AVowel|LetterType::OVowel|LetterType::StaticVowel => {},
                 _ => {
-                    letter = text_iter.next();
                     if letter.is_some() && gall_fn::stem_lookup(&letter.unwrap()) == (LetterType::StaticVowel, false) {
                         let vowel = VowCircle::new(
                             letter.unwrap(),
@@ -273,35 +276,41 @@ impl GallWord{
 
 impl VowCircle {
     pub fn new(text:char, repeat: bool, radius: f64, syllable: &mut GallCircle) -> VowCircle {
+        let vowel_radius = match repeat {
+            true => radius + syllable.thickness,
+            false => radius
+        };
         let (vowel_dot, _) = gall_fn::decor_lookup(&text);
-            if vowel_dot.is_some() {
-                let angle = match text {
-                    'I'|'i' => syllable.loc.ang.unwrap() + FRAC_PI_2,
-                    _ => syllable.loc.ang.unwrap(),
-                };
-                let dec_loc = GallOrd::new(
-                    Some(angle),
-                    radius,
-                    syllable.loc.svg_ord(),
-                );
-                let dec = Decor { 
-                    loc: dec_loc,
-                    dot: false,
-                    pair_syllable: None,
-                    free: true,
-                    address: (syllable.index,syllable.decorators.len())
-                };
-                syllable.decorators.push(dec)
-            }
-        VowCircle { character: text, repeat, radius }
+        if vowel_dot.is_some() {
+            let angle = match text {
+                'I'|'i' => syllable.loc.ang.unwrap() + FRAC_PI_2,
+                _ => syllable.loc.ang.unwrap(),
+            };
+            let dec_loc = GallOrd::new(
+                Some(angle),
+                vowel_radius,
+                syllable.loc.svg_ord(),
+            );
+            let dec = Decor { 
+                loc: dec_loc,
+                dot: false,
+                pair_syllable: None,
+                free: true,
+                address: (syllable.index,syllable.decorators.len())
+            };
+            syllable.decorators.push(dec)
+        }
+        VowCircle { character: text, repeat, radius: vowel_radius }
     }
 }
 
 impl GallCircle {
     pub fn new<'a>(character: char,stem: LetterType,repeat: bool,vowel: Option<VowCircle>,loc: GallOrd,radius: f64,thickness:f64, decorators: Vec<Decor>, index:usize) -> GallCircle{
+        let mut main_radius = radius;
+        if repeat {main_radius += 2.0*thickness}
         let (inner_radius, outer_radius) = match repeat {
-            true  => (radius - 3.0*thickness, radius + 3.0*thickness),
-            false => (radius -     thickness, radius +     thickness)
+            true  => (main_radius - 3.0*thickness, main_radius + 3.0*thickness),
+            false => (main_radius -     thickness, main_radius +     thickness)
         };
         GallCircle { 
             character, 
@@ -309,13 +318,99 @@ impl GallCircle {
             repeat, 
             vowel, 
             loc, 
-            radius, 
+            radius: main_radius, 
             thickness,
             inner_radius, 
             outer_radius, 
             decorators,
             index,
         }
+    }
+    pub fn gen_repeat_path(&self, letter_dist:f64, word_inner_radius:f64, origin: (f64,f64)) -> Option<Path> {
+        if !self.repeat {
+            return None
+        }
+        let b_divot_flag = match self.stem {
+            LetterType::BStem => 1, 
+            _ => 0,
+        };
+
+        let small_radius = self.outer_rad() - 2.0*self.thickness;
+        let big_radius = self.outer_rad();
+        let thi_inner_repeat = gall_fn::thi(
+            letter_dist,
+            big_radius, 
+            word_inner_radius
+        );
+        let thi_outer_repeat = gall_fn::thi(
+            letter_dist,
+            small_radius, 
+            word_inner_radius
+        );
+        let inner_repeat_end_angle = self.loc.ang.unwrap() - thi_inner_repeat;
+        let outer_repeat_end_angle = self.loc.ang.unwrap() - thi_outer_repeat;
+        
+        let mut tracker = GallOrd::new(
+            Some(inner_repeat_end_angle),
+            word_inner_radius,
+            origin,
+        );
+
+        let inner_letter_start = tracker.svg_ord();
+        tracker.c_clockwise(2.0 * thi_inner_repeat, true);
+        let inner_letter_finish = tracker.svg_ord();
+
+        tracker.set_ang( outer_repeat_end_angle);
+        let outer_letter_start = tracker.svg_ord();
+        tracker.c_clockwise(2.0 * thi_outer_repeat, true);
+        let outer_letter_finish = tracker.svg_ord();
+
+        let data = Data::new()
+            .move_to(inner_letter_start)
+            .elliptical_arc_to(
+                    (
+                    word_inner_radius,
+                    word_inner_radius,
+                    0,
+                    0,
+                    0,
+                    outer_letter_start.0,
+                    outer_letter_start.1,
+                ))
+            .elliptical_arc_to(
+                (
+                    small_radius,
+                    small_radius,
+                    0,
+                    b_divot_flag,
+                    1,
+                    outer_letter_finish.0,
+                    outer_letter_finish.1,
+                ))
+            .elliptical_arc_to(
+                (
+                    word_inner_radius,
+                    word_inner_radius,
+                    0,
+                    0,
+                    0,
+                    inner_letter_finish.0,
+                    inner_letter_finish.1,
+                ))
+            .elliptical_arc_to(
+                (
+                    big_radius,
+                    big_radius,
+                    0,
+                    b_divot_flag,
+                    0,
+                    inner_letter_start.0,
+                    inner_letter_start.1,
+                ))
+            .close();
+
+        let shape = Path::new().set("d",data);
+        Some(shape)
     }
     pub fn outer_rad(&self) -> f64 {
         self.outer_radius

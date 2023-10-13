@@ -15,9 +15,9 @@ use gall_struct::{GallCircle, GallWord};
 
 impl GallWord {
     fn render_syl_split(&self) -> (Vec<Circle>,Vec<&GallCircle>,Vec<&GallCircle>) {
+        let mut floating_circles = Vec::new();
         let mut skele_ltrs = Vec::new();
         let mut oth_ltrs = Vec::new();
-        let mut floating_circles = Vec::new();
         for letter in &self.syllables {
             match letter.stem {
                 gall_struct::LetterType::BStem => skele_ltrs.push(letter),
@@ -25,14 +25,25 @@ impl GallWord {
                 _ => oth_ltrs.push(letter),
             }
             if letter.vowel.is_some() {
+                let vowel = letter.vowel.as_ref().unwrap();
                 let circle_vowel = Circle::new()
                     .set("fill", "none")
                     .set("stroke", "black")
-                    .set("stroke-width", 3)
+                    .set("stroke-width", letter.thickness)
                     .set("cx", letter.loc.svg_x())
                     .set("cy", letter.loc.svg_y())
-                    .set("r", letter.vowel.as_ref().unwrap().radius);
+                    .set("r", vowel.radius);
                 floating_circles.push(circle_vowel);
+                if vowel.repeat {
+                    let vowel_repeat = Circle::new()
+                        .set("fill", "none")
+                        .set("stroke", "black")
+                        .set("stroke-width", letter.thickness)
+                        .set("cx", letter.loc.svg_x())
+                        .set("cy", letter.loc.svg_y())
+                        .set("r", vowel.radius - 2.0*letter.thickness);
+                    floating_circles.push(vowel_repeat);
+                }
             }
             for decor in &letter.decorators {
                 if decor.dot {
@@ -97,75 +108,10 @@ impl GallWord {
         let inner_continuum = inner_tracker.svg_ord();
         let outer_continuum = outer_tracker.svg_ord();
 
-        if skeleton_letters[0].repeat {
-            let small_radius = skeleton_letters[0].outer_rad() - 2.0*skeleton_letters[0].thickness;
-            let big_radius = skeleton_letters[0].outer_rad();
-            let thi_inner_repeat = gall_fn::thi(
-                letter_dist,
-                big_radius, 
-                self.inner_radius
-            );
-            let thi_outer_repeat = gall_fn::thi(
-                letter_dist,
-                small_radius, 
-                self.inner_radius
-            );
-            let inner_repeat_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_inner_repeat;
-            let outer_repeat_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_outer_repeat;
-            inner_tracker.set_ang( inner_repeat_end_angle);
-            let inner_letter_start = inner_tracker.svg_ord();
-            inner_tracker.c_clockwise(2.0 * thi_inner_repeat, true);
-            let inner_letter_finish = inner_tracker.svg_ord();
-
-            inner_tracker.set_ang( outer_repeat_end_angle);
-            let outer_letter_start = inner_tracker.svg_ord();
-            inner_tracker.c_clockwise(2.0 * thi_outer_repeat, true);
-            let outer_letter_finish = inner_tracker.svg_ord();
-
-            let repeat_data = Data::new()
-                .move_to(inner_letter_start)
-                .elliptical_arc_to(
-                        (
-                        self.inner_radius,
-                        self.inner_radius,
-                        0,
-                        0,
-                        0,
-                        outer_letter_start.0,
-                        outer_letter_start.1,
-                    ))
-                .elliptical_arc_to(
-                    (
-                        small_radius,
-                        small_radius,
-                        0,
-                        b_divot_flag,
-                        1,
-                        outer_letter_finish.0,
-                        outer_letter_finish.1,
-                    ))
-                .elliptical_arc_to(
-                    (
-                        self.inner_radius,
-                        self.inner_radius,
-                        0,
-                        0,
-                        0,
-                        inner_letter_finish.0,
-                        inner_letter_finish.1,
-                    ))
-                .elliptical_arc_to(
-                    (
-                        big_radius,
-                        big_radius,
-                        0,
-                        b_divot_flag,
-                        0,
-                        inner_letter_start.0,
-                        inner_letter_start.1,
-                    ))
-                .close();
-            repeat_circles.push(Path::new().set("d", repeat_data));
+        let shape = skeleton_letters[0].gen_repeat_path(letter_dist, self.inner_radius, self.loc.svg_ord());
+        match shape {
+            Some(repeat_path) => repeat_circles.push(repeat_path),
+            None => {}
         }
 
         let mut long_inner_skeleton = 0;
@@ -243,15 +189,24 @@ impl GallWord {
                 b_divot_flag = 0; //If not Bstem, then Tstem
                 letter_dist = letter.loc.dist + letter.thickness;
             }
-            //letter_radius = letter_props(letter);
+            letter_larger_radius = letter.outer_rad();
+            letter_smaller_radius = letter.inner_rad(); 
+            if letter.repeat {
+                letter_larger_radius -= 4.0*letter.thickness;
+            }
+            let shape = letter.gen_repeat_path(letter_dist, self.inner_radius, self.loc.svg_ord());
+            match shape {
+                Some(repeat_path) => repeat_circles.push(repeat_path),
+                None => {}
+            }
             thi_inner = gall_fn::thi(
                 letter_dist, 
-                letter.outer_rad(), 
+                letter_larger_radius, 
                 self.inner_radius
             );
             thi_outer = gall_fn::thi(
                 letter_dist, 
-                letter.inner_rad(), 
+                letter_smaller_radius, 
                 self.outer_radius
             );
             inner_word_end_angle = letter.loc.ang.unwrap() - thi_inner;
@@ -285,8 +240,8 @@ impl GallWord {
                     inner_letter_start.1
                 ))
                 .elliptical_arc_to((
-                    letter.outer_rad(), 
-                    letter.outer_rad(),
+                    letter_larger_radius, 
+                    letter_larger_radius,
                     0,
                     b_divot_flag,
                     1,
@@ -305,8 +260,8 @@ impl GallWord {
                     outer_letter_start.1
                 ))
                 .elliptical_arc_to((
-                    letter.inner_rad(), 
-                    letter.inner_rad(),
+                    letter_smaller_radius, 
+                    letter_smaller_radius,
                     0,
                     b_divot_flag,
                     1,
@@ -372,14 +327,32 @@ impl GallWord {
             }
         }
         for letter in other_letters {
-            let circle = Circle::new()
-                .set("fill", "blue")
-                .set("stroke", "black")
-                .set("stroke-width", 3)
+            let circle_outline = Circle::new()
+                .set("fill", "black")
+                .set("stroke", "none")
+                .set("stroke-width", 0)
                 .set("cx", letter.loc.svg_x())
                 .set("cy", letter.loc.svg_y())
-                .set("r", gall_fn::stem_size(&letter.stem));
+                .set("r", letter.outer_rad());
+            svg_doc = svg_doc.add(circle_outline);
+            let circle = Circle::new()
+                .set("fill", "blue")
+                .set("stroke", "none")
+                .set("stroke-width", 0)
+                .set("cx", letter.loc.svg_x())
+                .set("cy", letter.loc.svg_y())
+                .set("r", letter.inner_rad());
             svg_doc = svg_doc.add(circle);
+            if letter.repeat {
+                let circle = Circle::new()
+                    .set("fill", "none")
+                    .set("stroke", "blue")
+                    .set("stroke-width", 2.0*letter.thickness)
+                    .set("cx", letter.loc.svg_x())
+                    .set("cy", letter.loc.svg_y())
+                    .set("r", letter.radius);
+                svg_doc = svg_doc.add(circle);
+            }
         }
         for node in attached_letters {
             svg_doc = svg_doc.add(node);
@@ -428,6 +401,7 @@ fn main() {
         );
         sentence.words.push(word_circle);
     }
+    println!("Deciding layout...");
     for word in &mut sentence.words {
         word.distribute();
         word.update_kids();
