@@ -1,4 +1,4 @@
-use std::f64::consts::FRAC_PI_2;
+use std::f64::consts::{FRAC_PI_2, PI};
 
 use svg::node::element::Path;
 use svg::node::element::path::Data;
@@ -45,6 +45,7 @@ pub struct GallCircle { //Syllable equivalent
     outer_radius:f64,
     pub decorators:Vec<Decor>,
     pub index: usize,
+    attached_o_flag: Option<usize>,
 }
 #[derive(PartialEq,Default)]
 pub struct VowCircle { //for attached vowels only
@@ -69,15 +70,15 @@ impl Decor {
 }
 
 impl GallWord{
-    pub fn new<'a>(text: String, loc: GallOrd,word_radius: f64,thickness: f64,decorators: Vec<Decor>) -> GallWord {
+    pub fn new(text: String, loc: GallOrd,word_radius: f64,thickness: f64,decorators: Vec<Decor>) -> GallWord {
         let count_guess = text.len(); //len() is byte len, not # of chars
         let mut syllable_list = Vec::with_capacity(count_guess);
+        let mut o_attach_list = Vec::new();
         let mut count:usize = 0;
         let letter_sep_ang = std::f64::consts::TAU/(count_guess as f64);
         let mut text_iter = text.chars(); 
         let mut letter = text_iter.next();
         while letter.is_some() {
-            count += 1;
             let char1 = letter.unwrap();
             let (stem, repeat) = gall_fn::stem_lookup(&char1);
             let (dot, decor_num) = gall_fn::decor_lookup(&char1);
@@ -99,10 +100,11 @@ impl GallWord{
                     dot: dot.unwrap(),
                     pair_syllable: None,
                     free:!dot.unwrap_or(true),
-                    address: (count-1,num),
+                    address: (count,num),
                 };
                 decor_list.push(dec)
             }
+            count += 1;
             let mut syllable = GallCircle::new(
                 char1,
                 stem,
@@ -115,24 +117,34 @@ impl GallWord{
                 count,
             );
             letter = text_iter.next();
-            match syllable.stem {
-                LetterType::AVowel|LetterType::OVowel|LetterType::StaticVowel => {},
-                _ => {
-                    if letter.is_some() && gall_fn::stem_lookup(&letter.unwrap()) == (LetterType::StaticVowel, false) {
-                        let vowel = VowCircle::new(
-                            letter.unwrap(),
-                            false,
-                            letter_size/2.0,
-                            &mut syllable
-                        );
-                        syllable.vowel = Some(vowel);
-                        letter = text_iter.next();
-                    }
-                }
+            if letter.is_none() {
+                syllable_list.push(syllable);
+                continue;    
             }
-            syllable_list.push(syllable);
+            match syllable.stem {
+                LetterType::AVowel|LetterType::OVowel|LetterType::StaticVowel => {
+                    syllable_list.push(syllable);
+                    continue;    
+                },
+                _ => {},
+            }
+            let (vowel_stem, repeated) = gall_fn::stem_lookup(&letter.unwrap());
+            let vowel_size = gall_fn::stem_size(&vowel_stem);
+            if vowel_stem == LetterType::StaticVowel {
+                let vowel = VowCircle::new(
+                    letter.unwrap(),
+                    repeated,
+                    vowel_size,
+                    &mut syllable
+                );
+                syllable.vowel = Some(vowel);
+                letter = text_iter.next();
+            } else if vowel_stem == LetterType::OVowel {
+                o_attach_list.push(count);
+            }
+            syllable_list.push(syllable);    
         }       
-        return GallWord { 
+        let mut word = GallWord { 
             syllables: syllable_list, 
             letter_count: count, 
             loc, 
@@ -141,7 +153,29 @@ impl GallWord{
             decorators, 
             inner_radius: word_radius - thickness, 
             outer_radius: word_radius + thickness, 
+        };
+        for o_index in o_attach_list {
+            word.attach_o(o_index);
         }
+        word
+    }
+    
+    pub fn attach_o(&mut self, o_addr:usize) {
+        let target = &self.syllables[o_addr - 1];
+        let xy_loc = target.loc.svg_ord();
+        let new_dist = match target.stem {
+            LetterType::TStem => target.radius - target.thickness,
+            _ => target.radius,
+        }; 
+        let new_ang = match target.loc.ang {
+            Some(ang) => ang + PI,
+            None => 0.0,
+        };
+        let o_syl = &mut self.syllables[o_addr];
+        o_syl.attached_o_flag =  Some(o_addr - 1);
+        o_syl.loc.set_dist(new_dist);
+        o_syl.loc.set_ang(new_ang);        
+        o_syl.loc.update_center(xy_loc);
     }
     
     //generates a list of angles between letters, as measured by thi 
@@ -150,6 +184,10 @@ impl GallWord{
         let mut angle1 = f64::NAN; //dummy value
         let mut first_angle_cache = f64::NAN;
         for letter in &self.syllables {
+            if letter.is_attached_o() {
+                angle_list.push(0.0);
+                continue;
+            }
             let angle2 = letter.loc.ang.unwrap() - self.inner_thi(letter);
             if angle1.is_nan() {
                 first_angle_cache = angle2;
@@ -167,14 +205,25 @@ impl GallWord{
         let distribution = self.angular_distance_list();
         let mut success = None;
         let mut max = 0.0;
+        //TODO: Fix attached Os
         for index in 0..self.letter_count {
+            if distribution[index] == 0.0 {
+                continue
+            }
             let prev:usize; 
             if index == 0 {
                 prev = self.letter_count - 1;
             } else {
                 prev = index - 1;
             }
-            let right_dist_weight = distribution[index] - distribution[prev];
+            let mut left_dist = distribution[prev];
+            if left_dist == 0.0 {
+                left_dist = match index {
+                    1 => distribution[self.letter_count - 1],
+                    _ => distribution[prev - 1],
+                };
+            }
+            let right_dist_weight = distribution[index] - left_dist;
             if right_dist_weight.abs() > std::f64::consts::FRAC_PI_8/10.0{
                 if right_dist_weight.abs() > 0.1 {
                     success = self.syllables[index].loc.c_clockwise(right_dist_weight/3.0, false);
@@ -187,6 +236,7 @@ impl GallWord{
                 max = f64::max(max, right_dist_weight.abs());
             };
         };
+        self.update_kids();
         match success {
             Some(_) => Some(max),
             None => None,
@@ -201,7 +251,7 @@ impl GallWord{
         loop {
             count += 1;
             let val = match self.distribute_step() {
-                Some(val0) => val0,
+                Some(val_0) => val_0,
                 None => return
             };
             if val >= max {
@@ -214,14 +264,7 @@ impl GallWord{
             }
         }
     }
-    //might not need this
-    /*pub fn collect_points(&self, point_vec: &mut Vec<&GallOrd>) {
-        for syllable in &self.syllables {
-            point_vec.push(&syllable.loc)
-        }
-        point_vec.push(&self.loc)
-    }*/
-
+    //collections return a vector of addresses, instead of the objects themselves.
     pub fn collect_t_stem(&self) -> Vec<usize> {
         let mut list = Vec::new();
         let mut count = 0;
@@ -233,7 +276,6 @@ impl GallWord{
         }
         list
     }
-
     pub fn collect_dashes(&self) -> Vec<(usize,usize)> {
         let mut list = Vec::new();
         let mut syl_index = 0;
@@ -267,9 +309,23 @@ impl GallWord{
         }
     }*/
     pub fn update_kids(&mut self) {
+        let mut o_list = Vec::new();
         for circle in &mut self.syllables {
-            circle.loc.center = self.loc.svg_ord();
-            circle.update_kids();
+            match circle.attached_o_flag {
+                Some(addr) => {
+                    o_list.push(addr); 
+                    continue;},
+                None => {
+                    circle.loc.update_center(self.loc.svg_ord());
+                    circle.update_kids();
+                }
+            }
+        }
+        for o_index in o_list {
+            let new_center = self.syllables[o_index].loc.svg_ord();
+            let o_syl = &mut self.syllables[o_index + 1];
+            o_syl.loc.update_center(new_center);
+            o_syl.update_kids();
         }
     }
 }
@@ -324,6 +380,7 @@ impl GallCircle {
             outer_radius, 
             decorators,
             index,
+            attached_o_flag: None,
         }
     }
     pub fn gen_repeat_path(&self, letter_dist:f64, word_inner_radius:f64, origin: (f64,f64)) -> Option<Path> {
@@ -412,6 +469,9 @@ impl GallCircle {
         let shape = Path::new().set("d",data);
         Some(shape)
     }
+    pub fn is_attached_o(&self) -> bool {
+        self.attached_o_flag.is_some()
+    }
     pub fn outer_rad(&self) -> f64 {
         self.outer_radius
     }
@@ -420,7 +480,7 @@ impl GallCircle {
     }
     fn update_kids(&mut self) {
         for dec in &mut self.decorators {
-            dec.loc.center = self.loc.svg_ord()
+            dec.loc.update_center(self.loc.svg_ord());
         }
     }
     //below is python

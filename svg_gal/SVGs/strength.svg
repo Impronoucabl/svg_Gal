@@ -1,14 +1,14 @@
 <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-<path d="M229.05977,457.20444 A203,203,0,0,0,229.05977,457.20444 A27,27,0,0,1,282.94022,457.20444 A203,203,0,0,0,435.9588,349.93524 A27,27,0,0,1,454.33176,299.28412 A203,203,0,0,0,408.19,121.66011 A27,27,0,0,1,367.488,86.354996 A203,203,0,1,0,229.05977,457.20444 z" fill="green" stroke="none" stroke-width="0"/>
-<path d="M224.13858,450.4064 A197,197,0,0,0,224.13858,450.4064 A33,33,0,0,1,287.86142,450.4064 A197,197,0,0,0,427.8901,352.2434 A33,33,0,0,1,449.61926,292.33978 A197,197,0,0,0,407.45313,130.02003 A33,33,0,0,1,359.31607,88.26571 A197,197,0,1,0,224.13858,450.4064 z" fill="yellow" stroke="none" stroke-width="0"/>
-<circle cx="146.8373760638021" cy="88.41861220480291" fill="blue" r="30" stroke="black" stroke-width="3"/>
-<circle cx="62.145202138873316" cy="305.196720888914" fill="blue" r="30" stroke="black" stroke-width="3"/>
-<circle cx="387.04978854688704" cy="104.91739702462036" fill="none" r="15" stroke="black" stroke-width="3"/>
-<circle cx="387.04978854688704" cy="134.91739702462036" fill="black" r="10" stroke="none" stroke-width="0"/>
-<circle cx="404.68334611566127" cy="129.1879068558688" fill="black" r="10" stroke="none" stroke-width="0"/>
-<circle cx="415.58148403574165" cy="114.18790685586877" fill="black" r="10" stroke="none" stroke-width="0"/>
-<path d="M256,486 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M273.63354,480.2705 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M284.5317,465.2705 L256,256" fill="none" stroke="black" stroke-width="1"/>
+<path d="M229.05977,457.20444 A203,203,0,0,0,229.05977,457.20444 A27,27,0,0,1,282.94022,457.20444 A203,203,0,0,0,352.4699,434.61288 A27,27,0,0,1,396.0601,402.94275 A203,203,0,0,0,439.0318,343.79727 A27,27,0,0,1,455.68176,292.5539 A203,203,0,1,0,229.05977,457.20444 z" fill="green" stroke="none" stroke-width="0"/>
+<path d="M224.13858,450.4064 A197,197,0,0,0,224.13858,450.4064 A33,33,0,0,1,287.86142,450.4064 A197,197,0,0,0,344.4928,432.00577 A33,33,0,0,1,396.04565,394.5504 A197,197,0,0,0,431.04575,346.3769 A33,33,0,0,1,450.73718,285.77286 A197,197,0,1,0,224.13858,450.4064 z" fill="yellow" stroke="none" stroke-width="0"/>
+<circle cx="446.21130325903073" cy="194.19660112501052" fill="none" r="30" stroke="black" stroke-width="6"/>
+<circle cx="373.55705045849464" cy="94.19660112501052" fill="none" r="30" stroke="black" stroke-width="6"/>
+<circle cx="446.21130325903073" cy="317.80339887498945" fill="none" r="15" stroke="black" stroke-width="3"/>
+<circle cx="446.21130325903073" cy="347.80339887498945" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="463.84486082780495" cy="342.0739087062379" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="474.74299874788534" cy="327.0739087062379" fill="black" r="10" stroke="none" stroke-width="0"/>
+<path d="M256,486 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M273.63354,480.2705 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M284.5317,465.2705 L250,250" fill="none" stroke="black" stroke-width="1"/>
 <circle cx="256" cy="256" fill="none" r="250" stroke="black" stroke-width="6"/>
 </svg>

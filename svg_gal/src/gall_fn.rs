@@ -1,3 +1,5 @@
+use std::f64::consts::{PI, TAU};
+
 use crate::gall_struct::LetterType;
 
 pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
@@ -7,8 +9,8 @@ pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
         LetterType::TStem => dist,
         LetterType::ZStem => dist,
         LetterType::StaticVowel => dist,
-        LetterType::OVowel => dist - 20.0,
-        LetterType::AVowel => dist + 20.0,
+        LetterType::OVowel => dist - 25.0,
+        LetterType::AVowel => dist + 25.0,
         LetterType::Digit => dist - 35.0,
         _ => dist
     }
@@ -28,10 +30,10 @@ pub fn default_layouts(word_length:usize) -> (f64,f64,f64) {
     match word_length {
         //word_radius, word_angle, word_dist
         0|1 => (200.0,0.0,0.0),
-        2 => (80.0,std::f64::consts::PI,120.0),
+        2 => (80.0,PI,120.0),
         phrase_len => (
             50.0,
-            std::f64::consts::TAU/(phrase_len as f64),
+            TAU/(phrase_len as f64),
             150.0,
         ),
     }

@@ -1,21 +1,21 @@
 <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-<path d="M256,459 A83,83,0,0,0,332.68832,344.25256 A27,27,0,1,1,314.1843,316.8089 A83,83,0,1,0,212.56474,446.7275 A27,27,0,1,1,243.65721,458.07712 A83,83,0,0,0,256,459 z" fill="green" stroke="none" stroke-width="0"/>
-<path d="M256,453 A77,77,0,0,0,331.83664,362.6657 A33,33,0,1,1,296.795,310.69482 A77,77,0,0,0,202.44252,431.32266 A33,33,0,1,1,261.32318,452.81577 A77,77,0,0,0,256,453 z" fill="yellow" stroke="none" stroke-width="0"/>
-<circle cx="173.11174112228065" cy="320.05773922855656" fill="blue" r="15" stroke="black" stroke-width="3"/>
-<circle cx="235.42613155267293" cy="462.36236277084276" fill="black" r="10" stroke="none" stroke-width="0"/>
-<circle cx="261.4068936662061" cy="417.36236277084276" fill="black" r="10" stroke="none" stroke-width="0"/>
-<circle cx="209.44536943913977" cy="417.36236277084276" fill="black" r="10" stroke="none" stroke-width="0"/>
-<path d="M256,219 A83,83,0,0,0,336.1207,157.67192 A27,27,0,0,1,332.78836,104.4953 A83,83,0,1,0,212.56474,206.7275 A27,27,0,1,1,243.65721,218.07713 A83,83,0,0,0,256,219 z" fill="green" stroke="none" stroke-width="0"/>
-<path d="M256,213 A77,77,0,0,0,328.4324,162.12561 A33,33,0,0,1,324.60422,101.036255 A77,77,0,1,0,202.44252,191.32265 A33,33,0,1,1,261.32318,212.81578 A77,77,0,0,0,256,213 z" fill="yellow" stroke="none" stroke-width="0"/>
-<circle cx="247.38923564601222" cy="76.6210918150216" fill="blue" r="15" stroke="black" stroke-width="3"/>
-<circle cx="212.21219925291683" cy="125.62558407746522" fill="blue" r="30" stroke="black" stroke-width="3"/>
-<circle cx="212.21219925291683" cy="155.62558407746522" fill="black" r="10" stroke="none" stroke-width="0"/>
-<circle cx="242.21219925291683" cy="125.62558407746522" fill="black" r="10" stroke="none" stroke-width="0"/>
-<circle cx="212.21219925291683" cy="95.62558407746522" fill="black" r="10" stroke="none" stroke-width="0"/>
-<path d="M335.84338,160.99658 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M365.84338,130.99658 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M235.42613,222.36237 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M265.42612,192.36237 L256,256" fill="none" stroke="black" stroke-width="1"/>
-<path d="M235.42613,162.36237 L256,256" fill="none" stroke="black" stroke-width="1"/>
+<path d="M239.45041,457.33334 A83,83,0,0,0,239.45041,457.33334 A27,27,0,1,1,272.5496,457.33334 A83,83,0,1,0,193.83806,321.00098 A27,27,0,1,1,177.28847,349.6657 A83,83,0,0,0,239.45041,457.33334 z" fill="green" stroke="none" stroke-width="0"/>
+<path d="M224.65958,446.33334 A77,77,0,0,0,224.65958,446.33334 A33,33,0,1,1,287.34042,446.33334 A77,77,0,1,0,210.75977,313.69174 A33,33,0,1,1,179.41933,367.97495 A77,77,0,0,0,224.65958,446.33334 z" fill="yellow" stroke="none" stroke-width="0"/>
+<circle cx="346.93266739736606" cy="323.5" fill="none" r="15" stroke="black" stroke-width="6"/>
+<circle cx="204.03847577293368" cy="376" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="230.01923788646684" cy="331" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="178.05771365940052" cy="331" fill="black" r="10" stroke="none" stroke-width="0"/>
+<path d="M229.35954,214.60843 A83,83,0,0,0,229.35954,214.60843 A27,27,0,0,1,282.64047,214.60843 A83,83,0,1,0,174.66667,119.45041 A27,27,0,1,1,174.66667,152.54959 A83,83,0,0,0,229.35954,214.60843 z" fill="green" stroke="none" stroke-width="0"/>
+<path d="M225.3954,206.65663 A77,77,0,0,0,225.3954,206.65663 A33,33,0,0,1,286.60458,206.65663 A77,77,0,1,0,185.66667,104.65958 A33,33,0,1,1,185.66667,167.34042 A77,77,0,0,0,225.3954,206.65663 z" fill="yellow" stroke="none" stroke-width="0"/>
+<circle cx="256" cy="186" fill="none" r="15" stroke="black" stroke-width="6"/>
+<circle cx="256" cy="91" fill="none" r="30" stroke="black" stroke-width="6"/>
+<circle cx="256" cy="121" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="286" cy="91" fill="black" r="10" stroke="none" stroke-width="0"/>
+<circle cx="256" cy="61" fill="black" r="10" stroke="none" stroke-width="0"/>
+<path d="M256,246 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M286,216 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M196,166 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M226,136 L250,250" fill="none" stroke="black" stroke-width="1"/>
+<path d="M196,106 L250,250" fill="none" stroke="black" stroke-width="1"/>
 <circle cx="256" cy="256" fill="none" r="250" stroke="black" stroke-width="6"/>
 </svg>

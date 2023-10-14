@@ -1,14 +1,12 @@
 
-
-use std::f64::consts::FRAC_PI_2;
-use std::f64::consts::FRAC_PI_8;
+use std::f64::consts::{PI, FRAC_PI_2, FRAC_PI_8, TAU};
 
 #[derive(PartialEq,Default,Clone, Copy)]
 pub struct GallOrd {
     //ang is undefined if dist == 0.0
     pub ang: Option<f64>,
     pub dist: f64,
-    pub center: (f64,f64), // abs xy
+    center: (f64,f64), // abs xy
     rel_svg_x:f64,
     rel_svg_y:f64,
 }
@@ -41,16 +39,43 @@ impl GallOrd {
             None => self.center
         }
     }
+    pub fn get_center(&self) -> (f64,f64) {
+        self.center
+    }
+    pub fn flip_ang(&mut self) {
+        let mut angle = match self.ang {
+            Some(ang) => ang + PI,
+            None => return,
+        };
+        if angle > TAU {
+            angle -= TAU;
+        }
+        self.set_ang(angle);
+    }
+
     pub fn set_ang(&mut self, new_ang:f64) {
+        let mut ang = new_ang;
+        while ang > TAU {
+            ang -= TAU
+        };
+        while ang < 0.0 {
+            ang += TAU
+        };
         self.ang = match self.ang {
-            Some(_) => Some(new_ang),
+            Some(_) => Some(ang),
             None => None,
         };
         self.update_xy();
     }
     pub fn c_clockwise(&mut self, radians:f64, force:bool) -> Option<()> {
-        let new_angle = (self.ang? + radians).max(0.0);
+        let mut new_angle = (self.ang? + radians).max(0.0);
         if force {
+            while new_angle > TAU {
+                new_angle -= TAU;
+            }
+            while new_angle < 0.0 {
+                new_angle += TAU;
+            }
             self.ang = Some(new_angle);
         } else {
             static READABILITY_ANGLE:f64 = std::f64::consts::TAU - 0.35;
@@ -74,6 +99,9 @@ impl GallOrd {
             self.ang = None;
         }
         self.update_xy();
+    }
+    pub fn update_center(&mut self, new_center: (f64,f64)) {
+        self.center = new_center;
     }
     fn update_xy(&mut self) {
         let (rel_y,rel_x) = match self.ang {

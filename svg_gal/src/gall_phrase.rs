@@ -68,7 +68,6 @@ impl GallPhrase {
                         break
                     },
                 };
-                //println!("{},{},{}",word3,addr3.0,addr3.1);
                 if word3 == word1 && addr3.0 == addr1.0 {
                     spare_dash.push((word3,addr3));
                     spare_dash.push((word2,addr2));

@@ -1,5 +1,6 @@
 //use std::collections::VecDeque;
 use std::env;
+use std::f64::consts::PI;
 
 use svg::Document;
 use svg::node::element::{Path, Circle, SVG};
@@ -210,13 +211,14 @@ impl GallWord {
                 self.outer_radius
             );
             inner_word_end_angle = letter.loc.ang.unwrap() - thi_inner;
-            if inner_word_end_angle - inner_tracker.ang.unwrap() > std::f64::consts::PI {
+            if (inner_word_end_angle - inner_tracker.ang.unwrap()) > PI {
                 long_inner_skeleton = 1
             } else {
                 long_inner_skeleton = 0
             }
             outer_word_end_angle = letter.loc.ang.unwrap() - thi_outer;
-            if outer_word_end_angle - outer_tracker.ang.unwrap() > std::f64::consts::PI {
+            
+            if (outer_word_end_angle - outer_tracker.ang.unwrap()) > PI {
                 long_outer_skeleton = 1
             } else {
                 long_outer_skeleton = 0
@@ -327,31 +329,32 @@ impl GallWord {
             }
         }
         for letter in other_letters {
-            let circle_outline = Circle::new()
-                .set("fill", "black")
-                .set("stroke", "none")
-                .set("stroke-width", 0)
-                .set("cx", letter.loc.svg_x())
-                .set("cy", letter.loc.svg_y())
-                .set("r", letter.outer_rad());
-            svg_doc = svg_doc.add(circle_outline);
-            let circle = Circle::new()
-                .set("fill", "blue")
-                .set("stroke", "none")
-                .set("stroke-width", 0)
-                .set("cx", letter.loc.svg_x())
-                .set("cy", letter.loc.svg_y())
-                .set("r", letter.inner_rad());
-            svg_doc = svg_doc.add(circle);
-            if letter.repeat {
+            if !letter.repeat {
                 let circle = Circle::new()
                     .set("fill", "none")
-                    .set("stroke", "blue")
+                    .set("stroke", "black")
                     .set("stroke-width", 2.0*letter.thickness)
                     .set("cx", letter.loc.svg_x())
                     .set("cy", letter.loc.svg_y())
                     .set("r", letter.radius);
                 svg_doc = svg_doc.add(circle);
+            } else {
+                let small_circle = Circle::new()
+                    .set("fill", "none")
+                    .set("stroke", "black")
+                    .set("stroke-width", 2.0*letter.thickness)
+                    .set("cx", letter.loc.svg_x())
+                    .set("cy", letter.loc.svg_y())
+                    .set("r", letter.inner_rad() + letter.thickness);
+                svg_doc = svg_doc.add(small_circle);
+                let big_circle = Circle::new()
+                    .set("fill", "none")
+                    .set("stroke", "black")
+                    .set("stroke-width", 2.0*letter.thickness)
+                    .set("cx", letter.loc.svg_x())
+                    .set("cy", letter.loc.svg_y())
+                    .set("r", letter.outer_rad() - letter.thickness);
+                svg_doc = svg_doc.add(big_circle);
             }
         }
         for node in attached_letters {
@@ -389,7 +392,7 @@ fn main() {
         let word_loc = GallOrd::new(
             Some(word_angle * num as f64), 
             word_dist, 
-            ORIGIN.center, 
+            ORIGIN.get_center(), 
         );
         //parse letters more?
         let word_circle = GallWord::new(
@@ -402,6 +405,7 @@ fn main() {
         sentence.words.push(word_circle);
     }
     println!("Deciding layout...");
+    
     for word in &mut sentence.words {
         word.distribute();
         word.update_kids();
