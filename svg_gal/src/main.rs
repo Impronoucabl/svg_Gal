@@ -35,7 +35,7 @@ fn main() {
     }
     let (word_radius, word_angle, word_dist) = gall_fn::default_layouts(word_list.len());
     println!("Generating...");
-    let mut sentence = GallPhrase{words:Vec::new(),radius:WIDTH/2.0 - 6.0};
+    let mut sentence = GallPhrase{words:Vec::new(),dash_pairs:Vec::new(),radius:WIDTH/2.0 - 6.0, thickness: 6.0};
     for (num,words) in word_list.into_iter().enumerate() {
         let word_loc = GallOrd::new(
             Some(word_angle * num as f64), 

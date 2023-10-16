@@ -14,33 +14,35 @@ impl GallPhrase {
         for word in &self.words {
             svg_doc = word.render(svg_doc);
         }
-        //TODO: create path intermidiary & loop through that instead?
-        for word in &self.words {
-            for letter in &word.syllables {
-                for decor in &letter.decorators {
-                    if decor.dot {
-                        continue
-                    }
-                    let destination = match decor.pair_syllable {
-                        Some(addr) =>self.get_dash_svg_xy(addr),
-                        None => (self.radius,self.radius),
-                    }; //sentence.get_dash_ord(addr)
-                    let line_path = Data::new()
-                        .move_to(decor.loc.svg_ord())
-                        .line_to(destination);
-                    let dash = Path::new()
-                        .set("fill", "none")
-                        .set("stroke", "black")
-                        .set("stroke-width", 1)
-                        .set("d", line_path);
-                    svg_doc = svg_doc.add(dash);
-                }
+        for pair in &self.dash_pairs {
+            let source = pair.get_source(self);
+            let target = pair.get_target(self);
+            let mut line_path = Data::new();
+            let mut dash = Path::new();
+            if pair.straight() && pair.get_thickness() < self.thickness/2.0 {
+                line_path = line_path
+                    .move_to(source)
+                    .line_to(target);
+                dash = dash
+                    .set("fill", "none")
+                    .set("stroke", "black")
+                    .set("stroke-width", pair.get_thickness())
+            } else {
+                line_path = line_path
+                    .move_to(source)
+                    .line_to(target);
+                dash = dash
+                    .set("fill", "black")
+                    .set("stroke", "none")
+                    .set("stroke-width", 0)
             }
+            dash = dash.set("d", line_path);
+            svg_doc = svg_doc.add(dash);
         }
         let circle = Circle::new()
             .set("fill", "none")
             .set("stroke", "black")
-            .set("stroke-width", 6)
+            .set("stroke-width", self.thickness)
             .set("cx", origin.svg_x())
             .set("cy", origin.svg_y())
             .set("r", self.radius);
