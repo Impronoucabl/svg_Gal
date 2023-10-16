@@ -1,9 +1,4 @@
-use svg::Document;
-use svg::node::element::path::Data;
-use svg::node::element::{SVG, Circle, Path};
-
 use crate::gall_struct::{GallWord, Decor, GallCircle};
-use crate::gall_ord::GallOrd;
 
 pub struct GallPhrase {
     pub words:Vec<GallWord>,
@@ -116,42 +111,6 @@ impl GallPhrase {
     }
     fn get_syl(&self, address:(usize,usize)) -> &GallCircle {
         &self.words[address.0].syllables[address.1]
-    }
-    pub fn render(&self, mut svg_doc:Document, origin: GallOrd) -> SVG {
-        for word in &self.words {
-            svg_doc = word.render(svg_doc);
-        }
-        //TODO: create path intermidiary & loop through that instead?
-        for word in &self.words {
-            for letter in &word.syllables {
-                for decor in &letter.decorators {
-                    if decor.dot {
-                        continue
-                    }
-                    let destination = match decor.pair_syllable {
-                        Some(addr) =>self.get_dash_svg_xy(addr),
-                        None => (self.radius,self.radius),
-                    }; //sentence.get_dash_ord(addr)
-                    let line_path = Data::new()
-                        .move_to(decor.loc.svg_ord())
-                        .line_to(destination);
-                    let dash = Path::new()
-                        .set("fill", "none")
-                        .set("stroke", "black")
-                        .set("stroke-width", 1)
-                        .set("d", line_path);
-                    svg_doc = svg_doc.add(dash);
-                }
-            }
-        }
-        let circle = Circle::new()
-            .set("fill", "none")
-            .set("stroke", "black")
-            .set("stroke-width", 6)
-            .set("cx", origin.svg_x())
-            .set("cy", origin.svg_y())
-            .set("r", self.radius);
-        svg_doc.add(circle)
     }
 
 }

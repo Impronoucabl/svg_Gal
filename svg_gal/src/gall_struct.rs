@@ -1,11 +1,7 @@
 use std::f64::consts::{FRAC_PI_2, PI};
 
-use svg::node::element::Path;
-use svg::node::element::path::Data;
-
 use crate::gall_ord::GallOrd;
 use crate::gall_fn;
-//use std::result::Result::{Err, Ok};
 
 #[derive(PartialEq,Default)]
 pub enum  LetterType {
@@ -382,92 +378,6 @@ impl GallCircle {
             index,
             attached_o_flag: None,
         }
-    }
-    pub fn gen_repeat_path(&self, letter_dist:f64, word_inner_radius:f64, origin: (f64,f64)) -> Option<Path> {
-        if !self.repeat {
-            return None
-        }
-        let b_divot_flag = match self.stem {
-            LetterType::BStem => 1, 
-            _ => 0,
-        };
-
-        let small_radius = self.outer_rad() - 2.0*self.thickness;
-        let big_radius = self.outer_rad();
-        let thi_inner_repeat = gall_fn::thi(
-            letter_dist,
-            big_radius, 
-            word_inner_radius
-        );
-        let thi_outer_repeat = gall_fn::thi(
-            letter_dist,
-            small_radius, 
-            word_inner_radius
-        );
-        let inner_repeat_end_angle = self.loc.ang.unwrap() - thi_inner_repeat;
-        let outer_repeat_end_angle = self.loc.ang.unwrap() - thi_outer_repeat;
-        
-        let mut tracker = GallOrd::new(
-            Some(inner_repeat_end_angle),
-            word_inner_radius,
-            origin,
-        );
-
-        let inner_letter_start = tracker.svg_ord();
-        tracker.c_clockwise(2.0 * thi_inner_repeat, true);
-        let inner_letter_finish = tracker.svg_ord();
-
-        tracker.set_ang( outer_repeat_end_angle);
-        let outer_letter_start = tracker.svg_ord();
-        tracker.c_clockwise(2.0 * thi_outer_repeat, true);
-        let outer_letter_finish = tracker.svg_ord();
-
-        let data = Data::new()
-            .move_to(inner_letter_start)
-            .elliptical_arc_to(
-                    (
-                    word_inner_radius,
-                    word_inner_radius,
-                    0,
-                    0,
-                    0,
-                    outer_letter_start.0,
-                    outer_letter_start.1,
-                ))
-            .elliptical_arc_to(
-                (
-                    small_radius,
-                    small_radius,
-                    0,
-                    b_divot_flag,
-                    1,
-                    outer_letter_finish.0,
-                    outer_letter_finish.1,
-                ))
-            .elliptical_arc_to(
-                (
-                    word_inner_radius,
-                    word_inner_radius,
-                    0,
-                    0,
-                    0,
-                    inner_letter_finish.0,
-                    inner_letter_finish.1,
-                ))
-            .elliptical_arc_to(
-                (
-                    big_radius,
-                    big_radius,
-                    0,
-                    b_divot_flag,
-                    0,
-                    inner_letter_start.0,
-                    inner_letter_start.1,
-                ))
-            .close();
-
-        let shape = Path::new().set("d",data);
-        Some(shape)
     }
     pub fn is_attached_o(&self) -> bool {
         self.attached_o_flag.is_some()
