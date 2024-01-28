@@ -5,12 +5,12 @@ use svg::node::element::{Path, Circle, SVG};
 use svg::node::element::path::Data;
 
 use crate::gall_fn;
-use crate::gall_ord::GallLoc;
+use crate::gall_ord::GallOrd;
 use crate::gall_phrase::GallPhrase;
 use crate::gall_struct::{GallCircle, GallWord, LetterType, self};
 
 impl GallPhrase {
-    pub fn render(&self, mut svg_doc:Document, origin: GallLoc) -> SVG {
+    pub fn render(&self, mut svg_doc:Document, origin: GallOrd) -> SVG {
         for word in &self.words {
             svg_doc = word.render(svg_doc);
         }
@@ -132,12 +132,12 @@ impl GallWord {
         let mut outer_word_end_angle = skeleton_letters[0].loc.ang.unwrap() - thi_outer;
         let inner_init_angle = 0.0_f64.min(inner_word_end_angle);
         let outer_init_angle = 0.0_f64.min(outer_word_end_angle);
-        let mut inner_tracker = GallLoc::new(
+        let mut inner_tracker = GallOrd::new(
             Some(inner_init_angle),
             self.inner_radius,
             self.loc.svg_ord(),
         );
-        let mut outer_tracker = GallLoc::new(
+        let mut outer_tracker = GallOrd::new(
             Some(outer_init_angle),
             self.outer_radius,
             self.loc.svg_ord(),
@@ -159,8 +159,8 @@ impl GallWord {
         if outer_word_end_angle > std::f64::consts::PI {
             long_outer_skeleton = 1;
         }
-        inner_tracker.mut_ang( inner_word_end_angle);
-        outer_tracker.mut_ang( outer_word_end_angle);
+        inner_tracker.set_ang( inner_word_end_angle);
+        outer_tracker.set_ang( outer_word_end_angle);
         let mut inner_letter_start = inner_tracker.svg_ord();
         let mut outer_letter_start = outer_tracker.svg_ord();
         inner_tracker.c_clockwise(2.0 * thi_inner, true);
@@ -259,8 +259,8 @@ impl GallWord {
             } else {
                 long_outer_skeleton = 0
             }
-            inner_tracker.mut_ang( inner_word_end_angle);
-            outer_tracker.mut_ang( outer_word_end_angle);
+            inner_tracker.set_ang( inner_word_end_angle);
+            outer_tracker.set_ang( outer_word_end_angle);
             inner_letter_start = inner_tracker.svg_ord();
             outer_letter_start = outer_tracker.svg_ord();
             inner_tracker.c_clockwise(2.0 * thi_inner, true);
@@ -425,7 +425,7 @@ impl GallCircle {
         let inner_repeat_end_angle = self.loc.ang.unwrap() - thi_inner_repeat;
         let outer_repeat_end_angle = self.loc.ang.unwrap() - thi_outer_repeat;
         
-        let mut tracker = GallLoc::new(
+        let mut tracker = GallOrd::new(
             Some(inner_repeat_end_angle),
             word_inner_radius,
             origin,
@@ -435,7 +435,7 @@ impl GallCircle {
         tracker.c_clockwise(2.0 * thi_inner_repeat, true);
         let inner_letter_finish = tracker.svg_ord();
 
-        tracker.mut_ang( outer_repeat_end_angle);
+        tracker.set_ang( outer_repeat_end_angle);
         let outer_letter_start = tracker.svg_ord();
         tracker.c_clockwise(2.0 * thi_outer_repeat, true);
         let outer_letter_finish = tracker.svg_ord();

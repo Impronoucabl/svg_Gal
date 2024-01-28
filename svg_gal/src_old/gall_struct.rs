@@ -1,6 +1,6 @@
 use std::f64::consts::{FRAC_PI_2, PI};
 
-use crate::gall_ord::GallLoc;
+use crate::gall_ord::GallOrd;
 use crate::gall_fn;
 
 #[derive(PartialEq,Default)]
@@ -20,7 +20,7 @@ pub enum  LetterType {
 pub struct GallWord {
     pub syllables: Vec<GallCircle>,
     pub letter_count: usize,
-    pub loc: GallLoc,
+    pub loc: GallOrd,
     pub radius: f64,
     pub thickness:f64,
     pub decorators:Vec<Decor>,
@@ -34,7 +34,7 @@ pub struct GallCircle { //Syllable equivalent
     pub stem:LetterType,
     pub repeat: bool,
     pub vowel:Option<VowCircle>,
-    pub loc: GallLoc,
+    pub loc: GallOrd,
     pub radius: f64,
     pub thickness: f64,
     inner_radius:f64,
@@ -52,7 +52,7 @@ pub struct VowCircle { //for attached vowels only
 #[derive(PartialEq,Default)]
 pub struct Decor {
     //position relative to syllable
-    pub loc: GallLoc,
+    pub loc: GallOrd,
     pub dot: bool,
     pub pair_syllable: Option<(usize,usize,usize)>,
     pub free: bool,
@@ -66,7 +66,7 @@ impl Decor {
 }
 
 impl GallWord{
-    pub fn new(text: String, loc: GallLoc,word_radius: f64,thickness: f64,decorators: Vec<Decor>) -> GallWord {
+    pub fn new(text: String, loc: GallOrd,word_radius: f64,thickness: f64,decorators: Vec<Decor>) -> GallWord {
         let count_guess = text.len(); //len() is byte len, not # of chars
         let mut syllable_list = Vec::with_capacity(count_guess);
         let mut o_attach_list = Vec::new();
@@ -80,13 +80,13 @@ impl GallWord{
             let (dot, decor_num) = gall_fn::decor_lookup(&char1);
             let mut decor_list = Vec::new();
             let letter_size = gall_fn::stem_size(&stem);
-            let letter_loc = GallLoc::new( 
+            let letter_loc = GallOrd::new( 
                 Some(letter_sep_ang * count as f64), 
                 gall_fn::stem_dist(&stem, word_radius), 
                 loc.svg_ord(), 
             );
             for num in 0..decor_num {
-                let dec_loc = GallLoc::new(
+                let dec_loc = GallOrd::new(
                     Some(letter_sep_ang * num as f64),
                     letter_size,
                     letter_loc.svg_ord(),
@@ -170,7 +170,7 @@ impl GallWord{
         let o_syl = &mut self.syllables[o_addr];
         o_syl.attached_o_flag =  Some(o_addr - 1);
         o_syl.loc.set_dist(new_dist);
-        o_syl.loc.mut_ang(new_ang);        
+        o_syl.loc.set_ang(new_ang);        
         o_syl.loc.update_center(xy_loc);
     }
     
@@ -338,7 +338,7 @@ impl VowCircle {
                 'I'|'i' => syllable.loc.ang.unwrap() + FRAC_PI_2,
                 _ => syllable.loc.ang.unwrap(),
             };
-            let dec_loc = GallLoc::new(
+            let dec_loc = GallOrd::new(
                 Some(angle),
                 vowel_radius,
                 syllable.loc.svg_ord(),
@@ -357,7 +357,7 @@ impl VowCircle {
 }
 
 impl GallCircle {
-    pub fn new<'a>(character: char,stem: LetterType,repeat: bool,vowel: Option<VowCircle>,loc: GallLoc,radius: f64,thickness:f64, decorators: Vec<Decor>, index:usize) -> GallCircle{
+    pub fn new<'a>(character: char,stem: LetterType,repeat: bool,vowel: Option<VowCircle>,loc: GallOrd,radius: f64,thickness:f64, decorators: Vec<Decor>, index:usize) -> GallCircle{
         let mut main_radius = radius;
         if repeat {main_radius += 2.0*thickness}
         let (inner_radius, outer_radius) = match repeat {

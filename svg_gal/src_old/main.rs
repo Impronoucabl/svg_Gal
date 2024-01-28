@@ -8,7 +8,7 @@ mod gall_struct;
 mod gall_ord;
 mod gall_phrase;
 mod rendering;
-use gall_ord::GallLoc;
+use gall_ord::GallOrd;
 use gall_phrase::GallPhrase;
 use gall_struct::GallWord;
 
@@ -16,7 +16,7 @@ fn main() {
     static WIDTH:f64 = 512.0;
     static HEIGHT:f64 = 512.0;
     //maybe lazy static it in
-    let ORIGIN: GallLoc = GallLoc::new(
+    let ORIGIN: GallOrd = GallOrd::new(
         None,
         0.0,
         (WIDTH/2.0,HEIGHT/2.0),
@@ -37,7 +37,7 @@ fn main() {
     println!("Generating...");
     let mut sentence = GallPhrase{words:Vec::new(),dash_pairs:Vec::new(),radius:WIDTH/2.0 - 6.0, thickness: 6.0};
     for (num,words) in word_list.into_iter().enumerate() {
-        let word_loc = GallLoc::new(
+        let word_loc = GallOrd::new(
             Some(word_angle * num as f64), 
             word_dist, 
             ORIGIN.get_center(), 
