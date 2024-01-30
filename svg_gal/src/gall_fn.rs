@@ -1,6 +1,18 @@
 use std::f64::consts::{PI, TAU};
 
-use crate::gall_struct::LetterType;
+#[derive(PartialEq,Default)]
+pub enum  LetterType {
+    Digit,
+    StaticVowel,
+    BStem,
+    JStem,
+    TStem,
+    ZStem,
+    AVowel,
+    OVowel,
+    #[default]
+    Punctuation, //more for error case than anything
+}
 
 pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
     match stem {

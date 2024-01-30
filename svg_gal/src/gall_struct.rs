@@ -1,21 +1,15 @@
+use std::error::Error;
 use std::f64::consts::{FRAC_PI_2, PI};
 
-use crate::gall_ord::GallLoc;
-use crate::gall_fn;
+use crate::gall_ord::{GallLoc, PositiveDist};
+use crate::gall_fn::{self, LetterType};
 
-#[derive(PartialEq,Default)]
-pub enum  LetterType {
-    Digit,
-    StaticVowel,
-    BStem,
-    JStem,
-    TStem,
-    ZStem,
-    AVowel,
-    OVowel,
-    #[default]
-    Punctuation, //more for error case than anything
+pub trait Circle {
+    fn get_outer_radius(&self) -> PositiveDist;
+    fn get_inner_radius(&self) -> PositiveDist;
+    fn mut_radius(&mut self, val:f64) -> Result<(), Box<dyn Error>>;
 }
+
 #[derive(PartialEq, Default)]
 pub struct GallWord {
     pub syllables: Vec<GallCircle>,

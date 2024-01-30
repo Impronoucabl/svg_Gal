@@ -1,8 +1,11 @@
 
 use std::f64::consts::{PI, FRAC_PI_2, FRAC_PI_8, TAU};
 use std::error::Error;
+use std::ops::{Add,Sub};
 
-trait BoundedValue<BoundType,ValueType> {
+use crate::gall_errors::{self, NegativeDistanceErr};
+
+pub trait BoundedValue<BoundType,ValueType> {
     fn val_check(lower_bound:BoundType, upper_bound:BoundType, val: ValueType) -> Result<ValueType, Box<dyn Error>>;
     fn mut_val(&mut self, val: ValueType) -> Result<(),Box<dyn Error>>;
 }
@@ -13,8 +16,8 @@ trait BoundedValue<BoundType,ValueType> {
 struct GallAng {
     angle: Option<f64>,
 }
-#[derive(PartialEq,Default,Clone, Copy)]
-struct PositiveDist {
+#[derive(PartialEq,Default,Clone,Copy)]
+pub struct PositiveDist {
     distance: f64,
 }
 
@@ -30,6 +33,24 @@ pub struct GallLoc {
     center: (f64,f64), // abs xy
     rel_svg_x:f64,
     rel_svg_y:f64,
+}
+
+impl Add for PositiveDist {
+    type Output = Self;
+    fn add(self, other: PositiveDist) -> PositiveDist {
+        PositiveDist {
+            distance: self.distance + other.distance
+        }
+    }
+}
+
+impl Sub for PositiveDist {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        PositiveDist {
+            distance: self.distance - rhs.distance,
+        }
+    }
 }
 
 impl BoundedValue<f64, Option<f64>> for GallAng {
@@ -96,12 +117,15 @@ impl GallAng {
 
 impl PositiveDist {
     fn new(dist: f64) -> Result<PositiveDist, Box<dyn Error>> {
-        //TODO if dist < 0.0 {return Err();}
+        if dist < 0.0 {return Err(Box::new(NegativeDistanceErr));}
         let new = PositiveDist {
             distance: PositiveDist::val_check(0.0, 0.0, dist)?
         };
         Ok(new)
-    }  
+    }
+    pub fn dist(&self) -> f64 {
+        self.distance
+    }   
 }
 
 //Technically should use Option<f64> for the angle, but lazy.
