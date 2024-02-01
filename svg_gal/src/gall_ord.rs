@@ -10,10 +10,19 @@ pub trait BoundedValue<BoundType,ValueType> {
     fn mut_val(&mut self, val: ValueType) -> Result<(),Box<dyn Error>>;
 }
 
+pub trait LocMover {
+    fn mut_ang(&mut self, angle:GallAng) -> Result<(), Box<dyn Error>>;
+    fn mut_dist(&mut self, new_dist:f64) -> Result<(), Box<dyn Error>>;
+    fn mut_center(&mut self, new_center:(f64,f64));
+    fn get_ang(&self) -> GallAng;
+    fn get_dist(&self) -> f64;
+    fn get_center(&self) -> (f64,f64);
+}
+
 //GallAng is a simple wrapper around Option<f64> to enforce
 // the allowed range of 0 < angle < TAU
 #[derive(PartialEq,Default,Clone, Copy)]
-struct GallAng {
+pub struct GallAng {
     angle: Option<f64>,
 }
 #[derive(PartialEq,Default,Clone,Copy)]
@@ -35,6 +44,30 @@ pub struct GallLoc {
     rel_svg_y:f64,
 }
 
+impl Add for GallAng {
+    type Output = Self;
+    fn add(self, other: GallAng) -> GallAng {
+        GallAng::new(
+            match (self.angle, other.angle) {
+                (Some(ang1),Some(ang2)) => Some(ang1 + ang2),
+                _ => None
+            }
+        )
+    }
+}
+
+impl Sub for GallAng {
+    type Output = Self;
+    fn sub(self, other: GallAng) -> GallAng {
+        GallAng::new(
+            match (self.angle, other.angle) {
+                (Some(ang1),Some(ang2)) => Some(ang1 - ang2),
+                _ => None
+            }
+        )
+    }
+}
+
 impl Add for PositiveDist {
     type Output = Self;
     fn add(self, other: PositiveDist) -> PositiveDist {
@@ -46,10 +79,10 @@ impl Add for PositiveDist {
 
 impl Sub for PositiveDist {
     type Output = Self;
-    fn sub(self, rhs: Self) -> Self::Output {
-        PositiveDist {
-            distance: self.distance - rhs.distance,
-        }
+    fn sub(self, rhs: Self) -> PositiveDist {
+        PositiveDist::new(
+            self.distance - rhs.distance
+        ).unwrap()
     }
 }
 
@@ -88,7 +121,7 @@ impl BoundedValue<f64, f64> for PositiveDist {
         Ok(())
     }
 }
-
+//Checks if distance is 0
 impl BoundedValue<f64, GallAng> for GallOrd {
     fn val_check(zero_dist:f64, dist:f64, ord:GallAng) -> Result<GallAng, Box<dyn Error>> {
         let new_ang = match dist {
@@ -104,11 +137,10 @@ impl BoundedValue<f64, GallAng> for GallOrd {
 }
 
 impl GallAng {
-    fn new(angle: Option<f64>) -> Result<GallAng, Box<dyn Error>> {
-        let new = GallAng {
-            angle: GallAng::val_check(0.0, TAU, angle)?
-        };
-        Ok(new)
+    fn new(angle: Option<f64>) -> GallAng {
+        GallAng {
+            angle: GallAng::val_check(0.0, TAU, angle).unwrap()
+        }
     }
     fn rotate(&mut self, angle:f64) {
         GallAng::mut_val(self, Some(angle));
@@ -140,11 +172,37 @@ impl GallOrd {
             }
         }
     } 
-    fn mut_ang(&mut self, angle:Option<f64>) {
-        self.ang.mut_val(angle);
+    fn mut_ang(&mut self, angle:GallAng) -> Result<(), Box<dyn Error>> {
+        self.mut_val(angle)
     }
-    fn mut_dist(&mut self, new_dist:f64) {
-        self.dist.mut_val(new_dist);
+    fn mut_dist(&mut self, new_dist:f64) -> Result<(), Box<dyn Error>> {
+        self.dist.mut_val(new_dist)
+    }
+}
+
+impl LocMover for GallLoc {
+    fn mut_ang(&mut self, angle:GallAng) -> Result<(), Box<dyn Error>> {
+        self.ord.mut_ang(angle)?;
+        self.update_xy();
+        Ok(())
+    }
+    fn mut_dist(&mut self, new_dist:f64)-> Result<(), Box<dyn Error>> {
+        self.ord.mut_dist(new_dist)?;
+        self.update_xy();
+        Ok(())
+    }
+    fn mut_center(&mut self, new_center: (f64,f64)) {
+        self.center = new_center;
+        self.update_xy();
+    }
+    fn get_ang(&self) -> GallAng {
+        self.ord.ang
+    }
+    fn get_dist(&self) -> f64 {
+        self.ord.dist.distance
+    }
+    fn get_center(&self) -> (f64,f64) {
+        self.center
     }
 }
 
@@ -161,33 +219,12 @@ impl GallLoc {
     }
     fn update_xy(&mut self) {
         let dist = self.get_dist();
-        let (rel_y,rel_x) = match self.get_ang() {
+        let (rel_y,rel_x) = match self.get_ang().angle {
             Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
             None => (0.0,0.0)
         };
         self.rel_svg_x = dist*rel_x;
         self.rel_svg_y = dist*rel_y;
-    }
-    fn mut_ang(&mut self, angle:Option<f64>) {
-        self.ord.mut_ang(angle);
-        self.update_xy();
-    }
-    pub fn mut_dist(&mut self, new_dist:f64) {
-        self.ord.mut_dist(new_dist);
-        self.update_xy();
-    }
-    pub fn mut_center(&mut self, new_center: (f64,f64)) {
-        self.center = new_center;
-        self.update_xy();
-    }
-    pub fn get_ang(&self) -> Option<f64> {
-        self.ord.ang.angle
-    }
-    pub fn get_dist(&self) -> f64 {
-        self.ord.dist.distance
-    }
-    pub fn get_center(&self) -> (f64,f64) {
-        self.center
     }
     pub fn svg_x(&self) -> f64 {
         self.rel_svg_x + self.center.0
@@ -198,33 +235,33 @@ impl GallLoc {
     pub fn svg_ord(&self) -> (f64,f64) {
         (self.svg_x(),self.svg_y())
     }
-    pub fn rotate_ccw(&mut self, angle: f64) -> Option<()> {
-        self.mut_ang(Some(self.get_ang()? + angle));
+    pub fn rotate_ccw(&mut self, angle: GallAng) -> Option<()> {
+        self.mut_ang(self.get_ang() + angle);
         Some(())
     }
-    pub fn rotate_cw(&mut self, angle: f64) -> Option<()> {
-        self.rotate_ccw(-angle)
+    pub fn rotate_cw(&mut self, angle: GallAng) -> Option<()> {
+        self.rotate_ccw(GallAng{angle:Some(0.0)} - angle)
     }
     pub fn step_ccw(&mut self) -> Option<()> {
-        let new_angle = self.get_ang()? + FRAC_PI_8/8.0;
+        let new_angle = self.get_ang().angle? + FRAC_PI_8/8.0;
         if new_angle < TAU {
-            self.mut_ang(Some(new_angle));
+            self.mut_ang(GallAng{angle:Some(new_angle)});
             Some(())
         } else {
             None
         }
     }
     pub fn step_cw(&mut self) -> Option<()> {
-        let new_angle = self.get_ang()? - FRAC_PI_8/8.0;
+        let new_angle = self.get_ang().angle? - FRAC_PI_8/8.0;
         if new_angle >= 0.0 {
-            self.mut_ang(Some(new_angle));
+            self.mut_ang(GallAng{angle:Some(new_angle)});
             Some(())
         } else {
             None
         }
     }
     pub fn flip_ang(&mut self) {
-        self.rotate_ccw(PI);
+        self.rotate_ccw(GallAng{angle:Some(PI)});
     }
     pub fn lengthen(&mut self, extra_dist:f64) {
         self.shorten(-extra_dist)
