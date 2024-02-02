@@ -6,10 +6,12 @@ use svg::Document;
 mod gall_fn;
 mod gall_struct;
 mod gall_ord;
+mod gall_vowel;
+mod gall_stem;
 mod gall_phrase;
 mod gall_errors;
 mod rendering;
-mod gall_letter_type;
+
 use gall_ord::GallLoc;
 use gall_phrase::GallPhrase;
 use gall_struct::GallWord;

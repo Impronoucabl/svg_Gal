@@ -4,26 +4,18 @@ use std::error::Error;
 
 use crate::gall_errors;
 use crate::gall_ord::{BoundedValue, GallAng, GallLoc, LocMover, PositiveDist};
-use crate::gall_struct::Circle;
+use crate::gall_struct::{ChildCircle, Circle};
 
+#[derive(PartialEq)]
 pub enum StemType {J,B,S,Z}
 
-struct Stem {
+pub struct Stem {
     loc: GallLoc,
     radius: PositiveDist,
     thickness: PositiveDist,
     parent_radius: Rc<PositiveDist>,
     parent_thickness: Rc<PositiveDist>,
-    stem_type: StemType,
-}
-
-impl Stem {
-    fn get_parent_radius(&self) -> f64 {
-        self.parent_radius.dist()
-    }
-    fn mut_stored_parent_radius(&mut self, new_radius:f64) -> Result<(),Box<dyn Error>> {
-        self.parent_radius.mut_val(new_radius)
-    }
+    pub stem_type: StemType,
 }
 
 impl LocMover for Stem {
@@ -100,6 +92,21 @@ impl BoundedValue<f64,PositiveDist> for Stem {
         };
         let radius = Stem::val_check(0.0, upper, new_radius)?.dist();
         self.radius.mut_val(radius)
+    }
+}
+
+impl ChildCircle for Stem {
+    fn get_parent_radius(&self) -> f64 {
+        self.parent_radius.dist()
+    }
+    fn get_parent_thick(&self) -> f64 {
+        self.parent_thickness.dist()
+    }
+    fn mut_stored_parent_radius(&mut self, new_radius:f64) -> Result<(),Box<dyn Error>> {
+        self.parent_radius.mut_val(new_radius)
+    }
+    fn mut_stored_parent_thick(&mut self, new_radius:f64) -> Result<(),Box<dyn Error>> {
+        self.parent_thickness.mut_val(new_radius)
     }
 }
 

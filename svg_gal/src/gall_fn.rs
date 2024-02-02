@@ -3,40 +3,41 @@ use std::f64::consts::{PI, TAU};
 #[derive(PartialEq,Default)]
 pub enum  LetterType {
     Digit,
-    StaticVowel,
+    EIU,
     BStem,
     JStem,
-    TStem,
+    SStem,
     ZStem,
-    AVowel,
-    OVowel,
+    A,
+    O1,
+    O2,
     #[default]
     Punctuation, //more for error case than anything
 }
 
-pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
-    match stem {
-        LetterType::BStem => dist - 20.0,
-        LetterType::JStem => dist - 35.0,
-        LetterType::TStem => dist,
-        LetterType::ZStem => dist,
-        LetterType::StaticVowel => dist,
-        LetterType::OVowel => dist - 25.0,
-        LetterType::AVowel => dist + 25.0,
-        LetterType::Digit => dist - 35.0,
-        _ => dist
-    }
-}
+// pub fn stem_dist(stem:&LetterType, dist:f64) -> f64 {
+//     match stem {
+//         LetterType::BStem => dist - 20.0,
+//         LetterType::JStem => dist - 35.0,
+//         LetterType::TStem => dist,
+//         LetterType::ZStem => dist,
+//         LetterType::StaticVowel => dist,
+//         LetterType::OVowel => dist - 25.0,
+//         LetterType::AVowel => dist + 25.0,
+//         LetterType::Digit => dist - 35.0,
+//         _ => dist
+//     }
+// }
 
-pub fn stem_size(stem:&LetterType) -> f64 {
-    match stem {
-        LetterType::AVowel => 15.0,
-        LetterType::StaticVowel => 15.0,
-        LetterType::OVowel => 15.0,
-        LetterType::Punctuation => 0.0,
-        _ => 30.0
-    }
-}
+// pub fn stem_size(stem:&LetterType) -> f64 {
+//     match stem {
+//         LetterType::AVowel => 15.0,
+//         LetterType::StaticVowel => 15.0,
+//         LetterType::OVowel => 15.0,
+//         LetterType::Punctuation => 0.0,
+//         _ => 30.0
+//     }
+// }
 
 pub fn default_layouts(word_length:usize) -> (f64,f64,f64) {
     match word_length {
@@ -111,16 +112,16 @@ pub fn stem_lookup(letter:&char) -> (LetterType, bool) {
         'O'|'o'|'\u{ea0f}'                                      => LetterType::OVowel,
         '█'|'B'|'D'|'F'|'G'|'H'|'b'|'d'|'f'|'g'|'h'             => LetterType::BStem,
         'C'|'J'|'K'|'L'|'M'|'N'|'P'|'c'|'j'|'k'|'l'|'m'|'n'|'p' => LetterType::JStem,
-        'R'|'S'|'T'|'V'|'W'|'r'|'s'|'t'|'v'|'w'                 => LetterType::TStem,
+        'R'|'S'|'T'|'V'|'W'|'r'|'s'|'t'|'v'|'w'                 => LetterType::SStem,
         'Q'|'X'|'Y'|'Z'|'q'|'x'|'y'|'z'                         => LetterType::ZStem, 
         '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'                 => LetterType::Digit, // TODO
         '\u{e100}'..='\u{e2ff}'                                 => LetterType::BStem, // CH & ND,
         '\u{e300}'..='\u{e3ff}'                                 => LetterType::JStem, // PH,
-        '\u{e400}'..='\u{e6ff}'                                 => LetterType::TStem, // WH, SH, NT
+        '\u{e400}'..='\u{e6ff}'                                 => LetterType::SStem, // WH, SH, NT
         '\u{e700}'..='\u{e9ff}'|'\u{e000}'..='\u{e0ff}'         => LetterType::ZStem, // GH, NG, QU, TH
         '\u{ea02}'|'\u{ea04}'|'\u{ea06}'|'\u{ea07}'|'\u{ea08}'  => LetterType::BStem, // repeat BStems
         '\u{ea03}'|'\u{ea0a}'|'\u{ea0b}'|'\u{ea0c}'|'\u{ea0d}'|'\u{ea0e}'|'\u{ea10}' => LetterType::JStem, // repeat JStems
-        '\u{ea12}'|'\u{ea13}'|'\u{ea14}'|'\u{ea16}'|'\u{ea17}'  => LetterType::TStem, // repeat TStems
+        '\u{ea12}'|'\u{ea13}'|'\u{ea14}'|'\u{ea16}'|'\u{ea17}'  => LetterType::SStem, // repeat TStems
         '\u{ea11}'|'\u{ea18}'|'\u{ea19}'|'\u{ea20}'             => LetterType::ZStem, // repeat ZStems
         _ => LetterType::Punctuation, //TODO
     };
