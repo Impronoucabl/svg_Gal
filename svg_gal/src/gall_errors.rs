@@ -21,6 +21,8 @@ pub struct VowelRadiusTooLong;
 #[derive(Debug, Clone)]
 pub struct InvalidVowelDist;
 #[derive(Debug, Clone)]
+pub struct DoNotMutTainer;
+#[derive(Debug, Clone)]
 pub struct TainerMissingStem;
 #[derive(Debug, Clone)]
 pub struct BadTainerStem;
@@ -35,6 +37,7 @@ impl Error for StemRadiusTooLong {}
 impl Error for VowelRadiusTooShort {}
 impl Error for VowelRadiusTooLong {}
 impl Error for InvalidVowelDist {}
+impl Error for DoNotMutTainer {}
 impl Error for TainerMissingStem {}
 impl Error for BadTainerStem {}
 impl Error for BadVowelType {}
@@ -77,6 +80,11 @@ impl fmt::Display for VowelRadiusTooLong {
 impl fmt::Display for InvalidVowelDist {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Vowel radius is invalid")
+    }
+}
+impl fmt::Display for DoNotMutTainer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Do Not Mut Tainer")
     }
 }
 impl fmt::Display for TainerMissingStem {

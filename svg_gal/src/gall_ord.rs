@@ -148,7 +148,7 @@ impl GallAng {
 }
 
 impl PositiveDist {
-    fn new(dist: f64) -> Result<PositiveDist, Box<dyn Error>> {
+    pub fn new(dist: f64) -> Result<PositiveDist, Box<dyn Error>> {
         if dist < 0.0 {return Err(Box::new(NegativeDistanceErr));}
         let new = PositiveDist {
             distance: PositiveDist::val_check(0.0, 0.0, dist)?
