@@ -1,3 +1,4 @@
+const COLLISION_DIST: f64 = 0.001;
 
 use std::rc::Rc;
 

@@ -2,7 +2,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Error {
-    error_type: str,
+    pub error_type: str,
 }
 impl std::error::Error for Error {}
 impl Error {

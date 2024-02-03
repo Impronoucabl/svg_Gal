@@ -1,11 +1,12 @@
-use std::error::Error;
 use std::rc::Rc;
 
-use crate::gall_fn::{self, LetterType};
+use crate::gall_errors::{Error, GallError};
+use crate::gall_fn;
 use crate::gall_ord::{BoundedValue, CenterOrd, GallAng, GallLoc, LocMover, PositiveDist};
-use crate::gall_stem::Stem;
-use crate::gall_struct::{Circle, HollowCircle};
+use crate::gall_stem::{Stem, StemType};
+use crate::gall_struct::{Circle, HollowCircle, LetterMark};
 use crate::gall_tainer::GallTainer;
+use crate::gall_vowel::VowelType;
 
 pub struct GallWord2 {
     loc: GallLoc,
@@ -34,31 +35,75 @@ impl GallWord2 {
         GallWord2::new(self.loc,*self.radius,*self.thickness)
     }
     fn make_tainer(&mut self) -> GallTainer {
-        let mut syl = GallTainer::new(gall_fn::LetterType::Punctuation,*self);
+        let mut syl = GallTainer::new(LetterMark::GallMark,*self);
         self.tainer_vec.push(syl);
         syl
     }
+    fn make_letter_loc(&self, stem:StemType, ang: f64, center: Rc<(f64,f64)>) -> GallLoc {
+        let multiplier = match stem {
+            J => 0.7,
+            B => 0.9,
+            _ => 1.0,
+        };
+        GallLoc::new(
+            ang,
+            self.get_radius()* multiplier,
+            center,
+        )
+    }
+    fn populate_stem(&mut self, s_type:StemType, syl:GallTainer, clock_loc:GallLoc, step_angle:f64, repeat: bool) -> Result<GallTainer,Error> {
+        let letter_loc = self.make_letter_loc(s_type, clock_loc.get_ang().ang, clock_loc.get_center());
+        let stem = Stem::new(letter_loc,100.0,2.0,s_type,self)?;
+        match syl.mut_stemtype(Some(s_type)) {
+            Ok(_) => {},
+            Err(E) => {
+                if E.error_type == GallError::BadTainerStem {
+                    self.tainer_vec.push(syl);
+                    clock_loc.rotate_ccw(step_angle);
+                    letter_loc.rotate_ccw(step_angle);
+                    syl = self.make_tainer();
+                    syl.mut_stemtype(Some(s_type))?;
+                } else {
+                    Err(E)
+                }                            
+            },
+        }
+        syl.add_stem(stem)?;
+        if repeat {
+            let repeat_loc = self.make_letter_loc(s_type, clock_loc.get_ang().ang, clock_loc.get_center());
+            let repeat_stem = Stem::new(repeat_loc,110.0,2.0,s_type,self)?;
+            syl.add_stem(repeat_stem)?;
+        }
+        Ok(syl)
+    } 
+    fn populate_vowel(&mut self, v_type: VowelType, syl: GallTainer, clock_loc: GallLoc, step_angle: f64, repeat:bool) -> Result<GallTainer, Error> {
+        
+    }
     //Assume String already parsed
     pub fn populate(&mut self, text: String) -> Result<(), Error> {
+        //text.len() is byte len, not # of chars
+        let letter_sep_ang = std::f64::consts::TAU/(text.len() as f64);
+        let clock_loc = GallLoc::new( 
+            0.0, 
+            self.get_radius(), 
+            self.loc.svg_ord(), 
+        );
+        
         let syl = self.make_tainer();
         let mut text_iter = text.chars(); 
         while let Some(letter) = text_iter.next() {
             //lookup letter
-            let (stem, repeat) = gall_fn::stem_lookup(&letter);
-            match stem {
-                LetterType::BStem|LetterType::JStem|LetterType::SStem|LetterType::ZStem => {
-                    let stem1 = Stem::new(loc,radius,thickness,stem,self)?;
-                    //attempt to add stem to tainer
-                    match syl.mut_stemtype(stem) {
-                        Ok(_) => {},
-                        Err(_) => { //TODO create crate errors
-                            syl = self.make_tainer();
-                        }
-                    }
-                }
-                LetterType::A|LetterType::EIU|LetterType::O1|LetterType::O2 => {
+            let (letter_mark, repeat) = gall_fn::stem_lookup(&letter);
+            match letter_mark {
+                LetterMark::Stem(s_type) => {
+                    syl = self.populate_stem(s_type, syl, clock_loc, letter_sep_ang, repeat)?;
+                },
+                LetterMark::GallVowel(v_type) => {
                     //GallVowel
+                    syl = self.populate_vowel()?;
                 }
+                LetterMark::Digit(num)=> {},
+                LetterMark::GallMark => {},
             }
             //create stem
             let stem1 = Stem::new(loc,radius,thickness,stem,self)?;
@@ -98,6 +143,9 @@ impl GallWord2 {
             }
         }
         Ok(())
+    }
+    fn stem_populate(&mut self) {
+
     }
 }
 impl LocMover for GallWord2 {

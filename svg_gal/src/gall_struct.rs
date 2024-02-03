@@ -3,6 +3,8 @@ use std::f64::consts::{FRAC_PI_2, PI};
 
 use crate::gall_ord::{GallLoc, PositiveDist};
 use crate::gall_fn::{self, LetterType};
+use crate::gall_stem::StemType;
+use crate::gall_vowel::VowelType;
 
 pub trait Circle {
     fn get_radius(&self) -> Rc<PositiveDist>;
@@ -24,6 +26,13 @@ pub trait ChildCircle {
     fn get_parent_thick(&self) -> f64;
     fn mut_stored_parent_radius(&mut self, new_radius:f64) -> Result<(),Error>;
     fn mut_stored_parent_thick(&mut self, new_radius:f64) -> Result<(),Error>;
+}
+
+pub enum LetterMark {
+    Stem(StemType),
+    GallVowel(VowelType),
+    GallMark,
+    Digit(u8),
 }
 
 #[derive(PartialEq, Default)]

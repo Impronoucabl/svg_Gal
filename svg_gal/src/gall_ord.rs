@@ -45,8 +45,7 @@ struct GallOrd {
 pub struct GallLoc {
     pub ord: GallOrd,
     center: Rc<(f64,f64)>, // abs xy
-    rel_svg_x:f64,
-    rel_svg_y:f64,
+    abs_svg: Rc<(f64,f64)>,
 }
 
 impl CenterOrd {
@@ -228,11 +227,11 @@ impl GallLoc {
     pub fn new(angle:f64, distance: f64, svg_center:CenterOrd) -> GallLoc {
         let ord = GallOrd::new(angle, distance);
         let (rel_y,rel_x) = (FRAC_PI_2 - angle).sin_cos();
+        let center = svg_center.get_rc();
         GallLoc { 
             ord: ord,
-            center: svg_center.get_rc(),  
-            rel_svg_x: distance*rel_x,
-            rel_svg_y: distance*rel_y,
+            center: center,  
+            abs_svg: Rc::new((distance*rel_x + center.0, distance*rel_y + center.1))
         }
     }
     fn update_xy(&mut self) {
@@ -241,17 +240,17 @@ impl GallLoc {
             Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
             None => (0.0,0.0)
         };
-        self.rel_svg_x = dist*rel_x;
-        self.rel_svg_y = dist*rel_y;
+        self.abs_svg.0 = dist*rel_x + self.center.0;
+        self.abs_svg.1 = dist*rel_y + self.center.1;
     }
     pub fn svg_x(&self) -> f64 {
-        self.rel_svg_x + self.center.0
+        self.abs_svg.0
     }
     pub fn svg_y(&self) -> f64 {
-        self.rel_svg_y + self.center.1
+        self.abs_svg.1
     }
-    pub fn svg_ord(&self) -> (f64,f64) {
-        (self.svg_x(),self.svg_y())
+    pub fn svg_ord(&self) -> Rc<(f64,f64)> {
+        self.abs_svg.clone()
     }
     pub fn rotate_ccw(&mut self, angle: GallAng) -> Option<()> {
         self.mut_ang(self.get_ang() + angle);
