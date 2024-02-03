@@ -5,16 +5,25 @@ use crate::gall_ord::{GallLoc, PositiveDist};
 use crate::gall_fn::{self, LetterType};
 
 pub trait Circle {
-    fn get_outer_radius(&self) -> PositiveDist;
-    fn get_inner_radius(&self) -> PositiveDist;
-    fn mut_radius(&mut self, val:f64) -> Result<(), Box<dyn Error>>;
+    fn get_radius(&self) -> Rc<PositiveDist>;
+    fn mut_radius(&mut self, val:f64) -> Result<(), Error>;
+}
+
+pub trait HollowCircle: Circle {
+    fn get_thickness(&self) -> Rc<PositiveDist>;
+    fn get_outer_radius(&self) -> PositiveDist {
+        self.get_radius() + self.get_thickness()
+    }
+    fn get_inner_radius(&self) -> PositiveDist {
+        self.get_radius() - self.get_thickness()
+    }
 }
 
 pub trait ChildCircle {
     fn get_parent_radius(&self) -> f64;
     fn get_parent_thick(&self) -> f64;
-    fn mut_stored_parent_radius(&mut self, new_radius:f64) -> Result<(),Box<dyn Error>>;
-    fn mut_stored_parent_thick(&mut self, new_radius:f64) -> Result<(),Box<dyn Error>>;
+    fn mut_stored_parent_radius(&mut self, new_radius:f64) -> Result<(),Error>;
+    fn mut_stored_parent_thick(&mut self, new_radius:f64) -> Result<(),Error>;
 }
 
 #[derive(PartialEq, Default)]

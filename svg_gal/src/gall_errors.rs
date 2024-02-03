@@ -1,104 +1,48 @@
 use std::fmt;
-use std::error::Error;
-
-type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 #[derive(Debug, Clone)]
-pub struct NegativeDistanceErr;
-#[derive(Debug, Clone)]
-pub struct StemDistTooShort;
-#[derive(Debug, Clone)]
-pub struct StemDistTooLong;
-#[derive(Debug, Clone)]
-pub struct StemRadiusTooShort;
-#[derive(Debug, Clone)]
-pub struct StemRadiusTooLong;
-#[derive(Debug, Clone)]
-pub struct VowelRadiusTooShort;
-#[derive(Debug, Clone)]
-pub struct VowelRadiusTooLong;
-
-#[derive(Debug, Clone)]
-pub struct InvalidVowelDist;
-#[derive(Debug, Clone)]
-pub struct DoNotMutTainer;
-#[derive(Debug, Clone)]
-pub struct TainerMissingStem;
-#[derive(Debug, Clone)]
-pub struct BadTainerStem;
-#[derive(Debug, Clone)]
-pub struct BadVowelType;
-
-impl Error for NegativeDistanceErr {}
-impl Error for StemDistTooShort {}
-impl Error for StemDistTooLong {}
-impl Error for StemRadiusTooShort {}
-impl Error for StemRadiusTooLong {}
-impl Error for VowelRadiusTooShort {}
-impl Error for VowelRadiusTooLong {}
-impl Error for InvalidVowelDist {}
-impl Error for DoNotMutTainer {}
-impl Error for TainerMissingStem {}
-impl Error for BadTainerStem {}
-impl Error for BadVowelType {}
-
-impl fmt::Display for NegativeDistanceErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Distance is negative")
+pub struct Error {
+    error_type: str,
+}
+impl std::error::Error for Error {}
+impl Error {
+    pub fn new(err:GallError) -> Error {
+        Error {
+            error_type: err,
+        }
     }
 }
-impl fmt::Display for StemDistTooShort {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Stem distance is too short")
-    }
+pub enum GallError {
+    NegativeDistanceErr, 
+    StemDistTooShort ,
+    StemDistTooLong ,
+    StemRadiusTooShort, 
+    StemRadiusTooLong ,
+    VowelRadiusTooShort ,
+    VowelRadiusTooLong ,
+    InvalidVowelDist ,
+    DoNotMutTainer ,
+    TainerMissingStem ,
+    BadTainerStem ,
+    StemAlreadySet,
 }
-impl fmt::Display for StemDistTooLong {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Stem distance is too long")
-    }
-}
-impl fmt::Display for StemRadiusTooShort {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Stem radius is too short")
-    }
-}
-impl fmt::Display for StemRadiusTooLong {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Stem radius is too long")
-    }
-}
-impl fmt::Display for VowelRadiusTooShort {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Vowel radius is too short")
-    }
-}
-impl fmt::Display for VowelRadiusTooLong {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Vowel radius is too long")
-    }
-}
-impl fmt::Display for InvalidVowelDist {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Vowel radius is invalid")
-    }
-}
-impl fmt::Display for DoNotMutTainer {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Do Not Mut Tainer")
-    }
-}
-impl fmt::Display for TainerMissingStem {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Tainer has no stem type")
-    }
-}
-impl fmt::Display for BadTainerStem {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Stem has wrong stem type for Tainer")
-    }
-}
-impl fmt::Display for BadVowelType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Vowel has wrong vowel type for Tainer")
+        let message = match self.error_type {
+            NegativeDistanceErr => "Distance is negative",
+            StemDistTooShort => "Stem distance is too short",
+            StemDistTooLong => "Stem distance is too long",
+            StemRadiusTooShort => "Stem radius is too short",
+            StemRadiusTooLong => "Stem radius is too long",
+            VowelRadiusTooShort => "Vowel radius is too short",
+            VowelRadiusTooLong => "Vowel radius is too long",
+            InvalidVowelDist => "Vowel radius is invalid",
+            DoNotMutTainer =>"Do Not Mut Tainer",
+            TainerMissingStem =>"Tainer's stem type is none",
+            BadTainerStem =>"Stem has wrong stem type for Tainer",
+            StemAlreadySet=>"Tainer already contains a vowel or Stem",
+            _ => "Unspecified Error",
+        };
+        write!(f, "{}",message)
     }
 }

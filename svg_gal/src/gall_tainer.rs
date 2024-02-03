@@ -1,10 +1,11 @@
-use std::error::Error;
 
-use crate::gall_errors::{BadTainerStem, BadVowelType, DoNotMutTainer, TainerMissingStem};
-use crate::gall_ord::PositiveDist;
+use std::rc::Rc;
+
+use crate::gall_errors::{Error, GallError};
+use crate::gall_ord::{BoundedValue, PositiveDist};
 use crate::gall_fn::LetterType;
 use crate::gall_stem::{Stem, StemType};
-use crate::gall_struct::Circle;
+use crate::gall_struct::{ChildCircle, Circle, HollowCircle};
 use crate::gall_vowel::{GallVowel, VowelType};
 
 pub struct GallTainer {
@@ -14,10 +15,12 @@ pub struct GallTainer {
     //node: Vec<GallNode>,
     //dot: Vec<GallDot>,
     //mark: Vec<GallMark>,
+    parent_radius: Rc<PositiveDist>,
+    parent_thickness: Rc<PositiveDist>,
 }
 
 impl GallTainer {
-    pub fn new(l_type:LetterType) -> GallTainer {
+    pub fn new<T:HollowCircle>(l_type:LetterType, parent:T) -> GallTainer {
         let (stem_type, stem_vec, vowel_vec) = match l_type {
             LetterType::Digit   => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
             LetterType::BStem   => (Some(StemType::B),Vec::with_capacity(1), Vec::new()),
@@ -36,21 +39,36 @@ impl GallTainer {
             vowel:vowel_vec,
             //node: Vec::new(),
             //dot: Vec::new(),
+            parent_radius:parent.get_radius(),
+            parent_thickness: parent.get_thickness(),
         }
     }
-    pub fn add_stem(&mut self, new_stem: Stem) -> Result<(),Box<dyn Error>> {
+    pub fn mut_stemtype(&mut self, s_type: Option<StemType>) -> Result<(), Error> {
+        if self.stem_type == s_type {
+            Ok(())
+        } else if self.stem.is_empty() && self.vowel.is_empty() {
+            self.stem_type = s_type;
+            Ok(())
+        } else {
+            Err(Error::new(GallError::StemAlreadySet))
+        }
+    }
+    pub fn add_stem(&mut self, new_stem: Stem) -> Result<(),Error> {
         let s_type = match self.stem_type {
             Some(s_type) => s_type,
-            None => return Err(Box::new(TainerMissingStem)),
+            None => return Err(Error::new(GallError::TainerMissingStem)),
         };
+        if self.stem.len() > 2 {
+            return Err(Error::new(GallError::TainerMissingStem)) //TODO: TooManyStem
+        }
         if s_type == new_stem.stem_type {
             self.stem.push(new_stem);
             Ok(())
         } else {
-            Err(Box::new(BadTainerStem))
+            Err(Error::new(GallError::BadTainerStem))
         }
     }
-    pub fn add_vowel(&mut self, new_vowel: GallVowel) -> Result<(),Box<dyn Error>> {
+    pub fn add_vowel(&mut self, new_vowel: GallVowel) -> Result<(),Error> {
         if self.vowel.len() == 0 {
             self.vowel.push(new_vowel);
             Ok(())
@@ -67,7 +85,7 @@ impl GallTainer {
                 self.vowel.push(new_vowel);
                 Ok(())
             } else {
-                Err(Box::new(BadVowelType))
+                Err(Error::new(GallError::BadVowelType))
             }
         }
     }
@@ -75,9 +93,9 @@ impl GallTainer {
 
 impl Circle for GallTainer {
     //This can panic, since it's not a real circle
-    fn get_outer_radius(&self) -> PositiveDist {
+    fn get_radius(&self) -> PositiveDist {
         if self.stem.is_empty() {
-            //return Err(Box::new(TainerMissingStem))
+            //return Err(Error::new(GallError::TainerMissingStem))
             panic!()
         };
         let mut result = -0.1;
@@ -89,22 +107,22 @@ impl Circle for GallTainer {
         }
         PositiveDist::new(result).unwrap()
     }
-    //This can panic, since it's not a real circle
-    fn get_inner_radius(&self) -> PositiveDist {
-        if self.stem.is_empty() {
-            //return Err(Box::new(TainerMissingStem))
-            panic!()
-        };
-        let mut result = f64::INFINITY;
-        for letter in self.stem {
-            let radius = letter.get_outer_radius();
-            if  radius.dist() < result {
-                result = radius.dist();
-            }
-        }
-        PositiveDist::new(result).unwrap()
+    fn mut_radius(&mut self, val:f64) -> Result<(), Error> {
+        Err(Error::new(GallError::DoNotMutTainer))
     }
-    fn mut_radius(&mut self, val:f64) -> Result<(), Box<dyn Error>> {
-        Err(Box::new(DoNotMutTainer))
+}
+
+impl ChildCircle for GallTainer {
+    fn get_parent_radius(&self) -> f64 {
+        self.parent_radius.dist()
+    }
+    fn get_parent_thick(&self) -> f64 {
+        self.parent_thickness.dist()
+    }
+    fn mut_stored_parent_radius(&mut self, new_radius:f64) -> Result<(),Error> {
+        self.parent_radius.mut_val(new_radius)
+    }
+    fn mut_stored_parent_thick(&mut self, new_radius:f64) -> Result<(),Error> {
+        self.parent_thickness.mut_val(new_radius)
     }
 }

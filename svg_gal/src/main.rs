@@ -9,6 +9,7 @@ mod gall_ord;
 mod gall_vowel;
 mod gall_stem;
 mod gall_tainer;
+mod gall_word;
 mod gall_phrase;
 mod gall_errors;
 mod rendering;
