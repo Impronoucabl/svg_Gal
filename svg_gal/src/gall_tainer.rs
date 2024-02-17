@@ -11,7 +11,7 @@ use crate::gall_vowel::{GallVowel, VowelType};
 
 pub struct GallTainer {
     stem_type: Option<StemType>,
-    stem: Vec<Stem>,
+    pub stem: Vec<Stem>,
     vowel: Vec<GallVowel>,
     //node: Vec<GallNode>,
     //dot: Vec<GallDot>,
@@ -94,7 +94,7 @@ impl GallTainer {
 
 impl Circle for GallTainer {
     //This can panic, since it's not a real circle
-    fn get_radius(&self) -> PositiveDist {
+    fn get_radius(&self) -> Rc<PositiveDist> {
         if self.stem.is_empty() {
             //return Err(Error::new(GallError::TainerMissingStem))
             panic!()
@@ -106,7 +106,7 @@ impl Circle for GallTainer {
                 result = radius.dist();
             }
         }
-        PositiveDist::new(result).unwrap()
+        Rc::new(PositiveDist::new(result).unwrap())
     }
     fn mut_radius(&mut self, val:f64) -> Result<(), Error> {
         Err(Error::new(GallError::DoNotMutTainer))

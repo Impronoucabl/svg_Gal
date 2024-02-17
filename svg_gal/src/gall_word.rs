@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use std::rc::Rc;
 
 use crate::gall_errors::{Error, GallError};
@@ -6,7 +7,7 @@ use crate::gall_ord::{BoundedValue, CenterOrd, GallAng, GallLoc, LocMover, Posit
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_struct::{Circle, HollowCircle, LetterMark};
 use crate::gall_tainer::GallTainer;
-use crate::gall_vowel::VowelType;
+use crate::gall_vowel::{GallVowel, VowelType};
 
 pub struct GallWord2 {
     loc: GallLoc,
@@ -18,6 +19,10 @@ impl HollowCircle for GallWord2 {
     fn get_thickness(&self) -> Rc<PositiveDist> {
         self.thickness.clone()
     }
+    fn mut_thickness(&mut self, new_thick: f64) -> Result<(),Error> {
+        self.thickness.mut_val(new_thick)
+    }
+    
 }
 impl GallWord2 {
     pub fn new(loc:GallLoc, radius: PositiveDist, thickness: PositiveDist) -> GallWord2 {
@@ -51,6 +56,26 @@ impl GallWord2 {
             center,
         )
     }
+    fn make_vowel_loc(&self, v_type:VowelType, ang: f64, center: Rc<(f64,f64)>) -> GallLoc {
+        let multiplier = match v_type {
+            O2 => {0.95},
+            VowelType::E|VowelType::I|VowelType::U => {1.0},
+            A=>{1.1},
+            O1 => {
+                return GallLoc::new(
+                    ang,
+                    100.0, //need to overwrite later with stem dist.
+                    center,
+                )
+            }
+        }; 
+        GallLoc::new(
+            ang,
+            self.get_radius()* multiplier,
+            center,
+        )
+        
+    }
     fn populate_stem(&mut self, s_type:StemType, syl:GallTainer, clock_loc:GallLoc, step_angle:f64, repeat: bool) -> Result<GallTainer,Error> {
         let letter_loc = self.make_letter_loc(s_type, clock_loc.get_ang().ang, clock_loc.get_center());
         let stem = Stem::new(letter_loc,100.0,2.0,s_type,self)?;
@@ -76,8 +101,47 @@ impl GallWord2 {
         }
         Ok(syl)
     } 
-    fn populate_vowel(&mut self, v_type: VowelType, syl: GallTainer, clock_loc: GallLoc, step_angle: f64, repeat:bool) -> Result<GallTainer, Error> {
-        
+    fn populate_vowel(&mut self, v_type: VowelType, syl: GallTainer, clock_loc: GallLoc, step_angle: f64, repeat:bool) -> Result<GallTainer, Error> { 
+        let ang = clock_loc.get_ang().ang();
+        let vowel_loc: GallLoc;
+        if !syl.stem.is_empty() && v_type == VowelType::O2 {
+            let temp_stem = syl.stem.pop().unwrap();
+            v_type = VowelType::O1;
+            vowel_loc = GallLoc::new(
+                ang + PI,
+                temp_stem.get_radius(), 
+                temp_stem.get_center(),
+            );
+            syl.stem.push(temp_stem)
+        } else {    
+            vowel_loc = self.make_vowel_loc(v_type, ang, clock_loc.get_center());
+        }
+        let vowel = GallVowel::new(
+            vowel_loc,
+            20.0,
+            2.0,
+            v_type,
+            match v_type {
+                O1=> syl.stem[syl.stem.len()-1],
+                _ => self,
+            },
+        )?;
+        syl.add_vowel(vowel);
+        if repeat {
+            vowel.mut_thickness(1.8);
+            let vowel2 = GallVowel::new(
+                vowel_loc,
+                27.0,
+                1.8,
+                v_type,
+                match v_type {
+                    O1=> syl[syl.len()-1],
+                    _ => self,
+                },
+            );
+            syl.add_vowel(vowel2?);
+        }
+        Ok(syl)
     }
     //Assume String already parsed
     pub fn populate(&mut self, text: String) -> Result<(), Error> {
@@ -85,11 +149,11 @@ impl GallWord2 {
         let letter_sep_ang = std::f64::consts::TAU/(text.len() as f64);
         let clock_loc = GallLoc::new( 
             0.0, 
-            self.get_radius(), 
-            self.loc.svg_ord(), 
+            self.get_radius().dist(), 
+            CenterOrd::Exisiting(self.loc.svg_ord())
         );
         
-        let syl = self.make_tainer();
+        let mut syl = self.make_tainer();
         let mut text_iter = text.chars(); 
         while let Some(letter) = text_iter.next() {
             //lookup letter
@@ -100,52 +164,19 @@ impl GallWord2 {
                 },
                 LetterMark::GallVowel(v_type) => {
                     //GallVowel
-                    syl = self.populate_vowel()?;
+                    syl = self.populate_vowel(v_type,syl,clock_loc,letter_sep_ang,repeat)?;
                 }
-                LetterMark::Digit(num)=> {},
-                LetterMark::GallMark => {},
-            }
-            //create stem
-            let stem1 = Stem::new(loc,radius,thickness,stem,self)?;
-            //attempt to add stem to tainer
-            match syl.mut_stemtype(stem) {
-                Ok(_) => {},
-                Err(_) => { //TODO create crate errors
-                    syl = self.make_tainer();
-                }
-            }
-            syl.add_stem(stem1); 
-            //let syl = GallTainer::new(stem,*self);
-            //push tainer into word
-            syl.add_stem(stem1)?;
-            if repeat {
-                let stem_copy = Stem::new(loc,radius,thickness,stem,self)?;
-                syl.add_stem(stem_copy)?;
-            }
+                LetterMark::Digit(num)=> {
+                    todo!();
+                },
+                LetterMark::GallMark => {
+                    todo!();
+                },
+            };
             //add nodes
             //add dots
-
-            if let Some(letter) = text_iter.next() {
-                //lookup letter
-                let (stem2, repeat2) = gall_fn::stem_lookup(&letter);
-                //check if can be added to current tainer
-                
-                
-                if stem == stem2 {
-                    //create stem
-                    //add to current tainer
-                } else {
-                    continue
-                }
-            } else {
-                //end of text
-                break
-            }
         }
         Ok(())
-    }
-    fn stem_populate(&mut self) {
-
     }
 }
 impl LocMover for GallWord2 {

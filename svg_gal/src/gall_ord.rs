@@ -157,6 +157,9 @@ impl GallAng {
     }
     fn rotate(&mut self, angle:f64) {
         GallAng::mut_val(self, Some(angle));
+    }
+    pub fn ang(self) -> Option<f64> {
+        self.angle
     }    
 }
 

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::gall_struct::{GallWord, Decor, GallCircle};
 
 pub struct CircleGallLine {
@@ -151,7 +153,7 @@ impl GallPhrase {
             println!("{}", dock_list.len())
         }
     }
-    pub fn get_dash_svg_xy(&self, addr:(usize,usize,usize)) -> (f64,f64) {
+    pub fn get_dash_svg_xy(&self, addr:(usize,usize,usize)) -> Rc<(f64,f64)> {
         self.words[addr.0].syllables[addr.1].decorators[addr.2].loc.svg_ord()
     }
     pub fn get_mut_dash(&mut self, address:(usize,usize,usize)) ->  &mut Decor {

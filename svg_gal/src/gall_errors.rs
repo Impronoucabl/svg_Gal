@@ -2,7 +2,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Error {
-    pub error_type: str,
+    pub error_type: GallError,
 }
 impl std::error::Error for Error {}
 impl Error {
@@ -12,6 +12,7 @@ impl Error {
         }
     }
 }
+#[derive(PartialEq,Debug, Clone)]
 pub enum GallError {
     NegativeDistanceErr, 
     StemDistTooShort ,
@@ -25,6 +26,7 @@ pub enum GallError {
     TainerMissingStem ,
     BadTainerStem ,
     StemAlreadySet,
+    BadVowelType,
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -41,6 +43,7 @@ impl fmt::Display for Error {
             TainerMissingStem =>"Tainer's stem type is none",
             BadTainerStem =>"Stem has wrong stem type for Tainer",
             StemAlreadySet=>"Tainer already contains a vowel or Stem",
+            BadVowelType=>"Bad Vowel type",
             _ => "Unspecified Error",
         };
         write!(f, "{}",message)

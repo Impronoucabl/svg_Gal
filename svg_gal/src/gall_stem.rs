@@ -132,4 +132,7 @@ impl HollowCircle for Stem {
     fn get_thickness(&self) -> Rc<PositiveDist> {
         self.thickness.clone()
     }
+    fn mut_thickness(&mut self, new_thick: f64) -> Result<(),Error> {
+        self.thickness.mut_val(new_thick)
+    }
 }

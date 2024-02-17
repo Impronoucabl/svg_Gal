@@ -4,6 +4,7 @@ use crate::gall_errors::{Error, GallError};
 use crate::gall_ord::{BoundedValue, CenterOrd, GallAng, GallLoc, LocMover, PositiveDist};
 use crate::gall_struct::{ChildCircle, Circle, HollowCircle};
 //O1 is on a letter, O2 is on a word
+#[derive(PartialEq)]
 pub enum VowelType {A,E,I,O1,O2,U}
 
 pub struct GallVowel {
@@ -13,6 +14,24 @@ pub struct GallVowel {
     parent_radius: Rc<PositiveDist>,
     parent_thickness: Rc<PositiveDist>,
     pub vowel_type: VowelType,
+}
+
+impl GallVowel {
+    pub fn new<T:HollowCircle>(loc:GallLoc, radius: f64, thickness:f64, vowel_type: VowelType, parent:T) -> Result<GallVowel, Error> {
+        let radius = Rc::new(PositiveDist::new(radius)?);
+        let thickness = Rc::new(PositiveDist::new(thickness)?);
+        let parent_radius = parent.get_radius().clone();
+        let parent_thickness = parent.get_thickness().clone();
+        
+        Ok(GallVowel {
+            loc,
+            radius,
+            thickness,
+            parent_radius,
+            parent_thickness,
+            vowel_type,
+        })
+    }
 }
 
 impl LocMover for GallVowel {
@@ -125,5 +144,8 @@ impl Circle for GallVowel {
 impl HollowCircle for GallVowel {
     fn get_thickness(&self) -> Rc<PositiveDist> {
         self.thickness.clone()
+    }
+    fn mut_thickness(&mut self, new_thick: f64) -> Result<(),Error> {
+        self.thickness.mut_val(new_thick)
     }
 }
