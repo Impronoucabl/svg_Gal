@@ -1,6 +1,4 @@
 use std::f64::consts::{PI, TAU};
- 
-use crate::{gall_stem::StemType, gall_struct::LetterMark::{self, GallVowel, Stem}, gall_vowel::VowelType};
 
 #[derive(PartialEq,Default)]
 pub enum  LetterType {
@@ -107,34 +105,34 @@ fn replace_two_char(lowercase_str:String) -> String {
         .replace("th", &'\u{e000}'.to_string())
 }
 
-pub fn stem_lookup(letter:&char) -> (LetterMark, bool) {
-    let stem:LetterMark = match letter {
-        'A'|'a'|'\u{ea01}'                                      => GallVowel(VowelType::A),
-        'E'|'e'|'\u{ea05}'                                      => GallVowel(VowelType::E),
-        'I'|'i'|'\u{ea09}'                                      => GallVowel(VowelType::I),
-        'O'|'o'|'\u{ea0f}'                                      => GallVowel(VowelType::O2),
-        'U'|'u'|'\u{ea15}'                                      => GallVowel(VowelType::U),
-        '█'|'B'|'D'|'F'|'G'|'H'|'b'|'d'|'f'|'g'|'h'             => Stem(StemType::B),
-        'C'|'J'|'K'|'L'|'M'|'N'|'P'|'c'|'j'|'k'|'l'|'m'|'n'|'p' => Stem(StemType::J),
-        'R'|'S'|'T'|'V'|'W'|'r'|'s'|'t'|'v'|'w'                 => Stem(StemType::S),
-        'Q'|'X'|'Y'|'Z'|'q'|'x'|'y'|'z'                         => Stem(StemType::Z), 
-        '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'                 => LetterMark::Digit(letter.to_digit(10).unwrap()), // TODO
-        '\u{e100}'..='\u{e2ff}'                                 => Stem(StemType::B), // CH & ND,
-        '\u{e300}'..='\u{e3ff}'                                 => Stem(StemType::J), // PH,
-        '\u{e400}'..='\u{e6ff}'                                 => Stem(StemType::S), // WH, SH, NT
-        '\u{e700}'..='\u{e9ff}'|'\u{e000}'..='\u{e0ff}'         => Stem(StemType::Z), // GH, NG, QU, TH
-        '\u{ea02}'|'\u{ea04}'|'\u{ea06}'|'\u{ea07}'|'\u{ea08}'  => Stem(StemType::B), // repeat BStems
-        '\u{ea03}'|'\u{ea0a}'|'\u{ea0b}'|'\u{ea0c}'|'\u{ea0d}'|'\u{ea0e}'|'\u{ea10}' => Stem(StemType::J), // repeat JStems
-        '\u{ea12}'|'\u{ea13}'|'\u{ea14}'|'\u{ea16}'|'\u{ea17}'  => Stem(StemType::S), // repeat TStems
-        '\u{ea11}'|'\u{ea18}'|'\u{ea19}'|'\u{ea20}'             => Stem(StemType::Z), // repeat ZStems
-        _ => LetterMark::GallMark //TODO
-    };
-    let repeat = match letter {
-        '\u{ea01}'..='\u{ea20}' => true,
-        _ => false
-    };
-    (stem,repeat)
-}
+// pub fn stem_lookup(letter:&char) -> (LetterMark, bool) {
+//     let stem:LetterMark = match letter {
+//         'A'|'a'|'\u{ea01}'                                      => GallVowel(VowelType::A),
+//         'E'|'e'|'\u{ea05}'                                      => GallVowel(VowelType::E),
+//         'I'|'i'|'\u{ea09}'                                      => GallVowel(VowelType::I),
+//         'O'|'o'|'\u{ea0f}'                                      => GallVowel(VowelType::O2),
+//         'U'|'u'|'\u{ea15}'                                      => GallVowel(VowelType::U),
+//         '█'|'B'|'D'|'F'|'G'|'H'|'b'|'d'|'f'|'g'|'h'             => Stem(StemType::B),
+//         'C'|'J'|'K'|'L'|'M'|'N'|'P'|'c'|'j'|'k'|'l'|'m'|'n'|'p' => Stem(StemType::J),
+//         'R'|'S'|'T'|'V'|'W'|'r'|'s'|'t'|'v'|'w'                 => Stem(StemType::S),
+//         'Q'|'X'|'Y'|'Z'|'q'|'x'|'y'|'z'                         => Stem(StemType::Z), 
+//         '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'                 => LetterMark::Digit(letter.to_digit(10).unwrap()), // TODO
+//         '\u{e100}'..='\u{e2ff}'                                 => Stem(StemType::B), // CH & ND,
+//         '\u{e300}'..='\u{e3ff}'                                 => Stem(StemType::J), // PH,
+//         '\u{e400}'..='\u{e6ff}'                                 => Stem(StemType::S), // WH, SH, NT
+//         '\u{e700}'..='\u{e9ff}'|'\u{e000}'..='\u{e0ff}'         => Stem(StemType::Z), // GH, NG, QU, TH
+//         '\u{ea02}'|'\u{ea04}'|'\u{ea06}'|'\u{ea07}'|'\u{ea08}'  => Stem(StemType::B), // repeat BStems
+//         '\u{ea03}'|'\u{ea0a}'|'\u{ea0b}'|'\u{ea0c}'|'\u{ea0d}'|'\u{ea0e}'|'\u{ea10}' => Stem(StemType::J), // repeat JStems
+//         '\u{ea12}'|'\u{ea13}'|'\u{ea14}'|'\u{ea16}'|'\u{ea17}'  => Stem(StemType::S), // repeat TStems
+//         '\u{ea11}'|'\u{ea18}'|'\u{ea19}'|'\u{ea20}'             => Stem(StemType::Z), // repeat ZStems
+//         _ => LetterMark::GallMark //TODO
+//     };
+//     let repeat = match letter {
+//         '\u{ea01}'..='\u{ea20}' => true,
+//         _ => false
+//     };
+//     (stem,repeat)
+// }
 
 pub fn decor_lookup(letter:&char) -> (Option<bool>,u8) {
     let dot = match letter {
