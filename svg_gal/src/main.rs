@@ -1,13 +1,21 @@
-use std::env;
+use std::{cell::Cell, env, rc::Rc};
 
 use svg::{node::element::Circle, Document};
 
+use crate::{gall_ang::GallAng, gall_loc::GallLoc, gall_word::GallWord};
+
+mod gall_errors;
+mod gall_ang;
+mod gall_ord;
+mod gall_loc;
 mod gall_fn;
 
+mod gall_word;
+
 fn main() {
-    static WIDTH:f64 = 512.0;
-    static HEIGHT:f64 = 512.0;
-    //const ORIGIN: Rc<(f64,f64)> = Rc::new((0.0,0.0));
+    static WIDTH:f64 = 2048.0;
+    static HEIGHT:f64 = 2048.0;
+    let ORIGIN = Rc::new(Cell::new((0.0,0.0)));
     println!("Initialising...");
     let args = env::args();
     let mut word_list = Vec::new();
@@ -22,7 +30,19 @@ fn main() {
         word_len += 1;
         word_list.push(gall_fn::string_parse(raw_word));
     }
+    //TODO: Generate word ang
+    let word_ang = 10.2;    
+    
     println!("Generating...");
+    for (num,words) in word_list.into_iter().enumerate() {
+        //create word struct
+        let loc = GallLoc::new(
+            (num as f64) * word_ang,
+            1500.0,
+            ORIGIN.clone()
+        );
+        GallWord::new(words);
+    }
     println!("Rendering...");
     let mut drawn = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
     // do actual rendering TODO

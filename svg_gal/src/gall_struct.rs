@@ -1,7 +1,7 @@
 use std::f64::consts::{FRAC_PI_2, PI};
 use std::rc::Rc;
 
-use crate::gall_ord::{GallLoc, PositiveDist};
+use crate::gall_loc::GallLoc;
 use crate::gall_errors::Error;
 use crate::gall_fn::{self, LetterType};
 use crate::gall_stem::StemType;
