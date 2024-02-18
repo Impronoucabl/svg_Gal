@@ -1,138 +1,167 @@
+use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::gall_errors::{Error, GallError};
-use crate::gall_ord::{BoundedValue, CenterOrd, GallAng, GallLoc, LocMover, PositiveDist};
-use crate::gall_struct::{ChildCircle, Circle, HollowCircle};
+use crate::gall_loc::{GallLoc, Location};
+use crate::gall_circle::{ChildCircle, Circle, HollowCircle, ParentCircle};
+use crate::gall_ord::PolarOrdinate;
 
 #[derive(PartialEq)]
 pub enum StemType {J,B,S,Z}
 
 pub struct Stem {
     loc: GallLoc,
-    radius: Rc<PositiveDist>,
-    thickness: Rc<PositiveDist>,
-    parent_radius: Rc<PositiveDist>,
-    parent_thickness: Rc<PositiveDist>,
+    radius: Rc<Cell<f64>>,
+    thickness: Rc<Cell<f64>>,
+    parent_radius: Rc<Cell<f64>>,
+    parent_thickness: Rc<Cell<f64>>,
+    mut_parent_rad_fn: fn(f64)-> Result<(),Error>,
+    mut_parent_thick_fn: fn(f64)-> Result<(),Error>,
     pub stem_type: StemType,
 }
 impl Stem {
-    pub fn new<T:HollowCircle>(loc:GallLoc, radius: f64, thickness:f64, stem_type: StemType, parent:T) -> Result<Stem,Error> {
-        let radius = Rc::new(PositiveDist::new(radius)?);
-        let thickness = Rc::new(PositiveDist::new(thickness)?);
+    pub fn new<T:ParentCircle>(loc:GallLoc, radius: f64, thickness:f64, stem_type: StemType, parent:T) -> Result<Stem,Error> {
+        let radius = Rc::new(Cell::new(radius));
+        let thickness = Rc::new(Cell::new(thickness));
         let parent_radius = parent.get_radius().clone();
         let parent_thickness = parent.get_thickness().clone();
-
+        let thick_fn_ptr: fn(f64)->Result<(),Error> = parent.get_mut_thick_fn_ptr();
+        let radius_fn_ptr: fn(f64)->Result<(),Error> = parent.get_mut_rad_fn_ptr();
         Ok(Stem {
             loc,
             radius,
             thickness,
             parent_radius,
             parent_thickness,
+            mut_parent_rad_fn: radius_fn_ptr,
+            mut_parent_thick_fn: thick_fn_ptr,
             stem_type,
         })
     }
+    fn radius_limits(&self) -> (f64,f64) {
+        match &self.stem_type {
+            StemType::J => (self.parent_inner() - self.dist()- 2.0*self.thick(),0.0),
+            StemType::B => (self.parent_outer() + self.parent_thick() - self.dist() - self.thick(), self.parent_outer() - self.dist() - self.thick()),
+            StemType::S => (f64::INFINITY,0.0),
+            StemType::Z => (2.0*self.parent_outer() - self.parent_radius() + self.dist() - self.thick(), 0.0),
+        }
+    }
+    fn dist_limits(&self) -> (f64,f64) {
+        todo!()
+    }
+    fn thick_limits(&self) -> (f64,f64) {
+        todo!()
+    }
+    fn check_radius(&self, test_val:f64) -> Result<(), Error> {
+        let (upper_limit, lower_limit) = self.radius_limits();
+        if test_val > upper_limit {
+            Err(Error::new(GallError::RadiusTooLong))
+        } else if test_val < lower_limit {
+            Err(Error::new(GallError::RadiusTooShort))
+        } else {
+            Ok(())
+        }
+    }
+    fn check_dist(&self, test_val:f64) -> Result<(), Error> {
+        let (upper_limit, lower_limit) = self.dist_limits();
+        if test_val > upper_limit {
+            Err(Error::new(GallError::DistTooLong))
+        } else if test_val < lower_limit {
+            Err(Error::new(GallError::DistTooShort))
+        } else {
+            Ok(())
+        }
+    }
+    fn check_thick(&self, test_val:f64) -> Result<(), Error> {
+        let (upper_limit, lower_limit) = self.thick_limits();
+        if test_val > upper_limit {
+            Err(Error::new(GallError::TooThick))
+        } else if test_val < lower_limit {
+            Err(Error::new(GallError::NotThickEnough))
+        } else {
+            Ok(())
+        }
+    }
 }
-impl LocMover for Stem {
-    fn mut_ang(&mut self, angle:GallAng) -> Result<(), Error> {
+impl PolarOrdinate for Stem {
+    fn ang(&self) -> Option<f64> {
+        self.loc.ang()
+    }
+    fn dist(&self) -> f64 {
+        self.loc.dist()
+    }
+    fn mut_ang(&mut self, angle:f64) {
         self.loc.mut_ang(angle)
     }
     fn mut_dist(&mut self, new_dist:f64) -> Result<(), Error> {
-        let (p_rad, p_thick, s_rad, s_thick) = (
-            self.parent_radius.dist(),
-            self.parent_thickness.dist(),
-            self.radius.dist(),
-            self.thickness.dist(),
-        );
-        let upper_limit = match self.stem_type {
-            J => p_rad - p_thick - s_rad - s_thick*2.0,
-            B => p_rad - p_thick - s_thick,
-            S => p_rad + p_thick + s_rad + s_thick,
-            Z => p_rad + p_thick + s_thick,
-        };
-        let lower_limit = match self.stem_type {
-            J => 0.0,
-            B => p_rad - p_thick - s_rad - s_thick,
-            S => p_rad - p_thick,
-            Z => p_rad - p_thick,
-        };
-        if upper_limit > new_dist {
-            if lower_limit < new_dist {
-                self.loc.mut_dist(new_dist)
-            } else {
-                Err(Error::new(GallError::StemDistTooShort))
-            }
-        } else {
-            Err(Error::new(GallError::StemDistTooLong))
-        }
+        self.check_dist(new_dist)?;
+        self.loc.mut_dist(new_dist);
+        Ok(())
     }
+}
+impl Location for Stem {
     fn mut_center(&mut self, movement:(f64,f64)) {
         self.loc.mut_center(movement)
     }
-    //This won't change any centers that have been cloned off this one
-    fn set_center(&mut self, new_center:CenterOrd) {
+    fn set_center(&mut self, new_center:Rc<Cell<(f64,f64)>>) {
         self.loc.set_center(new_center)
     }
-    fn get_ang(&self) -> GallAng {
-        self.loc.get_ang()
-    }
-    fn get_dist(&self) -> f64 {
-        self.loc.get_dist()
-    }
-    fn get_center(&self) -> Rc<(f64,f64)> {
+    fn get_center(&self) -> Rc<Cell<(f64,f64)>> {
         self.loc.get_center()
     }
-}
-impl BoundedValue<f64,PositiveDist> for Stem {
-    fn val_check(lower_bound:f64, upper_bound:f64, val: PositiveDist) -> Result<PositiveDist, Error> {
-        let radius = val.dist();
-        if radius >= lower_bound {
-            if radius < upper_bound {
-                Ok(val)
-            } else {
-                Err(Error::new(GallError::StemRadiusTooLong))
-            }
-        } else {
-            Err(Error::new(GallError::StemRadiusTooShort))
-        }
+    fn x(&self) -> f64 {
+        self.loc.x()
     }
-    fn mut_val(&mut self, new_radius: PositiveDist) -> Result<(),Error> {
-        let upper = match self.stem_type {
-            J => self.get_parent_radius()*0.9,
-            B => self.get_parent_radius()*0.95,
-            S => new_radius.dist() + 1.0, //no upper limit
-            Z => self.get_parent_radius()*2.0,
-        };
-        let radius = Stem::val_check(0.0, upper, new_radius)?.dist();
-        self.radius.mut_val(radius)
+    fn y(&self) -> f64 {
+        self.loc.y()
+    }
+    fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
+        self.loc.pos_ref()
     }
 }
 impl ChildCircle for Stem {
-    fn get_parent_radius(&self) -> f64 {
-        self.parent_radius.dist()
+    fn parent_radius(&self) -> f64 {
+        self.parent_radius.get()
     }
-    fn get_parent_thick(&self) -> f64 {
-        self.parent_thickness.dist()
+    fn parent_thick(&self) -> f64 {
+        self.parent_thickness.get()
     }
-    fn mut_stored_parent_radius(&mut self, new_radius:f64) -> Result<(),Error> {
-        self.parent_radius.mut_val(new_radius)
+    fn mut_parent_radius(&mut self, new_radius:f64) -> Result<(),Error> {
+        (self.mut_parent_rad_fn)(new_radius)
     }
-    fn mut_stored_parent_thick(&mut self, new_radius:f64) -> Result<(),Error> {
-        self.parent_thickness.mut_val(new_radius)
+    fn mut_parent_thick(&mut self, new_thick:f64) -> Result<(),Error> {
+        (self.mut_parent_thick_fn)(new_thick)
+    }
+    fn get_parent_radius(&self) -> Rc<Cell<f64>> {
+        self.parent_radius.clone()
+    }
+    fn get_parent_thick(&self) -> Rc<Cell<f64>> {
+        self.parent_thickness.clone()
     }
 }
 impl Circle for Stem {
-    fn get_radius(&self) -> Rc<PositiveDist> {
+    fn radius(&self) -> f64 {
+        self.radius.get()
+    }
+    fn get_radius(&self) -> Rc<Cell<f64>> {
         self.radius.clone()
     }
     fn mut_radius(&mut self, new_radius:f64) -> Result<(), Error> {
-        self.radius.mut_val(new_radius)
+        self.check_radius(new_radius)?;
+        self.radius.set(new_radius);
+        Ok(())
     }
 }
 impl HollowCircle for Stem {
-    fn get_thickness(&self) -> Rc<PositiveDist> {
+    fn get_thickness(&self) -> Rc<Cell<f64>> {
         self.thickness.clone()
     }
     fn mut_thickness(&mut self, new_thick: f64) -> Result<(),Error> {
-        self.thickness.mut_val(new_thick)
+        self.check_thick(new_thick)?;
+        self.thickness.set(new_thick);
+        Ok(())
+    }
+    fn thick(&self) -> f64 {
+        self.thickness.get()
     }
 }

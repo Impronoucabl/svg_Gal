@@ -12,7 +12,7 @@ pub struct GallLoc {
     abs_svg: Rc<Cell<(f64,f64)>>,
 }
 
-pub trait Location {
+pub trait Location:PolarOrdinate {
     fn mut_center(&mut self, movement:(f64,f64));
     fn set_center(&mut self, new_center:Rc<Cell<(f64,f64)>>);
     fn get_center(&self) -> Rc<Cell<(f64,f64)>>;
