@@ -4,6 +4,7 @@ use svg::{node::element::Circle, Document};
 
 use crate::gall_loc::GallLoc;
 use crate::gall_word::GallWord;
+use crate::render::renderable;
 
 mod gall_fn;
 mod gall_errors;
@@ -14,11 +15,12 @@ mod gall_stem;
 mod gall_circle;
 mod gall_tainer;
 mod gall_word;
+mod render;
 
 fn main() {
     const WIDTH:f64 = 2048.0;
     const HEIGHT:f64 = 2048.0;
-    let ORIGIN = Rc::new(Cell::new((0.0,0.0)));
+    let ORIGIN = Rc::new(Cell::new((WIDTH/2.0,HEIGHT/2.0)));
     println!("Initialising...");
     let args = env::args();
     let mut word_list = Vec::new();
@@ -52,6 +54,9 @@ fn main() {
     println!("Rendering...");
     let mut drawn = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   
     // do actual rendering TODO
+    for word in word_vec.into_iter() {
+        drawn = word.render(drawn);
+    }
     let circle = Circle::new()
                 .set("fill", "none")
                 .set("stroke", "black")

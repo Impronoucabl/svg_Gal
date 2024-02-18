@@ -2,17 +2,16 @@ use std::f64::consts::TAU;
 use std::{cell::Cell, f64::consts::PI};
 use std::rc::Rc;
 
-use crate::gall_circle::{Circle, HollowCircle, ParentCircle};
+use crate::gall_circle::{Circle, HollowCircle};
 use crate::gall_errors::{Error, GallError};
 use crate::gall_fn::{self, LetterMark};
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_ord::PolarOrdinate;
-use crate::gall_stem::StemType;
 use crate::gall_tainer::GallTainer;
 
 pub struct GallWord {
     loc: GallLoc,
-    tainer_vec: Vec<GallTainer>,
+    pub tainer_vec: Vec<GallTainer>,
     radius: Rc<Cell<f64>>,
     thickness: Rc<Cell<f64>>,
 }
@@ -29,23 +28,28 @@ impl GallWord {
         word.populate(text, len_guess)
     } 
     fn populate(mut self, word:String, len_guess:usize) -> GallWord {
-        let mut clock = 0.0;
+        const STACK: bool = false;
         let tainer_ang = TAU/(len_guess as f64); 
         let mut con_count:usize = 0;
         let mut con = self.get_con();
         for cha in word.chars() {
             let (l_mark, repeat) = gall_fn::stem_lookup(&cha);
+            
             if con.stem_type().is_none() && con.is_empty() {
                 match l_mark {
-                    LetterMark::Stem(stem) => {con.init(stem, con_count, tainer_ang)}
+                    LetterMark::Stem(stem) => {
+                        con_count = con.init(stem, con_count, tainer_ang)
+                    }
                     _ => {}
                 }
             } else {
                 match &l_mark {
-                    LetterMark::Stem(stem) => if Some(stem) != con.stem_type() {
-                        self.tainer_vec.push(con);
-                        con = self.get_con();
-                        con.init(*stem, con_count, tainer_ang);
+                    LetterMark::Stem(stem) => {
+                        if (!STACK && !con.stem.is_empty()) || (Some(stem) != con.stem_type()) {
+                            self.tainer_vec.push(con);
+                            con = self.get_con();
+                            con_count = con.init(*stem, con_count, tainer_ang);
+                        }
                     }
                     LetterMark::Digit(_) => {todo!()},
                     LetterMark::GallMark => {}, 
@@ -57,7 +61,7 @@ impl GallWord {
         self
     }
     fn get_con(&self) -> GallTainer {
-        GallTainer::new(LetterMark::GallMark, self)
+        GallTainer::new(LetterMark::GallMark)
     }
     fn check_radius(&self, new_radius:f64) -> Result<(),Error> {
         //todo!();
