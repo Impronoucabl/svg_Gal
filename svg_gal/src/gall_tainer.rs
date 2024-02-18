@@ -3,7 +3,7 @@ const COLLISION_DIST: f64 = 0.001;
 use std::cell::Cell;
 use std::rc::Rc;
 
-use crate::gall_circle::{ChildCircle, HollowCircle};
+use crate::gall_circle::ParentCircle;
 use crate::gall_errors::{Error, GallError};
 use crate::gall_fn::LetterType;
 use crate::gall_stem::{Stem, StemType};
@@ -19,10 +19,12 @@ pub struct GallTainer {
     //mark: Vec<GallMark>,
     parent_radius: Rc<Cell<f64>>,
     parent_thickness: Rc<Cell<f64>>,
+    //mut_parent_rad_fn: fn(f64)-> Result<(),Error>,
+    //mut_parent_thick_fn: fn(f64)-> Result<(),Error>,
 }
 
 impl GallTainer {
-    pub fn new<T:HollowCircle>(l_type:LetterType, parent:T) -> GallTainer {
+    pub fn new<T:ParentCircle>(l_type:LetterType, parent:T) -> GallTainer {
         let (stem_type, stem_vec, vowel_vec) = match l_type {
             LetterType::Digit   => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
             LetterType::BStem   => (Some(StemType::B),Vec::with_capacity(1), Vec::new()),
@@ -35,6 +37,8 @@ impl GallTainer {
         //     LetterType::EIU     => (None, Vec::new(), Vec::with_capacity(1)),
              _ => (None,Vec::new(), Vec::new())
         };
+        //let thick_fn_ptr: fn(f64)->Result<(),Error> = parent.get_mut_thick_fn_ptr();
+        //let radius_fn_ptr: fn(f64)->Result<(),Error> = parent.get_mut_rad_fn_ptr();
         GallTainer {
             stem_type,
             stem:stem_vec,
@@ -43,6 +47,8 @@ impl GallTainer {
             //dot: Vec::new(),
             parent_radius:parent.get_radius(),
             parent_thickness: parent.get_thickness(),
+            //mut_parent_rad_fn: radius_fn_ptr,
+            //mut_parent_thick_fn: thick_fn_ptr,
         }
     }
     // pub fn mut_stemtype(&mut self, s_type: Option<StemType>) -> Result<(), Error> {

@@ -5,6 +5,7 @@ use crate::gall_errors::{Error, GallError};
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_circle::{ChildCircle, Circle, HollowCircle, ParentCircle};
 use crate::gall_ord::PolarOrdinate;
+use crate::gall_word::GallWord;
 
 #[derive(PartialEq)]
 pub enum StemType {J,B,S,Z}
@@ -15,8 +16,8 @@ pub struct Stem {
     thickness: Rc<Cell<f64>>,
     parent_radius: Rc<Cell<f64>>,
     parent_thickness: Rc<Cell<f64>>,
-    mut_parent_rad_fn: fn(f64)-> Result<(),Error>,
-    mut_parent_thick_fn: fn(f64)-> Result<(),Error>,
+    //mut_parent_rad_fn: fn(&mut GallWord, f64) -> Result<(), Error>,
+    //mut_parent_thick_fn: fn(&mut GallWord, f64)-> Result<(),Error>,
     pub stem_type: StemType,
 }
 impl Stem {
@@ -25,16 +26,16 @@ impl Stem {
         let thickness = Rc::new(Cell::new(thickness));
         let parent_radius = parent.get_radius().clone();
         let parent_thickness = parent.get_thickness().clone();
-        let thick_fn_ptr: fn(f64)->Result<(),Error> = parent.get_mut_thick_fn_ptr();
-        let radius_fn_ptr: fn(f64)->Result<(),Error> = parent.get_mut_rad_fn_ptr();
+        //let thick_fn_ptr = parent.get_mut_thick_fn_ptr();
+        //let radius_fn_ptr = parent.get_mut_rad_fn_ptr();
         Ok(Stem {
             loc,
             radius,
             thickness,
             parent_radius,
             parent_thickness,
-            mut_parent_rad_fn: radius_fn_ptr,
-            mut_parent_thick_fn: thick_fn_ptr,
+            //mut_parent_rad_fn: radius_fn_ptr,
+            //mut_parent_thick_fn: thick_fn_ptr,
             stem_type,
         })
     }
@@ -126,12 +127,12 @@ impl ChildCircle for Stem {
     fn parent_thick(&self) -> f64 {
         self.parent_thickness.get()
     }
-    fn mut_parent_radius(&mut self, new_radius:f64) -> Result<(),Error> {
-        (self.mut_parent_rad_fn)(new_radius)
-    }
-    fn mut_parent_thick(&mut self, new_thick:f64) -> Result<(),Error> {
-        (self.mut_parent_thick_fn)(new_thick)
-    }
+    // fn mut_parent_radius(&mut self, new_radius:f64) -> Result<(),Error> {
+    //     (self.mut_parent_rad_fn)(new_radius)
+    // }
+    // fn mut_parent_thick(&mut self, new_thick:f64) -> Result<(),Error> {
+    //     (self.mut_parent_thick_fn)(new_thick)
+    // }
     fn get_parent_radius(&self) -> Rc<Cell<f64>> {
         self.parent_radius.clone()
     }
