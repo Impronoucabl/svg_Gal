@@ -7,7 +7,7 @@ use crate::gall_circle::{ChildCircle, Circle, HollowCircle, ParentCircle};
 use crate::gall_ord::PolarOrdinate;
 use crate::gall_word::GallWord;
 
-#[derive(PartialEq)]
+#[derive(PartialEq,Clone,Copy)]
 pub enum StemType {J,B,S,Z}
 
 pub struct Stem {
@@ -21,14 +21,14 @@ pub struct Stem {
     pub stem_type: StemType,
 }
 impl Stem {
-    pub fn new<T:ParentCircle>(loc:GallLoc, radius: f64, thickness:f64, stem_type: StemType, parent:T) -> Result<Stem,Error> {
+    pub fn new<T:HollowCircle>(loc:GallLoc, radius: f64, thickness:f64, stem_type: StemType, parent:&T) -> Stem {
         let radius = Rc::new(Cell::new(radius));
         let thickness = Rc::new(Cell::new(thickness));
         let parent_radius = parent.get_radius().clone();
         let parent_thickness = parent.get_thickness().clone();
         //let thick_fn_ptr = parent.get_mut_thick_fn_ptr();
         //let radius_fn_ptr = parent.get_mut_rad_fn_ptr();
-        Ok(Stem {
+        Stem {
             loc,
             radius,
             thickness,
@@ -37,7 +37,7 @@ impl Stem {
             //mut_parent_rad_fn: radius_fn_ptr,
             //mut_parent_thick_fn: thick_fn_ptr,
             stem_type,
-        })
+        }
     }
     fn radius_limits(&self) -> (f64,f64) {
         match &self.stem_type {
@@ -48,10 +48,16 @@ impl Stem {
         }
     }
     fn dist_limits(&self) -> (f64,f64) {
-        todo!()
+        match &self.stem_type {
+            StemType::J => (self.parent_inner() - self.outer_radius() - self.thick(), 0.0),
+            StemType::B => (self.parent_outer() + self.parent_thick() - self.outer_radius(), self.parent_outer() - self.outer_radius()),
+            StemType::S => (self.parent_inner() + self.inner_radius(),self.parent_inner()),
+            StemType::Z => (self.parent_outer(),self.parent_inner()),
+        }
     }
     fn thick_limits(&self) -> (f64,f64) {
-        todo!()
+        //todo!()
+        (2.0,20.0)
     }
     fn check_radius(&self, test_val:f64) -> Result<(), Error> {
         let (upper_limit, lower_limit) = self.radius_limits();

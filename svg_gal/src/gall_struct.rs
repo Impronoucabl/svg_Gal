@@ -30,13 +30,6 @@ pub trait ChildCircle {
     fn mut_stored_parent_thick(&mut self, new_radius:f64) -> Result<(),Error>;
 }
 
-pub enum LetterMark {
-    Stem(StemType),
-    GallVowel(VowelType),
-    GallMark,
-    Digit(u32),
-}
-
 #[derive(PartialEq, Default)]
 pub struct GallWord {
     pub syllables: Vec<GallCircle>,

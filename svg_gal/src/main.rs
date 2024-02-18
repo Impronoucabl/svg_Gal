@@ -47,7 +47,7 @@ fn main() {
             },
             ORIGIN.clone()
         );
-        word_vec.push(GallWord::new(words,loc));
+        word_vec.push(GallWord::new(words.0,words.1, loc));
     }
     println!("Rendering...");
     let mut drawn = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   

@@ -1,17 +1,22 @@
 const COLLISION_DIST: f64 = 0.001;
 
-use std::cell::Cell;
+use std::cell::{Cell, OnceCell};
 use std::rc::Rc;
 
-use crate::gall_circle::ParentCircle;
+use crate::gall_ang::GallAng;
+use crate::gall_circle::{HollowCircle, ParentCircle};
 use crate::gall_errors::{Error, GallError};
-use crate::gall_fn::LetterType;
+use crate::gall_fn::{LetterMark, LetterType};
+use crate::gall_loc::{GallLoc, Location};
+use crate::gall_ord::PolarOrdinate;
 use crate::gall_stem::{Stem, StemType};
+use crate::gall_word::GallWord;
 //use crate::gall_struct::{ChildCircle, Circle, HollowCircle};
 //use crate::gall_vowel::{GallVowel, VowelType};
 
 pub struct GallTainer {
-    stem_type: Option<StemType>,
+    ang: GallAng,
+    stem_type: OnceCell<StemType>,
     pub stem: Vec<Stem>,
     pub vowel: Vec<Stem>,//GallVowel>,
     //node: Vec<GallNode>,
@@ -24,22 +29,25 @@ pub struct GallTainer {
 }
 
 impl GallTainer {
-    pub fn new<T:ParentCircle>(l_type:LetterType, parent:T) -> GallTainer {
-        let (stem_type, stem_vec, vowel_vec) = match l_type {
-            LetterType::Digit   => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
-            LetterType::BStem   => (Some(StemType::B),Vec::with_capacity(1), Vec::new()),
-            LetterType::JStem   => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
-            LetterType::SStem   => (Some(StemType::S),Vec::with_capacity(1), Vec::new()),
-            LetterType::ZStem   => (Some(StemType::Z),Vec::with_capacity(1), Vec::new()),
+    pub fn new<T:HollowCircle>(l_type:LetterMark, parent:&T) -> GallTainer {
+        let (mark_type, stem_vec, vowel_vec) = match l_type {
+            LetterMark::Digit(_)   => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
+            LetterMark::Stem(L)    => (Some(L),Vec::with_capacity(1), Vec::new()),
         //     LetterType::A       => (None, Vec::new(), Vec::with_capacity(1)),
         //     LetterType::O1      => (None, Vec::new(), Vec::with_capacity(1)),
         //     LetterType::O2      => (None, Vec::new(), Vec::with_capacity(1)),
         //     LetterType::EIU     => (None, Vec::new(), Vec::with_capacity(1)),
              _ => (None,Vec::new(), Vec::new())
         };
+        let stem_type = OnceCell::new();
+        match mark_type {
+            Some(stem) => {stem_type.get_or_init(||stem);},
+            None => {},
+        };
         //let thick_fn_ptr: fn(f64)->Result<(),Error> = parent.get_mut_thick_fn_ptr();
         //let radius_fn_ptr: fn(f64)->Result<(),Error> = parent.get_mut_rad_fn_ptr();
         GallTainer {
+            ang: GallAng::new(None),
             stem_type,
             stem:stem_vec,
             vowel:vowel_vec,
@@ -51,16 +59,44 @@ impl GallTainer {
             //mut_parent_thick_fn: thick_fn_ptr,
         }
     }
-    // pub fn mut_stemtype(&mut self, s_type: Option<StemType>) -> Result<(), Error> {
-    //     if self.stem_type == s_type {
-    //         Ok(())
-    //     } else if self.stem.is_empty() && self.vowel.is_empty() {
-    //         self.stem_type = s_type;
-    //         Ok(())
-    //     } else {
-    //         Err(Error::new(GallError::StemAlreadySet))
-    //     }
-    // }
+    pub fn init(&mut self, stem_type:StemType, mut con_count:usize, ang:f64) {
+        self.stem_type.get_or_init(||stem_type);
+        self.ang.mut_ang(Some(con_count as f64 * ang));
+        con_count += 1;
+    }
+    pub fn stem_type(&self) -> Option<&StemType> {
+        self.stem_type.get()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.stem.is_empty() && self.vowel.is_empty()
+    }
+    pub fn populate(&mut self, l_mark: LetterMark, word: &GallWord) {
+        match l_mark {
+            LetterMark::Stem(stem) => {},//todo!(),
+            LetterMark::Digit(num) => todo!(),
+            LetterMark::GallMark => {},//todo!(),
+        }
+    }
+    pub fn create_stem(&self, stem:StemType, word: &GallWord) -> Stem {
+        let dist = match stem {
+            StemType::J => 200.0,
+            StemType::B => 200.0,
+            StemType::S => 200.0,
+            StemType::Z => 200.0,
+        };
+        let loc = GallLoc::new(
+            self.ang.ang().unwrap(),
+            dist,
+            word.get_center(),
+        );
+        Stem::new(
+            loc,
+            200.0,
+            5.0,
+            stem,
+            word
+        )
+    }
     // pub fn add_stem(&mut self, new_stem: Stem) -> Result<(),Error> {
     //     let s_type = match self.stem_type {
     //         Some(s_type) => s_type,
