@@ -1,10 +1,11 @@
 const COLLISION_DIST: f64 = 0.001;
+const LETTER_FRAC_OF_WRD: f64 = 0.35;
 
 use std::cell::{Cell, OnceCell};
 use std::rc::Rc;
 
 use crate::gall_ang::GallAng;
-use crate::gall_circle::HollowCircle;
+use crate::gall_circle::{Circle, HollowCircle};
 use crate::gall_fn::{LetterMark, LetterType};
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_stem::{Stem, StemType};
@@ -79,11 +80,12 @@ impl GallTainer {
         }
     }
     pub fn create_stem(&self, stem:StemType, word: &GallWord) -> Stem {
+        let p_rad = word.radius();
         let dist = match stem {
-            StemType::J => 200.0,
-            StemType::B => 200.0,
-            StemType::S => 200.0,
-            StemType::Z => 200.0,
+            StemType::J => p_rad*(0.8-LETTER_FRAC_OF_WRD),
+            StemType::B => p_rad*(1.0-LETTER_FRAC_OF_WRD),
+            StemType::S => p_rad,
+            StemType::Z => p_rad,
         };
         let loc = GallLoc::new(
             self.ang.ang().unwrap(),
@@ -92,8 +94,8 @@ impl GallTainer {
         );
         Stem::new(
             loc,
-            200.0,
-            5.0,
+            p_rad*LETTER_FRAC_OF_WRD,
+            word.thick() - 1.0,
             stem,
             word
         )
@@ -125,6 +127,11 @@ impl GallTainer {
     //         }
     //     }
     // }
+    fn unpack(mut self) -> (Vec<Stem>,Vec<Stem>) {
+        self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
+        self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
+        (self.stem,self.vowel)
+    }
 }
 
 // impl ChildCircle for GallTainer {

@@ -25,18 +25,20 @@ pub enum  LetterType {
     Punctuation, //more for error case than anything
 }
 
-// pub fn default_layouts(word_length:usize) -> (f64,f64,f64) {
-//     match word_length {
-//         //word_radius, word_angle, word_dist
-//         0|1 => (200.0,0.0,0.0),
-//         2 => (80.0,PI,120.0),
-//         phrase_len => (
-//             50.0,
-//             TAU/(phrase_len as f64),
-//             150.0,
-//         ),
-//     }
-// }
+pub fn default_layouts(phrase_length:usize, num:usize) -> (f64,f64,f64,f64) {
+    match phrase_length {
+        //word_radius, word_thick, word_angle, word_dist
+        0|1 => (650.0,75.0,0.0,0.0),
+        2 => (400.0,10.0,PI,200.0),
+        len => (
+            300.0,
+            9.0,
+            num as f64*TAU/(len as f64),
+            250.0,
+        ),//Circular pattern
+        //TODO: spiral pattern?
+    }
+}
 
 pub fn string_parse(raw_word:String) -> (String, usize) {
     let mut word = raw_word.to_lowercase();

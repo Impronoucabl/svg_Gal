@@ -17,13 +17,13 @@ pub struct GallWord {
 }
 
 impl GallWord {
-    pub fn new(text:String, len_guess:usize, loc:GallLoc) -> GallWord {
+    pub fn new(text:String, len_guess:usize, loc:GallLoc, radius: f64, thick:f64) -> GallWord {
         let tainer_vec = Vec::with_capacity(len_guess);
-        let mut word = GallWord{
+        let word = GallWord{
             loc,
             tainer_vec,
-            radius: Rc::new(Cell::new(350.0)),
-            thickness: Rc::new(Cell::new(5.0))
+            radius: Rc::new(Cell::new(radius)),
+            thickness: Rc::new(Cell::new(thick))
         };
         word.populate(text, len_guess)
     } 
@@ -58,6 +58,7 @@ impl GallWord {
             con.populate(l_mark, &self);
             println!("{}",con_count);
         }
+        self.tainer_vec.push(con);
         self
     }
     fn get_con(&self) -> GallTainer {

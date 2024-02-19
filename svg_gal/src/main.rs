@@ -2,9 +2,10 @@ use std::{cell::Cell, env, rc::Rc};
 
 use svg::{node::element::Circle, Document};
 
+use crate::gall_fn::default_layouts;
 use crate::gall_loc::GallLoc;
 use crate::gall_word::GallWord;
-use crate::render::renderable;
+use crate::render::Renderable;
 
 mod gall_fn;
 mod gall_errors;
@@ -34,22 +35,18 @@ fn main() {
         filename += &raw_word;
         word_len += 1;
         word_list.push(gall_fn::string_parse(raw_word));
-    }
-    //TODO: Generate word ang
-    let word_ang = 10.2;    
+    }   
     let mut word_vec = Vec::with_capacity(word_len);
     println!("Generating...");
     for (num,words) in word_list.into_iter().enumerate() {
+        let (w_radius, w_thick, word_ang, dist) = default_layouts(word_len, num);
         //create word struct
         let loc = GallLoc::new(
             (num as f64) * word_ang,
-            match word_len{
-                1 => 0.0,
-                _ => 600.0,
-            },
+            dist,
             ORIGIN.clone()
         );
-        word_vec.push(GallWord::new(words.0,words.1, loc));
+        word_vec.push(GallWord::new(words.0,words.1, loc, w_radius, w_thick));
     }
     println!("Rendering...");
     let mut drawn = Document::new().set("viewBox", (0, 0, WIDTH, HEIGHT));   

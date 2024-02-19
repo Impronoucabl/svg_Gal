@@ -1,7 +1,8 @@
 <svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
-<circle cx="1024" cy="1224" fill="none" r="200" stroke="black" stroke-width="5"/>
-<circle cx="1180.366296493606" cy="1148.6979603717466" fill="none" r="200" stroke="black" stroke-width="5"/>
-<circle cx="1218.9855824363647" cy="979.4958132087371" fill="none" r="200" stroke="black" stroke-width="5"/>
-<circle cx="1110.7767478235116" cy="843.8062264195162" fill="none" r="200" stroke="black" stroke-width="5"/>
+<circle cx="1024" cy="1511.5" fill="none" r="162.5" stroke="black" stroke-width="74"/>
+<circle cx="1532.1904636042193" cy="1429.2683712081766" fill="none" r="162.5" stroke="black" stroke-width="74"/>
+<circle cx="1657.7031429181852" cy="879.3613929283956" fill="none" r="162.5" stroke="black" stroke-width="74"/>
+<circle cx="1306.024430426413" cy="438.3702358634275" fill="none" r="162.5" stroke="black" stroke-width="74"/>
+<circle cx="1024" cy="1024" fill="none" r="650" stroke="black" stroke-width="75"/>
 <circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
 </svg>

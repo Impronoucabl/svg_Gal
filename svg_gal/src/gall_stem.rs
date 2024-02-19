@@ -5,7 +5,6 @@ use crate::gall_errors::{Error, GallError};
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_circle::{ChildCircle, Circle, HollowCircle, ParentCircle};
 use crate::gall_ord::PolarOrdinate;
-use crate::gall_word::GallWord;
 
 #[derive(PartialEq,Clone,Copy)]
 pub enum StemType {J,B,S,Z}
