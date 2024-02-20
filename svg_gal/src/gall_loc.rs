@@ -19,6 +19,9 @@ pub trait Location:PolarOrdinate {
     fn x(&self) -> f64;
     fn y(&self) -> f64;
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>>;
+    fn svg_ord(&self) -> (f64,f64) {
+        self.pos_ref().get()
+    }
 }
 
 impl GallLoc {

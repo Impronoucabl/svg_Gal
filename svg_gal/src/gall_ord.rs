@@ -9,6 +9,15 @@ pub trait PolarOrdinate {
     fn mut_dist(&mut self, new_dist: f64) -> Result<(), Error>;
     fn ang(&self) -> Option<f64>;
     fn dist(&self) -> f64;
+    fn mut_ccw(&mut self, angle:f64) -> Result<(),Error> {
+        match self.ang() {
+            None => Err(Error::new(GallError::AngleUndefined)),
+            Some(ang) => Ok(self.mut_ang(angle + ang))
+        }
+    }
+    fn mut_cw(&mut self, angle:f64) -> Result<(),Error> {
+        self.mut_ccw(-angle)
+    }
 }
 
 #[derive(PartialEq,Default,Clone,Copy)]
