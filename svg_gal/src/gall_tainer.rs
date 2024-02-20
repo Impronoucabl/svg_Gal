@@ -5,9 +5,11 @@ use std::cell::{Cell, OnceCell};
 use std::rc::Rc;
 
 use crate::gall_ang::GallAng;
-use crate::gall_circle::{Circle, HollowCircle};
-use crate::gall_fn::{LetterMark, LetterType};
+use crate::gall_circle::{ChildCircle, Circle, HollowCircle};
+use crate::gall_config::Config;
+use crate::gall_fn::{self, LetterMark, LetterType};
 use crate::gall_loc::{GallLoc, Location};
+use crate::gall_ord::PolarOrdinate;
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_word::GallWord;
 //use crate::gall_struct::{ChildCircle, Circle, HollowCircle};
@@ -137,6 +139,29 @@ impl GallTainer {
     //         }
     //     }
     // }
+    pub fn thi_calc(&self) -> (f64,f64) {
+        let (stem1,stem2) = self.stack_check();
+        let thi_inner = gall_fn::thi(
+            stem1.dist(),
+            stem1.outer_radius(), 
+            stem1.parent_inner(),
+        );
+        let thi_outer = gall_fn::thi(
+            stem2.dist(),
+            stem2.inner_radius(), 
+            stem2.parent_outer(),
+        );
+        (thi_inner,thi_outer)
+    }
+    pub fn stack_check(&self) -> (&Stem, &Stem) {
+        let stem1 = self.stem.first().unwrap();
+        let stem2 = if Config::STACK {
+            self.stem.last().unwrap()
+        } else {
+            stem1 // stem1 > stem2
+        };
+        (stem1,stem2)
+    }
     fn unpack(mut self) -> (Vec<Stem>,Vec<Stem>) {
         self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
         self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
