@@ -44,6 +44,10 @@ impl GallLoc {
         let (center_x,center_y) = self.center_ref.get();
         self.abs_svg.set((dist*rel_x + center_x, dist*rel_y + center_y));
     }
+    pub fn compute_loc(&mut self, ang:f64) -> (f64,f64) {
+        self.mut_ccw(ang);
+        self.svg_ord()
+    }
     
     // pub fn rotate_ccw(&mut self, angle: f64) -> Option<()> {
     //     self.mut_ang(self.ang() + angle);

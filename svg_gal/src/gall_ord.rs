@@ -1,6 +1,4 @@
 
-use std::f64::consts::{PI, FRAC_PI_2, FRAC_PI_8, TAU};
-
 use crate::gall_ang::GallAng;
 use crate::gall_errors::{Error, GallError};
 
@@ -18,6 +16,10 @@ pub trait PolarOrdinate {
     fn mut_cw(&mut self, angle:f64) -> Result<(),Error> {
         self.mut_ccw(-angle)
     }
+    fn mut_ang_d(&mut self, new_dist:f64, new_ang:f64) {
+        self.mut_ang(new_ang);
+        let _ = self.mut_dist(new_dist);
+    }
 }
 
 #[derive(PartialEq,Default,Clone,Copy)]
@@ -33,22 +35,18 @@ impl GallOrd {
             distance
         }
     } 
-    //Checks if distance is 0
+    //Checks if distance is 0, and if it is, set angle to 0.
     fn ord_check(&mut self) -> Result<(), Error> {
-        self.angle = match self.distance {
-            0.0 => GallAng::new(None),
-            Other => match self.ang() {
-                Some(_) => self.angle,
+        if self.distance == 0.0 {
+            self.angle = GallAng::new(None);
+            Ok(())
+        } else {
+            match self.ang() {
+                Some(_) => Ok(()),
                 None => return Err(Error::new(GallError::AngleUndefined))
-            },
-        };
-        Ok(())
+            }
+        }
     }    
-    //mut self can't fail since ang can't be undef
-    pub fn mut_self(&mut self, new_dist:f64, new_ang:f64) {
-        self.mut_ang(new_ang);
-        self.mut_dist(new_dist);
-    }
 }
 
 impl PolarOrdinate for GallOrd {

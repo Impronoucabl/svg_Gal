@@ -3,6 +3,7 @@ use std::{cell::Cell, f64::consts::PI};
 use std::rc::Rc;
 
 use crate::gall_circle::{Circle, HollowCircle};
+use crate::gall_config::Config;
 use crate::gall_errors::{Error, GallError};
 use crate::gall_fn::{self, LetterMark};
 use crate::gall_loc::{GallLoc, Location};
@@ -28,24 +29,20 @@ impl GallWord {
         word.populate(text, len_guess)
     } 
     fn populate(mut self, word:String, len_guess:usize) -> GallWord {
-        const STACK: bool = false;
         let tainer_ang = TAU/(len_guess as f64); 
         let mut con_count:usize = 0;
         let mut con = self.get_con();
         for cha in word.chars() {
             let (l_mark, repeat) = gall_fn::stem_lookup(&cha);
-            
+            let d_mark = gall_fn::dot_lookup(&cha);
             if con.stem_type().is_none() && con.is_empty() {
-                match l_mark {
-                    LetterMark::Stem(stem) => {
-                        con_count = con.init(stem, con_count, tainer_ang)
-                    }
-                    _ => {}
+                if let LetterMark::Stem(stem) = l_mark {
+                    con_count = con.init(stem, con_count, tainer_ang)
                 }
             } else {
                 match &l_mark {
                     LetterMark::Stem(stem) => {
-                        if (!STACK && !con.stem.is_empty()) || (Some(stem) != con.stem_type()) {
+                        if (!Config::STACK && !con.stem.is_empty()) || (Some(stem) != con.stem_type()) {
                             self.tainer_vec.push(con);
                             con = self.get_con();
                             con_count = con.init(*stem, con_count, tainer_ang);
@@ -55,7 +52,7 @@ impl GallWord {
                     LetterMark::GallMark => {}, 
                 }
             } //At this point the con tainer should be initialised.
-            con.populate(l_mark, &self);
+            con.populate(l_mark, d_mark, &self);
             println!("{}",con_count);
         }
         self.tainer_vec.push(con);

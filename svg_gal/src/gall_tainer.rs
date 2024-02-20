@@ -69,7 +69,7 @@ impl GallTainer {
     pub fn is_empty(&self) -> bool {
         self.stem.is_empty() && self.vowel.is_empty()
     }
-    pub fn populate(&mut self, l_mark: LetterMark, word: &GallWord) {
+    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<bool>, u8), word: &GallWord) {
         match l_mark {
             LetterMark::Stem(stem) => {
                 let letter = self.create_stem(stem, word);
@@ -77,6 +77,15 @@ impl GallTainer {
             }
             LetterMark::Digit(num) => todo!(),
             LetterMark::GallMark => {},//todo!(),
+        }
+        if let Some(dot) = d_mark.0 {
+            let deco_fn = match dot {
+                true =>{||()}, //TODO: add add_dot_fn
+                false=>{||()}, //TODO: add add_dash_fn
+            };
+            for i in 0..d_mark.1 {
+                deco_fn()
+            }
         }
     }
     pub fn create_stem(&self, stem:StemType, word: &GallWord) -> Stem {
@@ -105,6 +114,7 @@ impl GallTainer {
             println!("Warning! Stem has different type to tainer")
         } ;
         self.stem.push(new_stem);
+        self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
     }
     // pub fn add_vowel(&mut self, new_vowel: GallVowel) -> Result<(),Error> {
     //     if self.vowel.len() == 0 {
