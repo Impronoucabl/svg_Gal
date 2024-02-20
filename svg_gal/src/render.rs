@@ -46,7 +46,6 @@ impl GallWord {
         let mut skel = Vec::new();
         let mut divot = Vec::new();
         let mut mark = Vec::new();
-        let center = self.get_center();
         for tainer in self.tainer_vec {
             match tainer.stem_type() {
                 None => mark.push(tainer),
