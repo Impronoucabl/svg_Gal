@@ -1,18 +1,13 @@
-const COLLISION_DIST: f64 = 0.001;
-const LETTER_FRAC_OF_WRD: f64 = 0.35;
-
-use std::cell::{Cell, OnceCell};
-use std::rc::Rc;
+use std::cell::OnceCell;
 
 use crate::gall_ang::GallAng;
 use crate::gall_circle::{ChildCircle, Circle, HollowCircle};
 use crate::gall_config::Config;
-use crate::gall_fn::{self, LetterMark, LetterType};
+use crate::gall_fn::{self, LetterMark};
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_ord::PolarOrdinate;
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_word::GallWord;
-//use crate::gall_struct::{ChildCircle, Circle, HollowCircle};
 //use crate::gall_vowel::{GallVowel, VowelType};
 
 pub struct GallTainer {
@@ -33,7 +28,7 @@ impl GallTainer {
     pub fn new(l_type:LetterMark) -> GallTainer {
         let (mark_type, stem_vec, vowel_vec) = match l_type {
             LetterMark::Digit(_)   => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
-            LetterMark::Stem(L)    => (Some(L),Vec::with_capacity(1), Vec::new()),
+            LetterMark::Stem(mark)    => (Some(mark),Vec::with_capacity(1), Vec::new()),
         //     LetterType::A       => (None, Vec::new(), Vec::with_capacity(1)),
         //     LetterType::O1      => (None, Vec::new(), Vec::with_capacity(1)),
         //     LetterType::O2      => (None, Vec::new(), Vec::with_capacity(1)),
@@ -91,12 +86,12 @@ impl GallTainer {
         }
     }
     pub fn create_stem(&self, stem:StemType, word: &GallWord) -> Stem {
-        let p_rad = word.radius();
-        let dist = match stem {
-            StemType::J => p_rad*(0.8-LETTER_FRAC_OF_WRD),
-            StemType::B => p_rad*(1.0-LETTER_FRAC_OF_WRD),
-            StemType::S => p_rad,
-            StemType::Z => p_rad,
+        let (p_rad, p_thick) = (word.radius(), word.thick());
+        let (dist,thick) = match stem {
+            StemType::J => (p_rad*(0.7 - Config::LETTER_FRAC_OF_WRD),p_thick*0.6),
+            StemType::B => (p_rad*(1.2 - Config::LETTER_FRAC_OF_WRD),p_thick*0.6),
+            StemType::S => (p_rad + p_thick, p_thick*0.6),
+            StemType::Z => (p_rad, p_thick*0.6),
         };
         let loc = GallLoc::new(
             self.ang.ang().unwrap(),
@@ -105,8 +100,8 @@ impl GallTainer {
         );
         Stem::new(
             loc,
-            p_rad*LETTER_FRAC_OF_WRD,
-            word.thick() - 1.0,
+            p_rad*Config::LETTER_FRAC_OF_WRD,
+            thick,
             stem,
             word
         )
@@ -152,6 +147,20 @@ impl GallTainer {
             stem2.parent_outer(),
         );
         (thi_inner,thi_outer)
+    }
+    pub fn theta_calc(&self) -> (f64,f64) {
+        let (stem1,stem2) = self.stack_check();
+        let theta_inner = gall_fn::theta(
+            stem1.dist(),
+            stem1.outer_radius(), 
+            stem1.parent_inner(),
+        );
+        let theta_outer = gall_fn::theta(
+            stem2.dist(),
+            stem2.inner_radius(), 
+            stem2.parent_outer(),
+        );
+        (theta_inner,theta_outer)
     }
     pub fn stack_check(&self) -> (&Stem, &Stem) {
         let stem1 = self.stem.first().unwrap();

@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::gall_errors::{Error, GallError};
 use crate::gall_loc::{GallLoc, Location};
-use crate::gall_circle::{ChildCircle, Circle, HollowCircle, ParentCircle};
+use crate::gall_circle::{ChildCircle, Circle, HollowCircle};
 use crate::gall_ord::PolarOrdinate;
 
 #[derive(PartialEq,Clone,Copy)]
@@ -25,8 +25,6 @@ impl Stem {
         let thickness = Rc::new(Cell::new(thickness));
         let parent_radius = parent.get_radius().clone();
         let parent_thickness = parent.get_thickness().clone();
-        //let thick_fn_ptr = parent.get_mut_thick_fn_ptr();
-        //let radius_fn_ptr = parent.get_mut_rad_fn_ptr();
         Stem {
             loc,
             radius,
@@ -56,7 +54,7 @@ impl Stem {
     }
     fn thick_limits(&self) -> (f64,f64) {
         //todo!()
-        (2.0,20.0)
+        (2.0,200.0)
     }
     fn check_radius(&self, test_val:f64) -> Result<(), Error> {
         let (upper_limit, lower_limit) = self.radius_limits();

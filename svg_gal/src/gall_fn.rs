@@ -164,7 +164,7 @@ pub fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
     }
 }
 
-pub fn _theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
+pub fn theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
     let theta = ((big_radius.powf(2.0) - letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*letter_radius)).acos();
     if theta == std::f64::NAN {
         0.0 //could do math error?

@@ -17,7 +17,7 @@ pub trait Renderable {
 
 trait SkelPart {
     fn part_init(&self) -> ((Data, Data),(f64,f64),(f64,f64),(f64,f64));
-    fn part_render(&self, inner_outer:(Data,Data)) -> ((Data,Data),(f64,f64));
+    fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> ((Data,Data),(f64,f64));
 }
 
 impl Renderable for GallWord {
@@ -31,14 +31,18 @@ impl Renderable for GallWord {
             .set("cy", self.y())
             .set("r", self.radius());
         let (skel, divot, mark) = self.pre_render();
-        drawn = GallWord::skel_render(skel, radius, drawn);
+        drawn = if skel.len() == 0 {
+            drawn.add(circle)
+        } else {
+            GallWord::skel_render(skel, radius, drawn)
+        };
         for tainer in divot {
             drawn = tainer.render(drawn);
         }
         for tainer in mark {
             drawn = tainer.render(drawn);
         }
-        drawn.add(circle)
+        drawn
     }
 }
 
@@ -64,12 +68,12 @@ impl GallWord {
     }
     fn skel_render(skel:Vec<GallTainer>, radius:(f64,f64), mut drawn:Document) -> Document {
         let (mut data,inner_join, outer_join, init_angles) = skel[0].part_init();
-        let mut fin_ang: (f64,f64) = (0.0,0.0);
+        let mut fin_ang: (f64,f64) = init_angles;
         for tainer in skel {
-            (data, fin_ang) = tainer.part_render(data)
+            (data, fin_ang) = tainer.part_render(data, fin_ang)
         };
-        let inner_sweep = fin_ang.0 - init_angles.0 <= PI;
-        let outer_sweep = fin_ang.1 - init_angles.1 <= PI;
+        let inner_sweep = (fin_ang.0 - init_angles.0).abs() > PI;
+        let outer_sweep = (fin_ang.1 - init_angles.1).abs() > PI;
         let closed_inner_loop = data.0.elliptical_arc_to((
             radius.0, radius.0,
             0,
@@ -89,7 +93,7 @@ impl GallWord {
         let outer_path = Path::new()
             .set("d", closed_outer_loop);
         drawn = drawn.add(outer_path
-            .set("fill", "black")
+            .set("fill", "blue")
             .set("stroke-width", 0.0)
             .set("stroke", "none")
         );  
@@ -112,22 +116,24 @@ impl Renderable for GallTainer {
 }
 
 impl SkelPart for GallTainer {
-    fn part_render(&self, inner_outer:(Data,Data)) -> ((Data,Data),(f64,f64)) {
+    fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> ((Data,Data),(f64,f64)) {
         let (stem1, stem2) = self.stack_check();
         let (thi_inner,thi_outer) = self.thi_calc();
+        let (theta_inner,theta_outer) = self.theta_calc();
+        if thi_inner.is_nan() || thi_outer.is_nan() {
+            println!("Skeleton letter not touching skeleton");
+            panic!();
+        };
         let w_in_rad = stem1.parent_inner();
         let w_ou_rad = stem2.parent_outer();
-        let l_in_rad = stem2.inner_radius();
-        let l_ou_rad = stem1.outer_radius();
-        let b_div_flag = match self.stem_type() {
-            Some(s_type) => s_type == &StemType::B,
-            None => {panic!()},
-        };
+        let l_in_big_rad = stem1.outer_radius();
+        let l_ou_smal_rad = stem2.inner_radius();
+        let big_inner_l_arc = 2.0*theta_inner < PI;
+        let big_outer_l_arc = 2.0*theta_outer < PI;
         let inner_word_end_angle = stem1.ang().unwrap() - thi_inner;
         let outer_word_end_angle = stem2.ang().unwrap() - thi_outer;
-        let long_inner_skeleton = inner_word_end_angle > PI;
-        let long_outer_skeleton = outer_word_end_angle > PI;
-        
+        let long_inner_skeleton = (inner_word_end_angle - start_ang.0).abs() > PI;
+        let long_outer_skeleton = (outer_word_end_angle - start_ang.1).abs() > PI;
         let mut tracker = GallLoc::new(
             inner_word_end_angle,
             w_in_rad, 
@@ -148,9 +154,9 @@ impl SkelPart for GallTainer {
             0,
             inner_letter_start.0, inner_letter_start.1
         )).elliptical_arc_to((
-            l_in_rad, l_in_rad, 
+            l_in_big_rad, l_in_big_rad, 
             0,
-            if b_div_flag {1} else {0},
+            if big_inner_l_arc {1} else {0},
             1,
             inner_letter_finish.0, inner_letter_finish.1
         ));
@@ -161,9 +167,9 @@ impl SkelPart for GallTainer {
             0,
             outer_letter_start.0, outer_letter_start.1
         )).elliptical_arc_to((
-            l_ou_rad, l_ou_rad, 
+            l_ou_smal_rad, l_ou_smal_rad, 
             0,
-            if b_div_flag {1} else {0},
+            if big_outer_l_arc {1} else {0},
             1,
             outer_letter_finish.0, outer_letter_finish.1
         ));
@@ -205,7 +211,7 @@ impl Renderable for Stem {
         let circle = Circle::new()
             .set("fill", "none")
             .set("stroke", "black")
-            .set("stroke-width", self.thick())
+            .set("stroke-width", (self.thick()*2.0).to_string()+"px")
             .set("cx", self.x())
             .set("cy", self.y())
             .set("r", self.radius());

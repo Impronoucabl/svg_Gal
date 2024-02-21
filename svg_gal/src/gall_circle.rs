@@ -20,14 +20,6 @@ pub trait HollowCircle: Circle {
     }
 }
 
-pub trait ParentCircle: HollowCircle {
-    fn get_mut_rad_fn_ptr<T:Circle>(&self) -> for<'a> fn(&'a mut T, f64) -> Result<(), Error> {
-        T::mut_radius
-    }
-    fn get_mut_thick_fn_ptr<T:HollowCircle>(&self) -> for <'a> fn(&'a mut T, f64)->Result<(),Error> {
-        T::mut_thickness
-    }
-}
 pub trait ChildCircle{
     fn parent_radius(&self) -> f64;
     fn parent_thick(&self) -> f64;

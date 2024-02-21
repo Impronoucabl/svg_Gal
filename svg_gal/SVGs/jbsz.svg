@@ -1,8 +1,7 @@
 <svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
-<path d="M1024,1749 A725,725,0,0,0,NaN,NaN A301.5,301.5,0,1,1,NaN,NaN A725,725,0,0,0,1164.7712,312.79788 A301.5,301.5,0,0,1,883.2287,312.79788 A725,725,0,0,0,1024,1749 z" fill="black" stroke="none" stroke-width="0"/>
-<path d="M1024,1599 A575,575,0,0,0,1518.9456,1316.6669 A153.5,153.5,0,1,1,1518.9456,731.3331 A575,575,0,0,0,1290.7104,514.5979 A153.5,153.5,0,0,1,757.2895,514.5979 A575,575,0,1,0,1024,1599 z" fill="green" stroke="none" stroke-width="0"/>
-<circle cx="1024" cy="1316.5" fill="none" r="227.49999999999997" stroke="black" stroke-width="74"/>
-<circle cx="374" cy="1023.9999999999999" fill="none" r="227.49999999999997" stroke="black" stroke-width="74"/>
-<circle cx="1024" cy="1024" fill="none" r="650" stroke="black" stroke-width="75"/>
+<path d="M1024,1749 A725,725,0,0,0,1745.7874,1092.1766 A182.5,182.5,0,1,1,1745.7874,955.82336 A725,725,0,0,0,1205.0487,321.96982 A182.5,182.5,0,0,1,842.9513,321.96982 A725,725,0,0,0,1024,1749 z" fill="blue" stroke="none" stroke-width="0"/>
+<path d="M1024,1599 A575,575,0,0,0,1532.2579,1292.8845 A272.5,272.5,0,0,1,1532.2579,755.1155 A575,575,0,0,0,1223.4342,484.69397 A272.5,272.5,0,0,1,824.5658,484.69397 A575,575,0,0,0,1024,1599 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1024" cy="1251.5" fill="none" r="227.49999999999997" stroke="black" stroke-width="90px"/>
+<circle cx="374" cy="1023.9999999999999" fill="none" r="227.49999999999997" stroke="black" stroke-width="90px"/>
 <circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
 </svg>

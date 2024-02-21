@@ -52,8 +52,7 @@ impl GallWord {
                     LetterMark::GallMark => {}, 
                 }
             } //At this point the con tainer should be initialised.
-            con.populate(l_mark, d_mark, &self);
-            println!("{}",con_count);
+            con.populate(l_mark, d_mark, &self)
         }
         self.tainer_vec.push(con);
         self

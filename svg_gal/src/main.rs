@@ -61,8 +61,7 @@ fn main() {
                 .set("cx", Config::WIDTH/2.0)
                 .set("cy", Config::HEIGHT/2.0)
                 .set("r", 1020);
-    drawn = drawn.add(circle);
-    //drawn = sentence.render(drawn, ORIGIN);    
+    drawn = drawn.add(circle);   
     println!("Saving under {}", filename);
     match svg::save(filename + ".svg", &drawn) {
         Ok(_) => println!("Done!"),
