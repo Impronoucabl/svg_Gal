@@ -1,46 +1,74 @@
+use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::gall_errors::{Error, GallError};
-use crate::gall_ord::{BoundedValue, CenterOrd, GallAng, GallLoc, LocMover, PositiveDist};
-use crate::gall_struct::{ChildCircle, Circle, HollowCircle};
+use crate::gall_circle::{ChildCircle, Circle, HollowCircle};
+use crate::gall_loc::{GallLoc, Location};
+use crate::gall_ord::PolarOrdinate;
 //O1 is on a letter, O2 is on a word
 #[derive(PartialEq)]
 pub enum VowelType {A,E,I,O1,O2,U}
 
 pub struct GallVowel {
     loc: GallLoc,
-    radius: Rc<PositiveDist>,
-    thickness: Rc<PositiveDist>,
-    parent_radius: Rc<PositiveDist>,
-    parent_thickness: Rc<PositiveDist>,
+    radius: Rc<Cell<f64>>,
+    thickness: Rc<Cell<f64>>,
+    parent_radius: Rc<Cell<f64>>,
+    parent_thickness: Rc<Cell<f64>>,
     pub vowel_type: VowelType,
 }
 
 impl GallVowel {
-    pub fn new<T:HollowCircle>(loc:GallLoc, radius: f64, thickness:f64, vowel_type: VowelType, parent:T) -> Result<GallVowel, Error> {
-        let radius = Rc::new(PositiveDist::new(radius)?);
-        let thickness = Rc::new(PositiveDist::new(thickness)?);
+    pub fn new<T:HollowCircle>(loc:GallLoc, radius: f64, thickness:f64, vowel_type: VowelType, parent:T) -> GallVowel {
+        let radius = Rc::new(Cell::new(radius));
+        let thickness = Rc::new(Cell::new(thickness));
         let parent_radius = parent.get_radius().clone();
         let parent_thickness = parent.get_thickness().clone();
-        
-        Ok(GallVowel {
+        GallVowel {
             loc,
             radius,
             thickness,
             parent_radius,
             parent_thickness,
             vowel_type,
-        })
+        }
     }
 }
 
-impl LocMover for GallVowel {
-    //case for EIU on letter/word not delt with, since a None angle short circuits to desired behaviour.
-    fn mut_ang(&mut self, angle:GallAng) -> Result<(), Error> {
+impl Location for GallVowel {
+    fn mut_center(&mut self, movement:(f64,f64)) {
+        self.loc.mut_center(movement)
+    }
+    //This won't change any centers that have been cloned off this one
+    fn set_center(&mut self, new_center:Rc<Cell<(f64, f64)>>) {
+        self.loc.set_center(new_center)
+    }
+    fn get_center(&self) -> Rc<Cell<(f64,f64)>> {
+        self.loc.get_center()
+    }
+    fn x(&self) -> f64 {
+        self.loc.x()
+    }
+    fn y(&self) -> f64 {
+        self.loc.y()
+    }
+    fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
+        self.loc.pos_ref()
+    }
+}
+
+impl PolarOrdinate for GallVowel {
+    fn ang(&self) -> Option<f64> {
+        self.loc.ang()
+    }
+    fn dist(&self) -> f64 {
+        self.loc.dist()
+    }
+    fn mut_ang(&mut self, angle:f64) {
         self.loc.mut_ang(angle)
     }
     fn mut_dist(&mut self, new_dist:f64) -> Result<(), Error> {
-        let p_rad = self.parent_radius.dist();
+        let p_rad = self.parent_radius();
         match self.vowel_type {
             VowelType::E|VowelType::I|VowelType::U => {
                 match new_dist {
@@ -49,103 +77,79 @@ impl LocMover for GallVowel {
                     _ => Err(Error::new(GallError::InvalidVowelDist)),
                 }
             },
-            A => {
-                if new_dist < p_rad + self.parent_thickness.dist() + self.thickness.dist() {
+            VowelType::A => {
+                if new_dist < p_rad + self.radius() + self.parent_thick() + self.thick() {
                     Err(Error::new(GallError::InvalidVowelDist))
                 } else {
                     self.loc.mut_dist(new_dist)
                 }
             },
-            O1 => {
-                if new_dist > p_rad + self.parent_thickness.dist() {
+            VowelType::O1 => {//attached O
+                //TODO: Confirm if works.
+                if new_dist > p_rad + self.parent_thick() {
                     return Err(Error::new(GallError::InvalidVowelDist));
                 }
-                if new_dist < p_rad - self.parent_thickness.dist() {
+                if new_dist < p_rad - self.parent_thick() {
                     Err(Error::new(GallError::InvalidVowelDist))
                 } else {
                     self.loc.mut_dist(new_dist)
                 }
             },
-            O2 => {
-                if new_dist > p_rad - self.parent_thickness.dist() - self.radius.dist() - self.thickness.dist() {
+            VowelType::O2 => {
+                if new_dist > p_rad - self.parent_thick() - self.radius() - self.thick() {
                     Err(Error::new(GallError::InvalidVowelDist))
                 } else {
                     self.loc.mut_dist(new_dist)
                 }
             },
         }
-    }
-    fn mut_center(&mut self, movement:(f64,f64)) {
-        self.loc.mut_center(movement)
-    }
-    //This won't change any centers that have been cloned off this one
-    fn set_center(&mut self, new_center:CenterOrd) {
-        self.loc.set_center(new_center)
-    }
-    fn get_ang(&self) -> GallAng {
-        self.loc.get_ang()
-    }
-    fn get_dist(&self) -> f64 {
-        self.loc.get_dist()
-    }
-    fn get_center(&self) -> Rc<(f64,f64)> {
-        self.loc.get_center()
-    }
-}
-
-impl BoundedValue<f64,PositiveDist> for GallVowel {
-    fn val_check(lower_bound:f64, upper_bound:f64, val: PositiveDist) -> Result<PositiveDist, Error> {
-        let radius = val.dist();
-        if radius >= lower_bound {
-            if radius < upper_bound {
-                Ok(val)
-            } else {
-                Err(Error::new(GallError::VowelRadiusTooLong))
-            }
-        } else {
-            Err(Error::new(GallError::VowelRadiusTooShort))
-        }
-    }
-
-    fn mut_val(&mut self, new_radius: PositiveDist) -> Result<(),Error> {
-        let radius = GallVowel::val_check(
-            self.parent_thickness.dist() + self.thickness.dist(), 
-            self.parent_radius.dist()- self.parent_thickness.dist(),
-            new_radius
-        )?.dist();
-        self.radius.mut_val(radius)
     }
 }
 
 impl ChildCircle for GallVowel {
-    fn get_parent_radius(&self) -> f64 {
-        self.parent_radius.dist()
+    fn get_parent_radius(&self) -> Rc<Cell<f64>> {
+        self.parent_radius.clone()
     }
-    fn get_parent_thick(&self) -> f64 {
-        self.parent_thickness.dist()
+    fn get_parent_thick(&self) -> Rc<Cell<f64>> {
+        self.parent_thickness.clone()
     }
-    fn mut_stored_parent_radius(&mut self, new_radius:f64) -> Result<(),Error> {
-        self.parent_radius.mut_val(new_radius)
+
+    fn parent_radius(&self) -> f64 {
+        self.parent_radius.get()
     }
-    fn mut_stored_parent_thick(&mut self, new_radius:f64) -> Result<(),Error> {
-        self.parent_thickness.mut_val(new_radius)
+
+    fn parent_thick(&self) -> f64 {
+        self.parent_thickness.get()
     }
 }
-
 impl Circle for GallVowel {
-    fn get_radius(&self) -> Rc<PositiveDist> {
+    fn get_radius(&self) -> Rc<Cell<f64>> {
         self.radius.clone()
     }
     fn mut_radius(&mut self, new_radius:f64) -> Result<(), Error> {
-        self.radius.mut_val(new_radius)
+        if new_radius < self.parent_thick() + self.thick() {
+            Err(Error::new(GallError::VowelRadiusTooShort))
+        } else if new_radius >= self.parent_radius()- self.parent_thick() {
+            Err(Error::new(GallError::VowelRadiusTooLong))
+        } else {
+            self.radius.set(new_radius);
+            Ok(())
+        }
+    }
+    fn radius(&self) -> f64 {
+        self.radius.get()
     }
 }
-
 impl HollowCircle for GallVowel {
-    fn get_thickness(&self) -> Rc<PositiveDist> {
+    fn get_thickness(&self) -> Rc<Cell<f64>> {
         self.thickness.clone()
     }
     fn mut_thickness(&mut self, new_thick: f64) -> Result<(),Error> {
-        self.thickness.mut_val(new_thick)
+        self.thickness.set(new_thick);
+        Ok(())
+        //TODO:Thickness checks
+    }
+    fn thick(&self) -> f64 {
+        self.thickness.get()
     }
 }

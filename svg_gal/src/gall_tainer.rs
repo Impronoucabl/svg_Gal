@@ -7,6 +7,7 @@ use crate::gall_fn::{self, LetterMark};
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_ord::PolarOrdinate;
 use crate::gall_stem::{Stem, StemType};
+use crate::gall_vowel::GallVowel;
 use crate::gall_word::GallWord;
 //use crate::gall_vowel::{GallVowel, VowelType};
 
@@ -14,7 +15,7 @@ pub struct GallTainer {
     ang: GallAng,
     stem_type: OnceCell<StemType>,
     pub stem: Vec<Stem>,
-    pub vowel: Vec<Stem>,//GallVowel>,
+    pub vowel: Vec<GallVowel>,
     //node: Vec<GallNode>,
     //dot: Vec<GallDot>,
     //mark: Vec<GallMark>,
@@ -171,7 +172,7 @@ impl GallTainer {
         };
         (stem1,stem2)
     }
-    fn unpack(mut self) -> (Vec<Stem>,Vec<Stem>) {
+    fn unpack(mut self) -> (Vec<Stem>,Vec<GallVowel>) {
         self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
         self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
         (self.stem,self.vowel)
