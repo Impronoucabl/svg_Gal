@@ -1,18 +1,20 @@
 use std::f64::consts::PI;
 
-use svg::Document;
-use svg::node::element::{Path, Circle, SVG};
+use svg::{Document, Node};
+use svg::node::element::{Circle, Element, Path, SVG};
 use svg::node::element::path::Data;
 
-use crate::gall_circle::{ChildCircle, Circle as Cir, HollowCircle};
+use crate::gall_circle::{ChildCircle, Circle as Cir, Dot, HollowCircle};
+use crate::gall_config::Config;
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_ord::PolarOrdinate;
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_tainer::GallTainer;
+use crate::gall_vowel::GallVowel;
 use crate::gall_word::GallWord;
 
 pub trait Renderable {
-    fn render(self, drawn:Document) -> Document;
+    fn render(self, drawn:Document) -> Document; 
 }
 
 trait SkelPart {
@@ -20,12 +22,16 @@ trait SkelPart {
     fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> ((Data,Data),(f64,f64));
 }
 
+trait FreeRender {
+    fn post_render(&self, vec:&mut Vec<Element>);
+}
+
 impl Renderable for GallWord {
     fn render(self, mut drawn:Document) -> Document {
         let radius = (self.inner_radius(),self.outer_radius());
         let circle = Circle::new()
             .set("fill", "none")
-            .set("stroke", "black")
+            .set("stroke", Config::SKEL_COLOUR())
             .set("stroke-width", self.thick())
             .set("cx", self.x())
             .set("cy", self.y())
@@ -53,7 +59,13 @@ impl GallWord {
         let mut mark = Vec::new();
         for tainer in self.tainer_vec {
             match tainer.stem_type() {
-                None => mark.push(tainer),
+                None => {
+                    if tainer.vowel.is_empty() {
+                        mark.push(tainer)
+                    } else {
+                        divot.push(tainer)
+                    }
+                }
                 Some(stem_type) => {
                     match stem_type {
                         StemType::J => divot.push(tainer),
@@ -61,7 +73,7 @@ impl GallWord {
                         StemType::S => skel.push(tainer),
                         StemType::Z => divot.push(tainer),
                     }
-                }
+                },
             }
         }
         (skel,divot,mark)
@@ -69,11 +81,15 @@ impl GallWord {
     fn skel_render(skel:Vec<GallTainer>, radius:(f64,f64), mut drawn:Document) -> Document {
         let (mut data,inner_join, outer_join, init_angles) = skel[0].part_init();
         let mut fin_ang: (f64,f64) = init_angles;
+        let mut post_render = Vec::new();
         for tainer in skel {
-            (data, fin_ang) = tainer.part_render(data, fin_ang)
+            (data, fin_ang) = tainer.part_render(data, fin_ang);
+            tainer.post_render(&mut post_render); //render non-skel stems
         };
-        let inner_sweep = (fin_ang.0 - init_angles.0).abs() > PI;
-        let outer_sweep = (fin_ang.1 - init_angles.1).abs() > PI;
+        let (inner_sweep, outer_sweep) = (
+            (init_angles.0 - fin_ang.0).abs() <= PI,
+            (init_angles.1 - fin_ang.1).abs() <= PI,
+        );
         let closed_inner_loop = data.0.elliptical_arc_to((
             radius.0, radius.0,
             0,
@@ -93,15 +109,18 @@ impl GallWord {
         let outer_path = Path::new()
             .set("d", closed_outer_loop);
         drawn = drawn.add(outer_path
-            .set("fill", "blue")
+            .set("fill", Config::SKEL_COLOUR())
             .set("stroke-width", 0.0)
             .set("stroke", "none")
         );  
         drawn = drawn.add(inner_path
-            .set("fill", "green")
+            .set("fill", Config::BG2_COLOUR())
             .set("stroke-width", 0.0)
             .set("stroke", "none")
-        );  
+        );
+        for differed in post_render {
+            drawn = drawn.add(differed);
+        }  
         drawn
     }
 }
@@ -110,6 +129,12 @@ impl Renderable for GallTainer {
     fn render(self, mut drawn:Document) -> Document {
         for stem in self.stem {
             drawn = stem.render(drawn);
+        }
+        for vow in self.vowel {
+            drawn = vow.render(drawn);
+        }
+        for dot in self.dot {
+            drawn = dot.render(drawn);
         }
         drawn
     }
@@ -124,16 +149,20 @@ impl SkelPart for GallTainer {
             println!("Skeleton letter not touching skeleton");
             panic!();
         };
-        let w_in_rad = stem1.parent_inner();
-        let w_ou_rad = stem2.parent_outer();
-        let l_in_big_rad = stem1.outer_radius();
-        let l_ou_smal_rad = stem2.inner_radius();
-        let big_inner_l_arc = 2.0*theta_inner < PI;
-        let big_outer_l_arc = 2.0*theta_outer < PI;
-        let inner_word_end_angle = stem1.ang().unwrap() - thi_inner;
-        let outer_word_end_angle = stem2.ang().unwrap() - thi_outer;
-        let long_inner_skeleton = (inner_word_end_angle - start_ang.0).abs() > PI;
-        let long_outer_skeleton = (outer_word_end_angle - start_ang.1).abs() > PI;
+        let (w_in_rad, w_ou_rad) = (
+            stem1.parent_inner(), stem2.parent_outer());
+        let (l_in_big_rad, l_ou_smal_rad) = (
+            stem1.outer_radius(), stem2.inner_radius());
+        let (big_inner_l_arc, big_outer_l_arc) = (
+            2.0*theta_inner < PI, 2.0*theta_outer < PI);
+        let (inner_word_end_angle, outer_word_end_angle) = (
+            stem1.ang().unwrap() - thi_inner, 
+            stem2.ang().unwrap() - thi_outer
+        );
+        let (long_inner_skeleton, long_outer_skeleton) = (
+            (inner_word_end_angle - start_ang.0).abs() > PI,
+            (outer_word_end_angle - start_ang.1).abs() > PI
+        );
         let mut tracker = GallLoc::new(
             inner_word_end_angle,
             w_in_rad, 
@@ -181,8 +210,10 @@ impl SkelPart for GallTainer {
     fn part_init(&self) -> ((Data, Data),(f64,f64),(f64,f64), (f64,f64)) {
         let (stem1, stem2) = self.stack_check();
         let (thi_inner,thi_outer) = self.thi_calc();
-        let inner_init_angle = stem1.ang().unwrap() - thi_inner;
-        let outer_init_angle = stem2.ang().unwrap() - thi_outer;
+        let (inner_init_angle, outer_init_angle) = (
+            stem1.ang().unwrap() - thi_inner,
+            stem2.ang().unwrap() - thi_outer
+        );
         let mut tracker = GallLoc::new(
             0.0_f64.min(inner_init_angle),
             stem1.parent_inner(), 
@@ -205,16 +236,91 @@ impl SkelPart for GallTainer {
         )
     }
 }
+impl GallTainer {
+    fn post_render(self, vec: &mut Vec<Element>) {
+        for stem in self.stem {
+            stem.post_render(vec);
+        }
+        for vow in self.vowel {
+            vow.post_render(vec);
+        }
+        for dot in self.dot {
+            dot.post_render(vec);
+        }
+    } 
+}
 
 impl Renderable for Stem {
     fn render(self, drawn:Document) -> Document {
-        let circle = Circle::new()
+        match self.get_shape() {
+            Some(circle) => drawn.add(circle),
+            None => drawn
+        }
+    }
+}
+
+impl FreeRender for Stem {
+    fn post_render(&self, vec:&mut Vec<Element>) {
+        if let Some(circle) = self.get_shape() {
+            vec.push(circle.into())
+        }
+    }
+}
+impl Stem {
+    fn get_shape(&self) -> Option<Circle> {
+        match self.stem_type {
+            StemType::J|StemType::Z => {
+                let circle = Circle::new()
+                    .set("fill", "none")
+                    .set("stroke", Config::JZ_COLOUR())
+                    .set("stroke-width", (self.thick()*2.0).to_string()+"px")
+                    .set("cx", self.x())
+                    .set("cy", self.y())
+                    .set("r", self.radius());
+                Some(circle)
+            },
+            StemType::B|StemType::S => None,//TODO: Stack gaps
+        }
+    }
+}
+impl Renderable for GallVowel {
+    fn render(self, drawn:Document) -> Document {
+        drawn.add(self.get_shape())
+    }
+}
+impl FreeRender for GallVowel {
+    fn post_render(&self, vec:&mut Vec<Element>) {
+        vec.push(self.get_shape().into())
+    }
+}
+impl GallVowel {
+    fn get_shape(&self) -> Circle {
+        Circle::new()
             .set("fill", "none")
-            .set("stroke", "black")
+            .set("stroke", Config::VOW_COLOUR())
             .set("stroke-width", (self.thick()*2.0).to_string()+"px")
             .set("cx", self.x())
             .set("cy", self.y())
-            .set("r", self.radius());
-        drawn.add(circle)
+            .set("r", self.radius())
+    }
+}
+impl Renderable for Dot {
+    fn render(self, drawn:Document) -> Document {
+        drawn.add(self.get_shape())
+    }
+}
+impl FreeRender for Dot {
+    fn post_render(&self, vec:&mut Vec<Element>) {
+        vec.push(self.get_shape().into())
+    }
+}
+impl Dot {
+    fn get_shape(&self) -> Circle {
+        Circle::new()
+            .set("fill", Config::DOT_COLOUR())
+            .set("stroke", "none")
+            .set("cx", self.x())
+            .set("cy", self.y())
+            .set("r", self.radius())
     }
 }

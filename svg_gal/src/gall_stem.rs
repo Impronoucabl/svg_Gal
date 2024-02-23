@@ -15,8 +15,6 @@ pub struct Stem {
     thickness: Rc<Cell<f64>>,
     parent_radius: Rc<Cell<f64>>,
     parent_thickness: Rc<Cell<f64>>,
-    //mut_parent_rad_fn: fn(&mut GallWord, f64) -> Result<(), Error>,
-    //mut_parent_thick_fn: fn(&mut GallWord, f64)-> Result<(),Error>,
     pub stem_type: StemType,
 }
 impl Stem {

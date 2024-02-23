@@ -1,5 +1,6 @@
 use std::{cell::Cell, env, rc::Rc};
 
+use svg::node::element::Rectangle;
 use svg::{node::element::Circle, Document};
 
 use crate::gall_config::Config;
@@ -51,14 +52,21 @@ fn main() {
     }
     println!("Rendering...");
     let mut drawn = Document::new().set("viewBox", (0, 0, Config::WIDTH, Config::HEIGHT));   
-    // do actual rendering TODO
+    let background = Rectangle::new()
+        .set("x", 0)
+        .set("y", 0)
+        .set("width", Config::WIDTH)
+        .set("height", Config::HEIGHT)
+        .set("fill", Config::BG_COLOUR())
+        .set("stroke", "none");
+    drawn = drawn.add(background);
     for word in word_vec.into_iter() {
         drawn = word.render(drawn);
     }
     let circle = Circle::new()
                 .set("fill", "none")
-                .set("stroke", "black")
-                .set("stroke-width", 20)
+                .set("stroke", Config::SENT_COLOUR())
+                .set("stroke-width", Config::SENT_THICK)
                 .set("cx", Config::WIDTH/2.0)
                 .set("cy", Config::HEIGHT/2.0)
                 .set("r", 1020);

@@ -1,0 +1,8 @@
+<svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+<rect fill="yellow" height="2048" stroke="none" width="2048" x="0" y="0"/>
+<path d="M841.6225,1725.6862 A725,725,0,0,0,841.6225,1725.6862 A182.5,182.5,0,1,1,1206.3774,1725.6862 A725,725,0,0,0,1092.1766,302.21268 A182.5,182.5,0,1,1,955.82336,302.21268 A725,725,0,0,0,841.6225,1725.6862 z" fill="black" stroke="none" stroke-width="0"/>
+<path d="M805.67224,1555.938 A575,575,0,0,0,805.67224,1555.938 A272.5,272.5,0,0,1,1242.3278,1555.938 A575,575,0,0,0,1292.8845,515.74207 A272.5,272.5,0,0,1,755.1155,515.74207 A575,575,0,0,0,805.67224,1555.938 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1024" cy="1479" fill="none" r="97.5" stroke="red" stroke-width="67.5px"/>
+<circle cx="1251.5" cy="1024" fill="none" r="227.49999999999997" stroke="black" stroke-width="90px"/>
+<circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
+</svg>

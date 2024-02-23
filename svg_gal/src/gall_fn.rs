@@ -1,11 +1,11 @@
 use std::f64::consts::{PI, TAU};
 
-use crate::gall_stem::StemType;
+use crate::{gall_stem::StemType, gall_vowel::VowelType};
 
 #[derive(PartialEq)]
 pub enum LetterMark {
     Stem(StemType),
-    //GallVowel(VowelType),
+    GallVowel(VowelType),
     GallMark,
     Digit(u32), //TODO: change to i32
 }
@@ -95,11 +95,11 @@ fn replace_two_char(lowercase_str:String) -> String {
 
 pub fn stem_lookup(letter:&char) -> (LetterMark, bool) {
     let stem:LetterMark = match letter {
-        // 'A'|'a'|'\u{ea01}'                                      => GallVowel(VowelType::A),
-        // 'E'|'e'|'\u{ea05}'                                      => GallVowel(VowelType::E),
-        // 'I'|'i'|'\u{ea09}'                                      => GallVowel(VowelType::I),
-        // 'O'|'o'|'\u{ea0f}'                                      => GallVowel(VowelType::O2),
-        // 'U'|'u'|'\u{ea15}'                                      => GallVowel(VowelType::U),
+        'A'|'a'|'\u{ea01}'                                      => LetterMark::GallVowel(VowelType::A),
+        'E'|'e'|'\u{ea05}'                                      => LetterMark::GallVowel(VowelType::E),
+        'I'|'i'|'\u{ea09}'                                      => LetterMark::GallVowel(VowelType::I),
+        'O'|'o'|'\u{ea0f}'                                      => LetterMark::GallVowel(VowelType::O2),
+        'U'|'u'|'\u{ea15}'                                      => LetterMark::GallVowel(VowelType::U),
         '█'|'B'|'D'|'F'|'G'|'H'|'b'|'d'|'f'|'g'|'h'             => LetterMark::Stem(StemType::B),
         'C'|'J'|'K'|'L'|'M'|'N'|'P'|'c'|'j'|'k'|'l'|'m'|'n'|'p' => LetterMark::Stem(StemType::J),
         'R'|'S'|'T'|'V'|'W'|'r'|'s'|'t'|'v'|'w'                 => LetterMark::Stem(StemType::S),

@@ -1,3 +1,4 @@
+use std::collections::btree_map::Keys;
 use std::f64::consts::TAU;
 use std::{cell::Cell, f64::consts::PI};
 use std::rc::Rc;
@@ -37,7 +38,9 @@ impl GallWord {
             let d_mark = gall_fn::dot_lookup(&cha);
             if con.stem_type().is_none() && con.is_empty() {
                 if let LetterMark::Stem(stem) = l_mark {
-                    con_count = con.init(stem, con_count, tainer_ang)
+                    con_count = con.init(Some(stem), con_count, tainer_ang)
+                } else {
+                    con_count = con.init(None,con_count,tainer_ang)
                 }
             } else {
                 match &l_mark {
@@ -45,11 +48,19 @@ impl GallWord {
                         if (!Config::STACK && !con.stem.is_empty()) || (Some(stem) != con.stem_type()) {
                             self.tainer_vec.push(con);
                             con = self.get_con();
-                            con_count = con.init(*stem, con_count, tainer_ang);
+                            con_count = con.init(Some(*stem), con_count, tainer_ang);
                         }
-                    }
+                    },
+                    LetterMark::GallVowel(_) => {
+                        if !Config::STACK && !con.vowel.is_empty() {
+                            self.tainer_vec.push(con);
+                            con = self.get_con();
+                            con_count = con.init(None, con_count, tainer_ang);
+                        }
+                    },
                     LetterMark::Digit(_) => {todo!()},
-                    LetterMark::GallMark => {}, 
+                    LetterMark::GallMark => {},
+                     
                 }
             } //At this point the con tainer should be initialised.
             con.populate(l_mark, d_mark, &self)
