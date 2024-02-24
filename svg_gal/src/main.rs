@@ -15,6 +15,7 @@ mod gall_errors;
 mod gall_ang;
 mod gall_ord;
 mod gall_loc;
+mod gall_node;
 mod gall_circle;
 mod gall_stem;
 mod gall_vowel;

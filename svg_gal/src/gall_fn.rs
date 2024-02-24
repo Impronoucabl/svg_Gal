@@ -122,7 +122,7 @@ pub fn stem_lookup(letter:&char) -> (LetterMark, bool) {
     (stem,repeat)
 }
 
-pub fn dot_lookup(letter:&char) -> (Option<bool>,u8) {
+pub fn dot_lookup(letter:&char) -> (Option<bool>,i8) {
     let dot = match letter {
         'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true),
         'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'U'|'V'|'W'|'X'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'u'|'v'|'w'|'x' => Some(false),

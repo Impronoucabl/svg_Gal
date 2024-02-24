@@ -1,26 +1,19 @@
-use std::f64::consts::FRAC_PI_2;
 use std::rc::Rc;
 use std::cell::Cell;
-use crate::gall_ang::GallAng;
+
 use crate::gall_errors::Error;
-use crate::gall_loc::{GallLoc, Location};
+use crate::gall_loc::{GallRelLoc, Location};
 use crate::gall_ord::PolarOrdinate;
 
 pub struct Dot {
-    angle: GallAng,
-    dist_offset: f64,
-    distance: Rc<Cell<f64>>,
+    loc: GallRelLoc,
     radius: Rc<Cell<f64>>,
-    center_ref: Rc<Cell<(f64,f64)>>, // abs xy
-    abs_svg: Rc<Cell<(f64,f64)>>,
 } 
-
 pub trait Circle {
     fn radius(&self) -> f64;
     fn mut_radius(&mut self, new_radius:f64) -> Result<(),Error>;
     fn get_radius(&self) -> Rc<Cell<f64>>;
 }
-
 pub trait HollowCircle: Circle {
     fn thick(&self) -> f64;
     fn get_thickness(&self) -> Rc<Cell<f64>>;
@@ -32,7 +25,6 @@ pub trait HollowCircle: Circle {
         self.radius() - self.thick()
     }
 }
-
 pub trait ChildCircle{
     fn parent_radius(&self) -> f64;
     fn parent_thick(&self) -> f64;
@@ -48,31 +40,11 @@ pub trait ChildCircle{
     }
 }
 impl Dot {
-    pub fn new(radius:f64, angle:f64, distance:Rc<Cell<f64>>,center_ref: Rc<Cell<(f64,f64)>>) -> Dot{
-        let (rel_y,rel_x) = (FRAC_PI_2 - angle).sin_cos();
-        let dist = distance.get();
-        let (center_x,center_y) = center_ref.get();
-        let pos = (dist*rel_x + center_x, dist*rel_y + center_y);
+    pub fn new(loc: GallRelLoc, radius:f64) -> Dot{
         Dot {
-            angle: GallAng::new(Some(angle)),
-            dist_offset: 0.0,
-            distance,
+            loc,
             radius: Rc::new(Cell::new(radius)),
-            center_ref,
-            abs_svg:Rc::new(Cell::new(pos)),
         }
-    }
-    pub fn set_dist(&mut self, dist_ref:Rc<Cell<f64>>) {
-        self.distance = dist_ref;
-    }
-    fn update_xy(&mut self) {
-        let dist = self.dist();
-        let (rel_y,rel_x) = match self.ang() {
-            Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
-            None => (0.0,0.0)
-        };
-        let (center_x,center_y) = self.center_ref.get();
-        self.abs_svg.set((dist*rel_x + center_x, dist*rel_y + center_y));
     }
 }
 impl Circle for Dot {
@@ -89,39 +61,35 @@ impl Circle for Dot {
 }
 impl PolarOrdinate for Dot {
     fn mut_ang(&mut self, new_ang:f64) {
-        self.angle.mut_ang(Some(new_ang))
+        self.loc.mut_ang(new_ang)
     }
     fn mut_dist(&mut self, new_dist: f64) -> Result<(), Error> {
-        let diff = new_dist - self.dist();
-        self.dist_offset += diff;
-        Ok(())
+        self.loc.mut_dist(new_dist)
     }
     fn ang(&self) -> Option<f64> {
-        self.angle.ang()
+        self.loc.ang()
     }
     fn dist(&self) -> f64 {
-        self.dist_offset + self.distance.get()
+        self.loc.dist()
     }
 }
 impl Location for Dot {
     fn mut_center(&mut self, movement:(f64,f64)) {
-        let (center_x,center_y) = self.center_ref.get();
-        self.center_ref.set((center_x + movement.0, center_y + movement.1));
+        self.loc.mut_center(movement)
     }
     fn set_center(&mut self, new_center: Rc<Cell<(f64,f64)>>) {
-        self.center_ref = new_center;
-        self.update_xy();
+        self.loc.set_center(new_center)
     }
     fn get_center(&self) -> Rc<Cell<(f64,f64)>> {
-        self.center_ref.clone()
+        self.loc.get_center()
     }
     fn x(&self) -> f64 {
-        self.abs_svg.get().0
+        self.loc.x()
     }
     fn y(&self) -> f64 {
-        self.abs_svg.get().1
+        self.loc.y()
     }
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
-        self.abs_svg.clone()
+        self.loc.pos_ref()
     }
 }

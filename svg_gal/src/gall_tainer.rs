@@ -1,4 +1,5 @@
 use std::cell::{Cell, OnceCell};
+use std::f64::consts::PI;
 use std::rc::Rc;
 
 use crate::gall_ang::GallAng;
@@ -6,14 +7,15 @@ use crate::gall_circle::{ChildCircle, Circle, Dot, HollowCircle};
 use crate::gall_config::Config;
 use crate::gall_errors::{Error, GallError};
 use crate::gall_fn::{self, LetterMark};
-use crate::gall_loc::{GallLoc, Location};
-use crate::gall_ord::PolarOrdinate;
+use crate::gall_loc::{GallLoc, GallRelLoc, Location};
+use crate::gall_node::GallNode;
+use crate::gall_ord::{GallOrd, PolarOrdinate};
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_vowel::{GallVowel, VowelType};
 use crate::gall_word::GallWord;
 
 pub struct GallTainer {
-    ang: GallAng,
+    ang: Rc<Cell<GallAng>>,
     stem_type: OnceCell<StemType>,
     pub stem: Vec<Stem>,
     pub vowel: Vec<GallVowel>,
@@ -35,8 +37,9 @@ impl GallTainer {
         if let Some(stem) = mark_type {
             stem_type.get_or_init(||stem);
         };
+        let ang = Rc::new(Cell::new(GallAng::new(None)));
         GallTainer {
-            ang: GallAng::new(None),
+            ang,
             stem_type,
             stem:stem_vec,
             vowel:vowel_vec,
@@ -49,7 +52,7 @@ impl GallTainer {
         if let Some(stem) = stem_type {
             self.stem_type.get_or_init(||stem);
         };
-        self.ang.mut_ang(Some(con_count as f64 * ang));
+        self.mut_ang(Some(con_count as f64 * ang));
         con_count + 1
     }
     pub fn stem_type(&self) -> Option<&StemType> {
@@ -58,7 +61,7 @@ impl GallTainer {
     pub fn is_empty(&self) -> bool {
         self.stem.is_empty() && self.vowel.is_empty()
     }
-    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<bool>, u8), word: &GallWord) {
+    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<bool>, i8), word: &GallWord) {
         match l_mark {
             LetterMark::Stem(stem) => {
                 let letter = self.create_stem(stem, word);
@@ -74,12 +77,13 @@ impl GallTainer {
         if let Some(dot) = d_mark.0 {
             if dot {
                 for n in 0..d_mark.1 {
-                    let decor = self.create_dot(&l_mark, n);
+                    let decor = self.create_dot(n - 1);
                     self.add_dot(decor);
                 }    
             } else {
                 for n in 0..d_mark.1 {
-                    todo!()//TODO: add add_dash_fn
+                    let decor = self.create_dash(n - 1, ,word.get_radius());
+                    self.add_dash(decor);
                 }
             }
         }
@@ -93,13 +97,12 @@ impl GallTainer {
             StemType::S => (p_rad + p_thick, p_thick),
             StemType::Z => (p_rad, p_thick),
         };
-        let loc = GallLoc::new(
-            self.ang.ang().unwrap(),
-            dist,
-            word.get_center(),
-        );
         Stem::new(
-            loc,
+            GallLoc::new(
+                self.ang(),
+                dist,
+                word.get_center(),
+            ),
             p_rad*Config::LETTER_FRAC_OF_WRD,
             thick,
             stem,
@@ -117,26 +120,42 @@ impl GallTainer {
             VowelType::O2 => (p_rad*0.6, p_thick),
             VowelType::U => (p_rad, p_thick),
         };
-        let loc = GallLoc::new(
-            self.ang.ang().unwrap(),
-            dist,
-            word.get_center(),
-        );
         GallVowel::new(
-            loc,
+            GallLoc::new(
+                self.ang(),
+                dist,
+                word.get_center(),
+            ),
             p_rad*Config::VOWEL_FRAC_OF_WRD,
             thick,
             stem,
             word
         )
     }
-    pub fn create_dot(&self, l_mark:&LetterMark, num: u8) -> Dot {
+    pub fn create_dot(&self, num: i8) -> Dot {
         let (dist,center_ref) = self.buffer.clone();
         Dot::new(
-            Config::DOT_RADIUS,
-            num as f64 * 12.4,
-            dist,
-            center_ref,            
+            GallRelLoc::new(
+                self.ang(),
+                PI + num as f64 * Config::DEF_DOT_SPREAD,
+                dist,
+                0.0,
+                center_ref
+            ),
+            Config::DOT_RADIUS,     
+        )
+    }
+    pub fn create_dash(&self, num: i8, l_dist: &GallOrd, w_rad: Rc<Cell<f64>>) -> GallNode {
+        let (dist,center_ref) = self.buffer.clone();
+        GallNode::new(
+            GallRelLoc::new(
+                self.ang(),
+                PI + num as f64 * Config::DEF_DOT_SPREAD,
+                dist,
+                0.0,
+                center_ref
+            ),
+            ,     
         )
     }
     pub fn add_stem(&mut self, new_stem: Stem) {
@@ -209,6 +228,12 @@ impl GallTainer {
         self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
         self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
         (self.stem,self.vowel)
+    }
+    pub fn mut_ang(&mut self, new_ang:Option<f64>) {
+        _ = self.ang.set(GallAng::new(new_ang))
+    }
+    pub fn ang(&self) -> f64 {
+        self.ang.get().ang().unwrap()
     }
 }
 
