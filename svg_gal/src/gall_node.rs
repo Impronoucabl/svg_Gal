@@ -3,27 +3,31 @@ use std::f64::consts::TAU;
 use std::rc::Rc;
 
 use crate::gall_errors::Error;
-use crate::gall_loc::{GallRelLoc, Location};
+use crate::gall_fn;
+use crate::gall_loc::{GallOffLoc, Location};
 use crate::gall_ord::{GallOrd, PolarOrdinate};
 
-pub struct GallNode<'a> {
-    pub loc: GallRelLoc,
-    l_dist: &'a GallOrd,//Rc<Cell<GallOrd>>,
-    w_rad: Rc<Cell<f64>>,
+pub struct GallNode {
+    pub loc: GallOffLoc,
+    l_dist: Rc<OnceCell<f64>>,
+    w_rad: Rc<OnceCell<f64>>,
 }
 
 //TODO:make Gall_pair
 
-impl GallNode<'_>  {
-    pub fn new<'a>(loc:GallRelLoc, letter_ord: &'a GallOrd, word_ord: Rc<Cell<f64>>) -> GallNode<'a> {
+impl GallNode  {
+    pub fn new(loc:GallOffLoc, l_dist: Rc<OnceCell<f64>>, w_rad: Rc<Oncecell<f64>>) -> GallNode {
         GallNode {
             loc,
-            l_dist: letter_ord,
-            w_rad: word_ord,
-        }
+            l_dist,
+            w_rad,
+        };
+    }
+    pub fn thi(&self) ->  f64 {
+        gall_fn::thi(self.l_dist.get()?,self.loc.dist()?,self.w_rad.get()?)
     }
 }
-impl PolarOrdinate for GallNode<'_> {
+impl PolarOrdinate for GallNode {
     fn mut_ang(&mut self, new_ang:f64) {
         self.loc.mut_ang(new_ang)
     }
@@ -33,11 +37,11 @@ impl PolarOrdinate for GallNode<'_> {
     fn ang(&self) -> Option<f64> {
         self.loc.ang()
     }
-    fn dist(&self) -> f64 {
+    fn dist(&self) -> Option<f64> {
         self.loc.dist()
     }
 }
-impl Location for GallNode<'_>  {
+impl Location for GallNode  {
     fn mut_center(&mut self, movement:(f64,f64)) {
         self.loc.mut_center(movement)
     }

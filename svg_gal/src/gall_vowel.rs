@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::cell::OnceCell;
 use std::f64::consts::PI;
 use std::rc::Rc;
 
@@ -13,23 +13,25 @@ pub enum VowelType {A,E,I,O1,O2,U}
 
 pub struct GallVowel {
     loc: GallLoc,
-    radius: Rc<Cell<f64>>,
-    thickness: Rc<Cell<f64>>,
-    parent_radius: Rc<Cell<f64>>,
-    parent_thickness: Rc<Cell<f64>>,
+    radius: Rc<OnceCell<f64>>,
+    thickness: Rc<OnceCell<f64>>,
+    parent_radius: Rc<OnceCell<f64>>,
+    parent_thickness: Rc<OnceCell<f64>>,
     pub vowel_type: VowelType,
 }
 
 impl GallVowel {
     pub fn new<T:HollowCircle>(loc:GallLoc, radius: f64, thickness:f64, vowel_type: VowelType, parent:&T) -> GallVowel {
-        let radius = Rc::new(Cell::new(radius));
-        let thickness = Rc::new(Cell::new(thickness));
+        let rad = Rc::new(OnceCell::new());
+        let thick = Rc::new(OnceCell::new());
+        rad.set(radius)
+        thick.set(thickness)
         let parent_radius = parent.get_radius().clone();
         let parent_thickness = parent.get_thickness().clone();
         GallVowel {
             loc,
-            radius,
-            thickness,
+            radius: rad,
+            thickness: thick,
             parent_radius,
             parent_thickness,
             vowel_type,
@@ -124,11 +126,11 @@ impl ChildCircle for GallVowel {
         self.parent_thickness.clone()
     }
 
-    fn parent_radius(&self) -> f64 {
+    fn parent_radius(&self) -> Option<f64> {
         self.parent_radius.get()
     }
 
-    fn parent_thick(&self) -> f64 {
+    fn parent_thick(&self) -> Option<f64> {
         self.parent_thickness.get()
     }
 }
@@ -146,12 +148,12 @@ impl Circle for GallVowel {
             Ok(())
         }
     }
-    fn radius(&self) -> f64 {
+    fn radius(&self) -> Option<f64> {
         self.radius.get()
     }
 }
 impl HollowCircle for GallVowel {
-    fn get_thickness(&self) -> Rc<Cell<f64>> {
+    fn get_thickness(&self) -> Rc<OnceCell<f64>> {
         self.thickness.clone()
     }
     fn mut_thickness(&mut self, new_thick: f64) -> Result<(),Error> {
@@ -159,7 +161,7 @@ impl HollowCircle for GallVowel {
         Ok(())
         //TODO:Thickness checks
     }
-    fn thick(&self) -> f64 {
+    fn thick(&self) -> Option<f64> {
         self.thickness.get()
     }
 }

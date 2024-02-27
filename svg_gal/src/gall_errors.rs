@@ -10,6 +10,9 @@ impl std::error::Error for Error {}
 pub enum GallError {
     AngleUndefined,
     NegativeDistanceErr, 
+    GallOffAng,
+    GallOffDist,
+    ValueNotSet,
     TooThick,
     NotThickEnough,
     DistTooShort ,
@@ -39,6 +42,9 @@ impl fmt::Display for Error {
         let message = match &self.error_type {
             GallError::AngleUndefined => "Angle is undefined.",
             GallError::NegativeDistanceErr => "Distance is negative",
+            GallError::GallOffAng => "GallOffLoc has no real angle",
+            GallError::GallOffDist => "GallOffLoc has no real distance",
+            GallError::ValueNotSet => "Pointer not intialised",
             GallError::TooThick => "Too much of dat THICCC",
             GallError::NotThickEnough => "Not enough THICCC",
             GallError::DistTooShort => "Stem distance is too short",
