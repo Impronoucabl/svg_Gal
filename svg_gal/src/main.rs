@@ -1,3 +1,4 @@
+use std::cell::OnceCell;
 use std::{cell::Cell, env, rc::Rc};
 
 use svg::node::element::Rectangle;
@@ -15,7 +16,7 @@ mod gall_errors;
 mod gall_ang;
 mod gall_ord;
 mod gall_loc;
-mod gall_node;
+// mod gall_node;
 mod gall_circle;
 mod gall_stem;
 mod gall_vowel;
@@ -24,7 +25,8 @@ mod gall_word;
 mod render;
 
 fn main() {
-    let ORIGIN = Rc::new(Cell::new((Config::WIDTH/2.0,Config::HEIGHT/2.0)));
+    let ORIGIN = Rc::new(OnceCell::new());
+    ORIGIN.set((Config::WIDTH/2.0,Config::HEIGHT/2.0));
     println!("Initialising...");
     let args = env::args();
     let mut word_list = Vec::new();
@@ -49,7 +51,7 @@ fn main() {
             dist,
             ORIGIN.clone()
         );
-        word_vec.push(GallWord::new(words.0,words.1, loc, w_radius, w_thick));
+        word_vec.push(GallWord::new(words.0,words.1, loc.unwrap(), w_radius, w_thick));
     }
     println!("Rendering...");
     let mut drawn = Document::new().set("viewBox", (0, 0, Config::WIDTH, Config::HEIGHT));   

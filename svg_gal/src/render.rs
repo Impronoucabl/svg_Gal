@@ -28,14 +28,14 @@ trait FreeRender {
 
 impl Renderable for GallWord {
     fn render(self, mut drawn:Document) -> Document {
-        let radius = (self.inner_radius(),self.outer_radius());
+        let radius = (self.inner_radius().unwrap(),self.outer_radius().unwrap());
         let circle = Circle::new()
             .set("fill", "none")
             .set("stroke", Config::SKEL_COLOUR())
-            .set("stroke-width", self.thick())
+            .set("stroke-width", self.thick().unwrap())
             .set("cx", self.x())
             .set("cy", self.y())
-            .set("r", self.radius());
+            .set("r", self.radius().unwrap());
         let (skel, divot, mark) = self.pre_render();
         drawn = if skel.len() == 0 {
             drawn.add(circle)
@@ -150,9 +150,9 @@ impl SkelPart for GallTainer {
             panic!();
         };
         let (w_in_rad, w_ou_rad) = (
-            stem1.parent_inner(), stem2.parent_outer());
+            stem1.parent_inner().unwrap(), stem2.parent_outer().unwrap());
         let (l_in_big_rad, l_ou_smal_rad) = (
-            stem1.outer_radius(), stem2.inner_radius());
+            stem1.outer_radius().unwrap(), stem2.inner_radius().unwrap());
         let (big_inner_l_arc, big_outer_l_arc) = (
             2.0*theta_inner < PI, 2.0*theta_outer < PI);
         let (inner_word_end_angle, outer_word_end_angle) = (
@@ -167,13 +167,13 @@ impl SkelPart for GallTainer {
             inner_word_end_angle,
             w_in_rad, 
             stem1.get_center(),
-        );
-        let inner_letter_start = tracker.svg_ord();
-        let inner_letter_finish = tracker.compute_loc(2.0 * thi_inner);
+        ).unwrap();
+        let inner_letter_start = tracker.svg_ord().unwrap();
+        let inner_letter_finish = tracker.compute_loc(2.0 * thi_inner).unwrap();
         let final_in_ang = tracker.ang().unwrap();
         tracker.mut_ang_d(w_ou_rad, outer_word_end_angle);
-        let outer_letter_start = tracker.svg_ord();
-        let outer_letter_finish = tracker.compute_loc(2.0 * thi_outer);
+        let outer_letter_start = tracker.svg_ord().unwrap();
+        let outer_letter_finish = tracker.compute_loc(2.0 * thi_outer).unwrap();
         let final_ou_ang = tracker.ang().unwrap();
         // x radius, y radius, rotation, large arc, sweep direction, end x, end y
         let inner_data = inner_outer.0.elliptical_arc_to((
@@ -216,12 +216,12 @@ impl SkelPart for GallTainer {
         );
         let mut tracker = GallLoc::new(
             0.0_f64.min(inner_init_angle),
-            stem1.parent_inner(), 
+            stem1.parent_inner().unwrap(), 
             stem1.get_center(),
-        );
-        let inner_continuum = tracker.pos_ref().get();
-        tracker.mut_ang_d(stem2.parent_outer(), 0.0_f64.min(outer_init_angle));
-        let outer_continuum = tracker.pos_ref().get();
+        ).unwrap();
+        let inner_continuum = *tracker.pos_ref().get().unwrap();
+        tracker.mut_ang_d(stem2.parent_outer().unwrap(), 0.0_f64.min(outer_init_angle));
+        let outer_continuum = *tracker.pos_ref().get().unwrap();
         (
             (
                 Data::new().move_to(inner_continuum),
@@ -273,10 +273,10 @@ impl Stem {
                 let circle = Circle::new()
                     .set("fill", "none")
                     .set("stroke", Config::JZ_COLOUR())
-                    .set("stroke-width", (self.thick()*2.0).to_string()+"px")
+                    .set("stroke-width", (self.thick().unwrap()*2.0).to_string()+"px")
                     .set("cx", self.x())
                     .set("cy", self.y())
-                    .set("r", self.radius());
+                    .set("r", self.radius().unwrap());
                 Some(circle)
             },
             StemType::B|StemType::S => None,//TODO: Stack gaps
@@ -298,10 +298,10 @@ impl GallVowel {
         Circle::new()
             .set("fill", "none")
             .set("stroke", Config::VOW_COLOUR())
-            .set("stroke-width", (self.thick()*2.0).to_string()+"px")
+            .set("stroke-width", (self.thick().unwrap()*2.0).to_string()+"px")
             .set("cx", self.x())
             .set("cy", self.y())
-            .set("r", self.radius())
+            .set("r", self.radius().unwrap())
     }
 }
 impl Renderable for Dot {
@@ -321,6 +321,6 @@ impl Dot {
             .set("stroke", "none")
             .set("cx", self.x())
             .set("cy", self.y())
-            .set("r", self.radius())
+            .set("r", self.radius().unwrap())
     }
 }

@@ -1,6 +1,6 @@
 use std::collections::btree_map::Keys;
-use std::f64::consts::TAU;
-use std::{cell::Cell, f64::consts::PI};
+use std::f64::consts::{TAU,PI};
+use std::cell::OnceCell;
 use std::rc::Rc;
 
 use crate::gall_circle::{Circle, HollowCircle};
@@ -14,18 +14,22 @@ use crate::gall_tainer::GallTainer;
 pub struct GallWord {
     loc: GallLoc,
     pub tainer_vec: Vec<GallTainer>,
-    radius: Rc<Cell<f64>>,
-    thickness: Rc<Cell<f64>>,
+    radius: Rc<OnceCell<f64>>,
+    thickness: Rc<OnceCell<f64>>,
 }
 
 impl GallWord {
     pub fn new(text:String, len_guess:usize, loc:GallLoc, radius: f64, thick:f64) -> GallWord {
         let tainer_vec = Vec::with_capacity(len_guess);
+        let rad = OnceCell::new();
+        let thickness = OnceCell::new();
+        rad.set(radius);
+        thickness.set(thick);
         let word = GallWord{
             loc,
             tainer_vec,
-            radius: Rc::new(Cell::new(radius)),
-            thickness: Rc::new(Cell::new(thick))
+            radius: Rc::new(rad),
+            thickness: Rc::new(thickness)
         };
         word.populate(text, len_guess)
     } 
@@ -79,10 +83,13 @@ impl GallWord {
 
 //impl ParentCircle for GallWord {}
 impl HollowCircle for GallWord {
-    fn thick(&self) -> f64 {
-        self.thickness.get()
+    fn thick(&self) -> Option<f64> {
+        match self.thickness.get() {
+            Some(thick) => Some(*thick),
+            None => None,
+        }
     }
-    fn get_thickness(&self) -> Rc<Cell<f64>> {
+    fn get_thickness(&self) -> Rc<OnceCell<f64>> {
         self.thickness.clone()
     }
     fn mut_thickness(&mut self, new_thick: f64) -> Result<(),Error> {
@@ -91,10 +98,13 @@ impl HollowCircle for GallWord {
     }
 }
 impl Circle for GallWord {
-    fn radius(&self) -> f64 {
-        self.radius.get()
+    fn radius(&self) -> Option<f64> {
+        match self.radius.get() {
+            Some(rad) => Some(*rad),
+            None => None,
+        }
     }
-    fn get_radius(&self) -> Rc<Cell<f64>> {
+    fn get_radius(&self) -> Rc<OnceCell<f64>> {
         self.radius.clone()
     }
     fn mut_radius(&mut self, new_radius:f64) -> Result<(), Error> {
@@ -107,10 +117,10 @@ impl Location for GallWord {
     fn mut_center(&mut self, movement:(f64,f64)) {
         self.loc.mut_center(movement)
     }
-    fn set_center(&mut self, new_center:Rc<Cell<(f64,f64)>>) {
+    fn set_center(&mut self, new_center:Rc<OnceCell<(f64,f64)>>) {
         self.loc.set_center(new_center)
     }
-    fn get_center(&self) -> Rc<Cell<(f64,f64)>> {
+    fn get_center(&self) -> Rc<OnceCell<(f64,f64)>> {
         self.loc.get_center()
     }
     fn x(&self) -> f64 {
@@ -119,8 +129,11 @@ impl Location for GallWord {
     fn y(&self) -> f64 {
         self.loc.y()
     }
-    fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
+    fn pos_ref(&self) -> Rc<OnceCell<(f64,f64)>> {
         self.loc.pos_ref()
+    }
+    fn center_ords(&self) -> (f64,f64) {
+        self.loc.center_ords()
     }
 }
 impl PolarOrdinate for GallWord {
@@ -133,7 +146,13 @@ impl PolarOrdinate for GallWord {
     fn ang(&self) -> Option<f64> {
         self.loc.ang()
     }
-    fn dist(&self) -> f64 {
+    fn dist(&self) -> Option<f64> {
         self.loc.dist()
+    }
+    fn get_ang(&self) -> Rc<OnceCell<f64>> {
+        self.loc.get_ang()
+    }
+    fn get_dist(&self) -> Rc<OnceCell<f64>> {
+        self.loc.get_dist()
     }
 }

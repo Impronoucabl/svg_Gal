@@ -65,6 +65,11 @@ impl GallLoc {
         self.mut_ccw(ang)?;
         self.svg_ord()
     }
+    pub fn mut_ang_d(&mut self, ang:f64,dist:f64) {
+        self.ord.mut_ang(ang);
+        self.ord.mut_dist(dist);
+        self.update_xy();
+    }
     
     // pub fn rotate_ccw(&mut self, angle: f64) -> Option<()> {
     //     self.mut_ang(self.ang() + angle);

@@ -16,12 +16,12 @@ pub struct GallNode {
 //TODO:make Gall_pair
 
 impl GallNode  {
-    pub fn new(loc:GallOffLoc, l_dist: Rc<OnceCell<f64>>, w_rad: Rc<Oncecell<f64>>) -> GallNode {
+    pub fn new(loc:GallOffLoc, l_dist: Rc<OnceCell<f64>>, w_rad: Rc<OnceCell<f64>>) -> GallNode {
         GallNode {
             loc,
             l_dist,
             w_rad,
-        };
+        }
     }
     pub fn thi(&self) ->  f64 {
         gall_fn::thi(self.l_dist.get()?,self.loc.dist()?,self.w_rad.get()?)
@@ -40,15 +40,21 @@ impl PolarOrdinate for GallNode {
     fn dist(&self) -> Option<f64> {
         self.loc.dist()
     }
+    fn get_ang(&self) -> Rc<OnceCell<f64>> {
+        todo!()
+    }
+    fn get_dist(&self) -> Rc<OnceCell<f64>> {
+        todo!()
+    }
 }
 impl Location for GallNode  {
     fn mut_center(&mut self, movement:(f64,f64)) {
         self.loc.mut_center(movement)
     }
-    fn set_center(&mut self, new_center: Rc<Cell<(f64,f64)>>) {
+    fn set_center(&mut self, new_center: Rc<OnceCell<(f64,f64)>>) {
         self.loc.set_center(new_center)
     }
-    fn get_center(&self) -> Rc<Cell<(f64,f64)>> {
+    fn get_center(&self) -> Rc<OnceCell<(f64,f64)>> {
         self.loc.get_center()
     }
     fn x(&self) -> f64 {
@@ -57,7 +63,10 @@ impl Location for GallNode  {
     fn y(&self) -> f64 {
         self.loc.y()
     }
-    fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
+    fn pos_ref(&self) -> Rc<OnceCell<(f64,f64)>> {
         self.loc.pos_ref()
+    }
+    fn center_ords(&self) -> (f64,f64) {
+        self.loc.center_ords()
     }
 }

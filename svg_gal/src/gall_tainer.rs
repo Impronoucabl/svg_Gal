@@ -8,7 +8,7 @@ use crate::gall_config::Config;
 use crate::gall_errors::{Error, GallError};
 use crate::gall_fn::{self, LetterMark};
 use crate::gall_loc::{GallLoc, GallOffLoc, Location};
-use crate::gall_node::GallNode;
+//use crate::gall_node::GallNode;
 use crate::gall_ord::{GallOrd, PolarOrdinate};
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_vowel::{GallVowel, VowelType};
@@ -146,24 +146,25 @@ impl GallTainer {
             Config::DOT_RADIUS,     
         ))
     }
-    pub fn create_dash(&self, num: i8, l_dist: &GallOrd, w_rad: Rc<Cell<f64>>) -> GallNode {
-        let (dist,center_ref) = self.buffer.clone();
-        GallNode::new(
-            GallOffLoc::new(
-                self.ang(),
-                PI + num as f64 * Config::DEF_DOT_SPREAD,
-                dist,
-                0.0,
-                center_ref
-            ),
-            ,     
-        )
-    }
+    // pub fn create_dash(&self, num: i8, l_dist: &GallOrd, w_rad: Rc<Cell<f64>>) -> GallNode {
+    //     let (rad, dist, center_ref) = self.buffer.clone();
+    //     GallNode::new(
+    //         GallOffLoc::new(
+    //             self.ang(),
+    //             PI + num as f64 * Config::DEF_DOT_SPREAD,
+    //             dist,
+    //             0.0,
+    //             center_ref
+    //         ),
+    //         ,
+    //         ,     
+    //     )
+    // }
     pub fn add_stem(&mut self, new_stem: Stem) {
         if self.stem_type.get().unwrap() != &new_stem.stem_type {
             println!("Warning! Stem has different type to tainer")
         };
-        self.buffer = (new_stem.get_radius(),new_stem.pos_ref());
+        //self.buffer = (new_stem.get_radius(),new_stem.pos_ref());
         self.stem.push(new_stem);
         self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
     }
