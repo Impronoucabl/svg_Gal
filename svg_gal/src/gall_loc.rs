@@ -2,32 +2,33 @@ use std::cell::OnceCell;
 use std::f64::consts::{FRAC_PI_2, TAU};
 use std::rc::Rc;
 
+use crate::gall_ang::GallAng;
 use crate::gall_ord::{GallOrd, PolarOrdinate};
 use crate::gall_errors::{Error, GallError};
 
 #[derive(PartialEq,Default,Clone)]
 pub struct GallLoc {
     ord: GallOrd,
-    center_ref: Rc<OnceCell<(f64,f64)>>, // abs xy
-    abs_svg: Rc<OnceCell<(f64,f64)>>,
+    center_ref: OnceCell<(f64,f64)>, // abs xy
+    abs_svg: OnceCell<(f64,f64)>,
 }
 
 pub struct GallOffLoc {
-    ord: GallOrd,
-    ang_offset: f64,
-    dist_offset: f64,
-    center_ref: Rc<OnceCell<(f64,f64)>>, // abs xy
-    abs_svg: Rc<OnceCell<(f64,f64)>>,
+    base_ord: GallOrd,
+    offset_ang: GallAng,
+    offset_dist: OnceCell<f64>,
+    center_ref: OnceCell<(f64,f64)>, // abs xy
+    abs_svg: OnceCell<(f64,f64)>,
 }
 
 pub trait Location:PolarOrdinate {
     fn mut_center(&mut self, movement:(f64,f64));
-    fn set_center(&mut self, new_center:Rc<OnceCell<(f64,f64)>>);
-    fn get_center(&self) -> Rc<OnceCell<(f64,f64)>>;
+    fn set_center(&mut self, new_center:OnceCell<(f64,f64)>);
+    fn get_center(&self) -> OnceCell<(f64,f64)>;
     fn center_ords(&self) -> (f64,f64);
     fn x(&self) -> f64;
     fn y(&self) -> f64;
-    fn pos_ref(&self) -> Rc<OnceCell<(f64,f64)>>;
+    fn pos_ref(&self) -> OnceCell<(f64,f64)>;
     fn svg_ord(&self) -> Result<(f64,f64), Error> {
         match self.pos_ref().get() {
             Some(xy) => Ok(*xy),
@@ -36,29 +37,34 @@ pub trait Location:PolarOrdinate {
     }
 }
 
+fn compute_svg(distance:f64, angle:Option<f64>, center_ref:OnceCell<(f64,f64)>) -> (f64,f64) {
+    let (rel_y,rel_x) = match angle {
+        Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
+        None => (0.0,0.0)
+    };
+    let (center_x,center_y) = center_ref.get().unwrap();
+    (distance*rel_x + center_x, distance*rel_y + center_y)
+}
+
 impl GallLoc {
-    pub fn new(angle:f64, distance: f64, center_ref:Rc<OnceCell<(f64,f64)>>) -> Option<GallLoc> {
-        let (rel_y,rel_x) = (FRAC_PI_2 - angle).sin_cos();
-        let (center_x,center_y) = center_ref.get()?;
-        let pos = (distance*rel_x + center_x, distance*rel_y + center_y);
-        let mut abs = OnceCell::new();
+    pub fn new(angle:f64, distance: f64, center_ref:OnceCell<(f64,f64)>) -> Option<GallLoc> {
+        let pos = self::compute_svg(distance, Some(angle), center_ref.clone());
+        let abs = OnceCell::new();
         abs.set(pos);
         Some(GallLoc { 
             ord: GallOrd::new(angle, distance),
             center_ref,  
-            abs_svg: Rc::new(abs),
+            abs_svg: abs,
         })
     }
-    fn update_xy(&mut self) {
-        if let Some(dist) = self.dist() {
-            let (rel_y,rel_x) = match self.ang() {
-                Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
-                None => (0.0,0.0)
-            };
-            let (center_x,center_y) = self.center_ref.get().unwrap();
-            self.abs_svg.set((dist*rel_x + center_x, dist*rel_y + center_y));
+    fn update_xy(&mut self) -> Result<(),Error> {
+        if let Some(&distance) = self.dist() {
+            let svg_ord = self::compute_svg(distance, self.ang().copied(), self.get_center());
+            _ = self.abs_svg.take();
+            _ = self.abs_svg.set(svg_ord);
+            Ok(())
         } else {
-            panic!()
+            Err(Error::new(GallError::ValueNotSet))
         }
     }
     pub fn compute_loc(&mut self, ang:f64) -> Result<(f64,f64), Error> {
@@ -69,6 +75,9 @@ impl GallLoc {
         self.ord.mut_ang(ang);
         self.ord.mut_dist(dist);
         self.update_xy();
+    }
+    pub fn take_ang(&mut self) -> f64 {
+        self.ord.take_ang()
     }
     
     // pub fn rotate_ccw(&mut self, angle: f64) -> Option<()> {
@@ -114,36 +123,42 @@ impl GallLoc {
 }
 
 impl GallOffLoc {
-    pub fn new(ord:GallOrd, ang_offset:f64, dist_offset:f64, center_ref: Rc<OnceCell<(f64,f64)>>) -> Option<GallOffLoc> {
-        let (rel_y,rel_x) = (FRAC_PI_2 - ord.ang()?).sin_cos();
-        let dist = ord.dist()?;
-        let (center_x,center_y) = center_ref.get()?;
-        let pos = (dist*rel_x + center_x, dist*rel_y + center_y);
-        let abs = OnceCell::new();
-        abs.set(pos);
-        Some(GallOffLoc {
-            ord,
-            ang_offset,
-            dist_offset,
-            center_ref,
-            abs_svg:Rc::new(abs),
-        })
-    }
-    fn update_xy(&mut self) {
-        if let Some(dist) = self.dist() {
-            let (rel_y,rel_x) = match self.ang() {
-                Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
-                None => (0.0,0.0)
+    pub fn new(base_ord:GallOrd, ang_offset:f64, dist_offset:f64, center_ref: OnceCell<(f64,f64)>) -> Option<GallOffLoc> {
+        if let Some(&distance) = base_ord.dist() {
+            let angle = match base_ord.ang() {
+                Some(&ang) => ang + ang_offset,
+                None => return None,
             };
-            let (center_x,center_y) = self.center_ords();
-            self.abs_svg.set((dist*rel_x + center_x, dist*rel_y + center_y));
+            let offset_dist = OnceCell::new();
+            offset_dist.set(dist_offset);
+            let pos = self::compute_svg(distance + dist_offset, Some(angle), center_ref.clone());
+            let abs = OnceCell::new();
+            abs.set(pos);
+            Some(GallOffLoc {
+                base_ord,
+                offset_ang: GallAng::new(Some(ang_offset)),
+                offset_dist,
+                center_ref,
+                abs_svg:abs,
+            })
         } else {
-            panic!()
+            None
         }
     }
-    pub fn set_ang(&mut self, new_ang_ref: Rc<OnceCell<f64>>) {
-        self.ord.set_ang(new_ang_ref)
+    fn update_xy(&mut self) -> Result<(),Error> {
+        if let (Some(&b_dist), Some(& o_dist), Some(&b_ang), Some(&o_ang)) = (
+                self.base_ord.dist(), self.dist(), self.base_ord.ang(), self.ang()) {
+            let svg_ord = self::compute_svg(b_dist+o_dist, Some(b_ang + o_ang), self.get_center());
+            _ = self.abs_svg.take();
+            _ = self.abs_svg.set(svg_ord);
+            Ok(())
+        } else {
+            Err(Error::new(GallError::ValueNotSet))
+        }
     }
+    // pub fn set_ang(&mut self, new_ang_ref: OnceCell<f64>) {
+    //     self.ord.set_ang(new_ang_ref)
+    // }
 }
 
 impl Location for GallLoc {
@@ -151,11 +166,11 @@ impl Location for GallLoc {
         let (center_x,center_y) = self.center_ords();
         self.center_ref.set((center_x + movement.0, center_y + movement.1));
     }
-    fn set_center(&mut self, new_center: Rc<OnceCell<(f64,f64)>>) {
+    fn set_center(&mut self, new_center: OnceCell<(f64,f64)>) {
         self.center_ref = new_center;
         self.update_xy();
     }
-    fn get_center(&self) -> Rc<OnceCell<(f64, f64)>> {
+    fn get_center(&self) -> OnceCell<(f64, f64)> {
         self.center_ref.clone()
     }
     fn x(&self) -> f64 {
@@ -164,7 +179,7 @@ impl Location for GallLoc {
     fn y(&self) -> f64 {
         self.abs_svg.get().unwrap().1
     }
-    fn pos_ref(&self) -> Rc<OnceCell<(f64, f64)>> {
+    fn pos_ref(&self) -> OnceCell<(f64, f64)> {
         self.abs_svg.clone()
     }
     fn center_ords(&self) -> (f64,f64) {
@@ -176,11 +191,11 @@ impl Location for GallOffLoc {
         let (center_x,center_y) = self.center_ref.get().unwrap();
         self.center_ref.set((center_x + movement.0, center_y + movement.1));
     }
-    fn set_center(&mut self, new_center: Rc<OnceCell<(f64,f64)>>) {
+    fn set_center(&mut self, new_center: OnceCell<(f64,f64)>) {
         self.center_ref = new_center;
         self.update_xy();
     }
-    fn get_center(&self) -> Rc<OnceCell<(f64,f64)>> {
+    fn get_center(&self) -> OnceCell<(f64,f64)> {
         self.center_ref.clone()
     }
     fn x(&self) -> f64 {
@@ -189,7 +204,7 @@ impl Location for GallOffLoc {
     fn y(&self) -> f64 {
         self.abs_svg.get().unwrap().1
     }
-    fn pos_ref(&self) -> Rc<OnceCell<(f64,f64)>> {
+    fn pos_ref(&self) -> OnceCell<(f64,f64)> {
         self.abs_svg.clone()
     }
     fn center_ords(&self) -> (f64,f64) {
@@ -202,68 +217,43 @@ impl PolarOrdinate for GallLoc {
         self.update_xy();
     }
     fn mut_dist(&mut self, new_dist:f64)-> Result<(), Error> {
-        match self.ord.mut_dist(new_dist) {
-            Ok(_) => Ok(self.update_xy()),
-            Err(E) => Err(E),
-        }
+        self.ord.mut_dist(new_dist)
+            .and_then(|_| self.update_xy())
     }
-    fn ang(&self) -> Option<f64> {
+    fn ang(&self) -> Option<&f64> {
         self.ord.ang()
     }
-    fn dist(&self) -> Option<f64> {
+    fn dist(&self) -> Option<&f64> {
         self.ord.dist()
     }
-    fn get_ang(&self) -> Rc<OnceCell<f64>> {
+    fn get_ang(&self) -> OnceCell<f64> {
         self.ord.get_ang()
     }
-    fn get_dist(&self) -> Rc<OnceCell<f64>> {
+    fn get_dist(&self) -> OnceCell<f64> {
         self.ord.get_dist()
     }
 }
 
 impl PolarOrdinate for GallOffLoc {
-    fn mut_ang(&mut self, mut new_ang:f64) {
-        if let Some(ang) = self.ord.ang() {
-            while new_ang.is_sign_negative() {
-                new_ang += TAU;
-            }
-            while new_ang > TAU {
-                new_ang -= TAU;
-            } 
-            self.ang_offset = new_ang - ang;
-        }
+    fn mut_ang(&mut self, new_ang:f64) {
+        self.offset_ang.mut_ang(Some(new_ang));
+        self.update_xy();
     }
     fn mut_dist(&mut self, new_dist: f64) -> Result<(), Error> {
-        if new_dist.is_sign_negative() {
-            return Err(Error::new(GallError::NegativeDistanceErr))
-        }
-        if let Some(dist) = self.ord.dist() {
-            self.dist_offset = new_dist - dist;
-            Ok(())
-        } else {
-            Err(Error::new(GallError::ValueNotSet))
-        }
+        _ = self.offset_dist.take();
+        _ = self.offset_dist.set(new_dist);
+        self.update_xy()
     }
-    fn ang(&self) -> Option<f64> {
-        if let Some(ang) = self.ord.ang() {
-            Some(self.ang_offset + ang)
-        } else {
-            None
-        }
+    fn ang(&self) -> Option<&f64> {
+        self.offset_ang.ang()
     }
-    fn dist(&self) -> Option<f64> {
-        if let Some(dist) = self.ord.dist() {
-            Some(dist + self.dist_offset)
-        } else {None} 
+    fn dist(&self) -> Option<&f64> {
+        self.offset_dist.get()
     }
-    fn get_ang(&self) -> Rc<OnceCell<f64>> {
-        todo!()
-        //self.ord.get_ang()
-        //Err(Error::new(GallError::GallOffAng))
+    fn get_ang(&self) -> OnceCell<f64> {
+        self.offset_ang.get_ang()
     }
-    fn get_dist(&self) -> Rc<OnceCell<f64>> {
-        todo!()
-        //self.ord.get_dist()
-        //Err(Error::new(GallError::GallOffDist))
-    }
+    fn get_dist(&self) -> OnceCell<f64> {
+        self.offset_dist.clone()
+    }    
 }

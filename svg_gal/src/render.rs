@@ -26,16 +26,16 @@ trait FreeRender {
     fn post_render(&self, vec:&mut Vec<Element>);
 }
 
-impl Renderable for GallWord {
+impl Renderable for GallWord<'_> {
     fn render(self, mut drawn:Document) -> Document {
         let radius = (self.inner_radius().unwrap(),self.outer_radius().unwrap());
         let circle = Circle::new()
             .set("fill", "none")
             .set("stroke", Config::SKEL_COLOUR())
-            .set("stroke-width", self.thick().unwrap())
+            .set("stroke-width", *self.thick().unwrap())
             .set("cx", self.x())
             .set("cy", self.y())
-            .set("r", self.radius().unwrap());
+            .set("r", *self.radius().unwrap());
         let (skel, divot, mark) = self.pre_render();
         drawn = if skel.len() == 0 {
             drawn.add(circle)
@@ -52,8 +52,8 @@ impl Renderable for GallWord {
     }
 }
 
-impl GallWord {
-    fn pre_render(self) -> (Vec<GallTainer>,Vec<GallTainer>,Vec<GallTainer>) {
+impl <'a>GallWord<'a> {
+    fn pre_render(self) -> (Vec<GallTainer<'a>>,Vec<GallTainer<'a>>,Vec<GallTainer<'a>>) {
         let mut skel = Vec::new();
         let mut divot = Vec::new();
         let mut mark = Vec::new();
@@ -125,7 +125,7 @@ impl GallWord {
     }
 }
 
-impl Renderable for GallTainer {
+impl Renderable for GallTainer<'_> {
     fn render(self, mut drawn:Document) -> Document {
         for stem in self.stem {
             drawn = stem.render(drawn);
@@ -140,17 +140,17 @@ impl Renderable for GallTainer {
     }
 }
 
-impl SkelPart for GallTainer {
+impl SkelPart for GallTainer<'_> {
     fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> ((Data,Data),(f64,f64)) {
         let (stem1, stem2) = self.stack_check();
-        let (thi_inner,thi_outer) = self.thi_calc();
-        let (theta_inner,theta_outer) = self.theta_calc();
+        let (thi_inner,thi_outer) = self.thi_calc().unwrap();
+        let (theta_inner,theta_outer) = self.theta_calc().unwrap();
         if thi_inner.is_nan() || thi_outer.is_nan() {
             println!("Skeleton letter not touching skeleton");
             panic!();
         };
         let (w_in_rad, w_ou_rad) = (
-            stem1.parent_inner().unwrap(), stem2.parent_outer().unwrap());
+            stem1.parent_inner(), stem2.parent_outer());
         let (l_in_big_rad, l_ou_smal_rad) = (
             stem1.outer_radius().unwrap(), stem2.inner_radius().unwrap());
         let (big_inner_l_arc, big_outer_l_arc) = (
@@ -170,11 +170,11 @@ impl SkelPart for GallTainer {
         ).unwrap();
         let inner_letter_start = tracker.svg_ord().unwrap();
         let inner_letter_finish = tracker.compute_loc(2.0 * thi_inner).unwrap();
-        let final_in_ang = tracker.ang().unwrap();
+        let final_in_ang = tracker.take_ang();
         tracker.mut_ang_d(w_ou_rad, outer_word_end_angle);
         let outer_letter_start = tracker.svg_ord().unwrap();
         let outer_letter_finish = tracker.compute_loc(2.0 * thi_outer).unwrap();
-        let final_ou_ang = tracker.ang().unwrap();
+        let final_ou_ang = tracker.take_ang();
         // x radius, y radius, rotation, large arc, sweep direction, end x, end y
         let inner_data = inner_outer.0.elliptical_arc_to((
             w_in_rad, w_in_rad, 
@@ -209,18 +209,18 @@ impl SkelPart for GallTainer {
     }
     fn part_init(&self) -> ((Data, Data),(f64,f64),(f64,f64), (f64,f64)) {
         let (stem1, stem2) = self.stack_check();
-        let (thi_inner,thi_outer) = self.thi_calc();
+        let (thi_inner,thi_outer) = self.thi_calc().unwrap();
         let (inner_init_angle, outer_init_angle) = (
             stem1.ang().unwrap() - thi_inner,
             stem2.ang().unwrap() - thi_outer
         );
         let mut tracker = GallLoc::new(
             0.0_f64.min(inner_init_angle),
-            stem1.parent_inner().unwrap(), 
+            stem1.parent_inner(), 
             stem1.get_center(),
         ).unwrap();
         let inner_continuum = *tracker.pos_ref().get().unwrap();
-        tracker.mut_ang_d(stem2.parent_outer().unwrap(), 0.0_f64.min(outer_init_angle));
+        tracker.mut_ang_d(stem2.parent_outer(), 0.0_f64.min(outer_init_angle));
         let outer_continuum = *tracker.pos_ref().get().unwrap();
         (
             (
@@ -236,7 +236,7 @@ impl SkelPart for GallTainer {
         )
     }
 }
-impl GallTainer {
+impl GallTainer<'_> {
     fn post_render(self, vec: &mut Vec<Element>) {
         for stem in self.stem {
             stem.post_render(vec);
@@ -250,7 +250,7 @@ impl GallTainer {
     } 
 }
 
-impl Renderable for Stem {
+impl Renderable for Stem<'_> {
     fn render(self, drawn:Document) -> Document {
         match self.get_shape() {
             Some(circle) => drawn.add(circle),
@@ -259,14 +259,14 @@ impl Renderable for Stem {
     }
 }
 
-impl FreeRender for Stem {
+impl FreeRender for Stem<'_> {
     fn post_render(&self, vec:&mut Vec<Element>) {
         if let Some(circle) = self.get_shape() {
             vec.push(circle.into())
         }
     }
 }
-impl Stem {
+impl Stem<'_> {
     fn get_shape(&self) -> Option<Circle> {
         match self.stem_type {
             StemType::J|StemType::Z => {
@@ -276,24 +276,24 @@ impl Stem {
                     .set("stroke-width", (self.thick().unwrap()*2.0).to_string()+"px")
                     .set("cx", self.x())
                     .set("cy", self.y())
-                    .set("r", self.radius().unwrap());
+                    .set("r", *self.radius().unwrap());
                 Some(circle)
             },
             StemType::B|StemType::S => None,//TODO: Stack gaps
         }
     }
 }
-impl Renderable for GallVowel {
+impl Renderable for GallVowel<'_> {
     fn render(self, drawn:Document) -> Document {
         drawn.add(self.get_shape())
     }
 }
-impl FreeRender for GallVowel {
+impl FreeRender for GallVowel<'_> {
     fn post_render(&self, vec:&mut Vec<Element>) {
         vec.push(self.get_shape().into())
     }
 }
-impl GallVowel {
+impl GallVowel<'_> {
     fn get_shape(&self) -> Circle {
         Circle::new()
             .set("fill", "none")
@@ -301,7 +301,7 @@ impl GallVowel {
             .set("stroke-width", (self.thick().unwrap()*2.0).to_string()+"px")
             .set("cx", self.x())
             .set("cy", self.y())
-            .set("r", self.radius().unwrap())
+            .set("r", *self.radius().unwrap())
     }
 }
 impl Renderable for Dot {
@@ -321,6 +321,6 @@ impl Dot {
             .set("stroke", "none")
             .set("cx", self.x())
             .set("cy", self.y())
-            .set("r", self.radius().unwrap())
+            .set("r", *self.radius().unwrap())
     }
 }

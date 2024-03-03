@@ -1,4 +1,4 @@
-use std::cell::{Cell, OnceCell};
+use std::cell::OnceCell;
 use std::f64::consts::PI;
 use std::rc::Rc;
 
@@ -6,28 +6,27 @@ use crate::gall_ang::GallAng;
 use crate::gall_circle::{ChildCircle, Circle, Dot, HollowCircle};
 use crate::gall_config::Config;
 use crate::gall_errors::{Error, GallError};
-use crate::gall_fn::{self, LetterMark};
+use crate::gall_fn::{self, DecorType, LetterMark};
 use crate::gall_loc::{GallLoc, GallOffLoc, Location};
 //use crate::gall_node::GallNode;
 use crate::gall_ord::{GallOrd, PolarOrdinate};
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_vowel::{GallVowel, VowelType};
-use crate::gall_word::GallWord;
 
-pub struct GallTainer {
-    ang: GallAng,
-    stem_type: OnceCell<StemType>,
-    pub stem: Vec<Stem>,
-    pub vowel: Vec<GallVowel>,
+pub struct GallTainer<'a> {
+    pub ang: GallAng,
+    pub stem_type: OnceCell<StemType>,
+    pub stem: Vec<Stem<'a>>,
+    pub vowel: Vec<GallVowel<'a>>,
     //node: Vec<GallNode>,
-    pub dot: Vec<Dot>,
+    //pub dot: Vec<Dot>,
     //mark: Vec<GallMark>,
     //radius, distance, center_ref
-    pub buffer: (Rc<OnceCell<f64>>, Rc<OnceCell<f64>>,Rc<OnceCell<(f64,f64)>>),
+    pub buffer: (OnceCell<f64>, OnceCell<f64>,OnceCell<(f64,f64)>),
 }
 
-impl GallTainer {
-    pub fn new(l_type:LetterMark) -> GallTainer {
+impl <'a>GallTainer<'a> {
+    pub fn new<'b>(l_type:LetterMark) -> GallTainer<'b> {
         let (mark_type, stem_vec, vowel_vec) = match l_type {
             LetterMark::Digit(_) => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
             LetterMark::Stem(mark) => (Some(mark),Vec::with_capacity(1), Vec::new()),
@@ -38,15 +37,15 @@ impl GallTainer {
         if let Some(stem) = mark_type {
             stem_type.get_or_init(||stem);
         };
-        let ang = Rc::new(Cell::new(GallAng::new(None)));
+        //let ang = Rc::new(Cell::new(GallAng::new(None)));
         GallTainer {
-            ang,
+            ang: GallAng::new(None), //ang,
             stem_type,
             stem:stem_vec,
             vowel:vowel_vec,
             //node: Vec::new(),
-            dot: Vec::new(),
-            buffer: (Rc::new(OnceCell::new()), Rc::new(OnceCell::new()),Rc::new(OnceCell::new()))
+            //dot: Vec::new(),
+            buffer: ((OnceCell::new(), OnceCell::new(),OnceCell::new()))
         }
     }
     pub fn init(&mut self, stem_type:Option<StemType>, con_count:usize, ang:f64) -> usize {
@@ -62,36 +61,36 @@ impl GallTainer {
     pub fn is_empty(&self) -> bool {
         self.stem.is_empty() && self.vowel.is_empty()
     }
-    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<bool>, i8), word: &GallWord) {
+    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<DecorType>, i8), wrd_rad: &'a f64, wrd_thick:&'a f64, wrd_center: OnceCell<(f64,f64)>) {
         match l_mark {
             LetterMark::Stem(stem) => {
-                let letter = self.create_stem(stem, word);
+                let letter = self.create_stem(stem, wrd_rad, wrd_thick, wrd_center).unwrap();
                 self.add_stem(letter);
             },
             LetterMark::GallVowel(vow) => {
-                let letter = self.create_vowel(vow,word);
+                let letter = self.create_vowel(vow,wrd_rad, wrd_thick, wrd_center).unwrap();
                 self.add_vowel(letter);
             },
             LetterMark::Digit(num) => todo!(),
             LetterMark::GallMark => {},//todo!(),
         }
         if let Some(dot) = d_mark.0 {
-            if dot {
+            if dot == DecorType::Dot {
                 for n in 0..d_mark.1 {
                     let decor = self.create_dot(n - 1);
-                    self.add_dot(decor);
+                    self.add_dot(decor.unwrap());
                 }    
             } else {
                 for n in 0..d_mark.1 {
-                    let decor = self.create_dash(n - 1, self.get_dist(),word.get_radius());
-                    self.add_dash(decor);
+                    //let decor = self.create_dash(n - 1, self.get_dist(),word.get_radius());
+                    //self.add_dash(decor);
                 }
             }
         }
     }
-    pub fn create_stem(&self, stem:StemType, word: &GallWord) -> Option<Stem> {
+    pub fn create_stem(&self, stem:StemType, wrd_rad: &'a f64, wrd_thick:&'a f64, wrd_center: OnceCell<(f64,f64)>) -> Option<Stem<'a>> {
         let rank = self.stem.len();
-        let (p_rad, p_thick) = (word.radius()?, word.thick()?*Config::LETTER_THICK_FRAC + rank as f64 * 5.0);
+        let (&p_rad, p_thick) = (wrd_rad, wrd_thick*Config::LETTER_THICK_FRAC + rank as f64 * 5.0);
         let (dist,thick) = match stem {
             StemType::J => (p_rad*(0.7 - Config::LETTER_FRAC_OF_WRD),p_thick),
             StemType::B => (p_rad*(1.2 - Config::LETTER_FRAC_OF_WRD),p_thick),
@@ -100,19 +99,20 @@ impl GallTainer {
         };
         Some(Stem::new(
             GallLoc::new(
-                self.ang(),
+                *self.ang(),
                 dist,
-                word.get_center(),
+                wrd_center,
             )?,
             p_rad*Config::LETTER_FRAC_OF_WRD,
             thick,
             stem,
-            word
-        ))
+            wrd_rad,
+            wrd_thick,
+        )?)
     }
-    pub fn create_vowel(&self, stem:VowelType, word: &GallWord) -> Option<GallVowel> {
+    pub fn create_vowel(&self, stem:VowelType, wrd_rad: &'a f64, wrd_thick:&'a f64, wrd_center: OnceCell<(f64,f64)>) -> Option<GallVowel<'a>> {
         let rank = self.vowel.len();
-        let (p_rad, p_thick) = (word.radius()?, word.thick()?*Config::VOWEL_THICK_FRAC + rank as f64 * 5.0);
+        let (&p_rad, p_thick) = (wrd_rad, wrd_thick*Config::VOWEL_THICK_FRAC + rank as f64 * 5.0);
         let (dist,thick) = match stem {
             VowelType::A => (p_rad*1.2, p_thick),
             VowelType::E => (p_rad, p_thick),
@@ -123,23 +123,27 @@ impl GallTainer {
         };
         Some(GallVowel::new(
             GallLoc::new(
-                self.ang(),
+                *self.ang(),
                 dist,
-                word.get_center(),
+                wrd_center,
             )?,
             p_rad*Config::VOWEL_FRAC_OF_WRD,
             thick,
             stem,
-            word
-        ))
+            wrd_rad,
+            wrd_thick,
+        )?)
     }
     pub fn create_dot(&self, num: i8) -> Option<Dot> {
-        let (dist,center_ref) = self.buffer.clone();
+        let (l_rad, dist,center_ref) = self.buffer.clone();
         Some(Dot::new(
             GallOffLoc::new(
-                self.ang(),
+                GallOrd::new(
+                    *self.ang(),
+                    *dist.get().unwrap(),
+
+                ),
                 PI + num as f64 * Config::DEF_DOT_SPREAD,
-                dist,
                 0.0,
                 center_ref
             )?,
@@ -160,7 +164,7 @@ impl GallTainer {
     //         ,     
     //     )
     // }
-    pub fn add_stem(&mut self, new_stem: Stem) {
+    pub fn add_stem(&mut self, new_stem: Stem<'a>) {
         if self.stem_type.get().unwrap() != &new_stem.stem_type {
             println!("Warning! Stem has different type to tainer")
         };
@@ -168,12 +172,12 @@ impl GallTainer {
         self.stem.push(new_stem);
         self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
     }
-    pub fn add_vowel(&mut self, mut new_vowel: GallVowel) {
+    pub fn add_vowel(&mut self, mut new_vowel: GallVowel<'a>) {
         if let Some(stem) = self.stem_type.get() {
             match stem {
                 StemType::J|StemType::B => match new_vowel.vowel_type {
                     VowelType::E|VowelType::I|VowelType::U => {
-                        self.buffer = (new_vowel.get_radius(),new_vowel.pos_ref());
+                        self.buffer = (new_vowel.get_radius(),new_vowel.get_radius(),new_vowel.pos_ref());
                         new_vowel.center_on_stem(&self.stem[0]);
                     },
                     VowelType::O1 => {
@@ -187,35 +191,39 @@ impl GallTainer {
         self.vowel.push(new_vowel);
     }
     pub fn add_dot(&mut self, dot:Dot) {
-        self.dot.push(dot)
+        //self.dot.push(dot)
     }
-    pub fn thi_calc(&self) -> (f64,f64) {
+    pub fn thi_calc(&self) -> Option<(f64,f64)> {
         let (stem1,stem2) = self.stack_check();
-        let thi_inner = gall_fn::thi(
-            stem1.dist(),
-            stem1.outer_radius(), 
-            stem1.parent_inner(),
-        );
-        let thi_outer = gall_fn::thi(
-            stem2.dist(),
-            stem2.inner_radius(), 
-            stem2.parent_outer(),
-        );
-        (thi_inner,thi_outer)
+        if let (Some(&i_dist), Some(&o_dist)) = (stem1.dist(), stem2.dist()) {
+            let thi_inner = gall_fn::thi(
+                i_dist,
+                stem1.outer_radius()?, 
+                stem1.parent_inner(),
+            );
+            let thi_outer = gall_fn::thi(
+                o_dist,
+                stem2.inner_radius()?, 
+                stem2.parent_outer(),
+            );
+            Some((thi_inner,thi_outer))
+        } else {None}
     }
-    pub fn theta_calc(&self) -> (f64,f64) {
+    pub fn theta_calc(&self) -> Option<(f64,f64)> {
         let (stem1,stem2) = self.stack_check();
-        let theta_inner = gall_fn::theta(
-            stem1.dist(),
-            stem1.outer_radius(), 
-            stem1.parent_inner(),
-        );
-        let theta_outer = gall_fn::theta(
-            stem2.dist(),
-            stem2.inner_radius(), 
-            stem2.parent_outer(),
-        );
-        (theta_inner,theta_outer)
+        if let (Some(&i_dist), Some(&o_dist)) = (stem1.dist(), stem2.dist()) {
+            let theta_inner = gall_fn::theta(
+                i_dist,
+                stem1.outer_radius()?, 
+                stem1.parent_inner(),
+            );
+            let theta_outer = gall_fn::theta(
+                o_dist,
+                stem2.inner_radius()?, 
+                stem2.parent_outer(),
+            );
+            Some((theta_inner,theta_outer))
+        } else {None}
     }
     pub fn stack_check(&self) -> (&Stem, &Stem) {
         let stem1 = self.stem.first().unwrap();
@@ -226,16 +234,16 @@ impl GallTainer {
         };
         (stem1,stem2)
     }
-    fn unpack(mut self) -> (Vec<Stem>,Vec<GallVowel>) {
-        self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
-        self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
-        (self.stem,self.vowel)
-    }
+    // fn unpack(mut self) -> (Vec<Stem>,Vec<GallVowel>) {
+    //     self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
+    //     self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
+    //     (self.stem,self.vowel)
+    // }
     pub fn mut_ang(&mut self, new_ang:Option<f64>) {
-        _ = self.ang.set(GallAng::new(new_ang))
+        _ = self.ang.mut_ang(new_ang)
     }
-    pub fn ang(&self) -> f64 {
-        self.ang.get().ang().unwrap()
+    pub fn ang(&self) -> &f64 {
+        self.ang.ang().unwrap()
     }
 }
 
