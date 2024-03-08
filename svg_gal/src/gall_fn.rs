@@ -9,6 +9,11 @@ pub enum LetterMark {
     GallMark,
     Digit(u32), //TODO: change to i32
 }
+#[derive(PartialEq)]
+pub enum Decor {
+    Dot,
+    Dash,    
+}
 
 #[derive(PartialEq,Default)]
 pub enum  LetterType {
@@ -122,17 +127,17 @@ pub fn stem_lookup(letter:&char) -> (LetterMark, bool) {
     (stem,repeat)
 }
 
-pub fn dot_lookup(letter:&char) -> (Option<bool>,i8) {
+pub fn dot_lookup(letter:&char) -> (Option<Decor>,i8) {
     let dot = match letter {
-        'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(true),
-        'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'U'|'V'|'W'|'X'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'u'|'v'|'w'|'x' => Some(false),
+        'C'|'D'|'K'|'L'|'Q'|'R'|'Y'|'Z'|'c'|'d'|'k'|'l'|'q'|'r'|'y'|'z' => Some(Decor::Dot),
+        'F'|'G'|'H'|'I'|'M'|'N'|'P'|'S'|'U'|'V'|'W'|'X'|'f'|'g'|'h'|'i'|'m'|'n'|'p'|'s'|'u'|'v'|'w'|'x' => Some(Decor::Dash),
         'A'|'B'|'E'|'J'|'O'|'T'|'a'|'b'|'e'|'j'|'o'|'t' => None,
         '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9' => None, //TODO
         '\u{e000}'..='\u{e0ff}' => None, // TH & variants
-        '\u{e800}'..='\u{e9ff}' => Some(false), // QU, NG & variants
-        '\u{e100}'..='\u{e7ff}' => Some(true), // Other two letter variants
-        '\u{ea03}'|'\u{ea04}'|'\u{ea0b}'|'\u{ea0c}'|'\u{ea11}'|'\u{ea12}'|'\u{ea19}'|'\u{ea20}'=> Some(true), //repeat dots
-        '\u{ea06}'|'\u{ea07}'|'\u{ea08}'|'\u{ea09}'|'\u{ea0d}'|'\u{ea0e}'|'\u{ea10}'|'\u{ea13}'|'\u{ea15}'|'\u{ea16}'|'\u{ea17}'|'\u{ea18}'=> Some(false), //repeat dashes
+        '\u{e800}'..='\u{e9ff}' => Some(Decor::Dash), // QU, NG & variants
+        '\u{e100}'..='\u{e7ff}' => Some(Decor::Dot), // Other two letter variants
+        '\u{ea03}'|'\u{ea04}'|'\u{ea0b}'|'\u{ea0c}'|'\u{ea11}'|'\u{ea12}'|'\u{ea19}'|'\u{ea20}'=> Some(Decor::Dot), //repeat dots
+        '\u{ea06}'|'\u{ea07}'|'\u{ea08}'|'\u{ea09}'|'\u{ea0d}'|'\u{ea0e}'|'\u{ea10}'|'\u{ea13}'|'\u{ea15}'|'\u{ea16}'|'\u{ea17}'|'\u{ea18}'=> Some(Decor::Dash), //repeat dashes
         '\u{ea01}'|'\u{ea02}'|'\u{ea05}'|'\u{ea0f}'|'\u{ea14}' => None, //repeat nones
         _ => None
     };

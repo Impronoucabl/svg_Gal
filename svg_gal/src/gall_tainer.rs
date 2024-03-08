@@ -6,7 +6,7 @@ use crate::gall_ang::GallAng;
 use crate::gall_circle::{ChildCircle, Circle, Dot, HollowCircle};
 use crate::gall_config::Config;
 use crate::gall_errors::{Error, GallError};
-use crate::gall_fn::{self, LetterMark};
+use crate::gall_fn::{self, Decor, LetterMark};
 use crate::gall_loc::{GallLoc, GallRelLoc, Location};
 use crate::gall_node::GallNode;
 use crate::gall_ord::{GallOrd, PolarOrdinate};
@@ -61,7 +61,7 @@ impl GallTainer {
     pub fn is_empty(&self) -> bool {
         self.stem.is_empty() && self.vowel.is_empty()
     }
-    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<bool>, i8), word: &GallWord) {
+    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<Decor>, i8), word: &GallWord) {
         match l_mark {
             LetterMark::Stem(stem) => {
                 let letter = self.create_stem(stem, word);
@@ -75,9 +75,9 @@ impl GallTainer {
             LetterMark::GallMark => {},//todo!(),
         }
         if let Some(dot) = d_mark.0 {
-            if dot {
+            if dot == Decor::Dot {
                 for n in 0..d_mark.1 {
-                    let decor = self.create_dot(n - 1);
+                    let decor = self.create_dot(n - 1, word.get_radius());
                     self.add_dot(decor);
                 }    
             } else {
@@ -132,24 +132,25 @@ impl GallTainer {
             word
         )
     }
-    pub fn create_dot(&self, num: i8) -> Dot {
+    pub fn create_dot(&self, num: i8, w_rad: Rc<Cell<f64>>) -> Dot {
         let (dist,center_ref) = self.buffer.clone();
         Dot::new(
             GallRelLoc::new(
-                self.ang(),
-                PI + num as f64 * Config::DEF_DOT_SPREAD,
+                self.get_ang(),
+                PI + Config::DEF_DOT_SPREAD * num as f64,
                 dist,
                 0.0,
                 center_ref
             ),
-            Config::DOT_RADIUS,     
+            Config::DOT_RADIUS,
+            w_rad,     
         )
     }
     pub fn create_dash(&self, num: i8, w_rad: Rc<Cell<f64>>) -> GallNode {
         let (dist,center_ref) = self.buffer.clone();
         GallNode::new(
             GallRelLoc::new(
-                self.ang(),
+                self.get_ang(),
                 PI + num as f64 * Config::DEF_DOT_SPREAD,
                 dist,
                 0.0,
@@ -239,7 +240,7 @@ impl GallTainer {
     pub fn ang(&self) -> f64 {
         self.ang.get().ang().unwrap()
     }
+    pub fn get_ang(&self) -> Rc<Cell<GallAng>> {
+        self.ang.clone()
+    }
 }
-
-// impl ChildCircle for GallTainer {
-// }

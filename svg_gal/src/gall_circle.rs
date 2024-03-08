@@ -8,6 +8,7 @@ use crate::gall_ord::PolarOrdinate;
 pub struct Dot {
     loc: GallRelLoc,
     radius: Rc<Cell<f64>>,
+    word_radius: Rc<Cell<f64>>,
 } 
 pub trait Circle {
     fn radius(&self) -> f64;
@@ -40,10 +41,11 @@ pub trait ChildCircle{
     }
 }
 impl Dot {
-    pub fn new(loc: GallRelLoc, radius:f64) -> Dot{
+    pub fn new(loc: GallRelLoc, radius:f64, w_rad:Rc<Cell<f64>>) -> Dot{
         Dot {
             loc,
             radius: Rc::new(Cell::new(radius)),
+            word_radius: w_rad,
         }
     }
 }

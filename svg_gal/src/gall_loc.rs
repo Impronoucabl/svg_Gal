@@ -2,7 +2,7 @@ use std::cell::Cell;
 use std::f64::consts::{FRAC_PI_2, TAU};
 use std::rc::Rc;
 
-use crate::gall_ang::GallAng;
+use crate::gall_ang::{self, GallAng};
 use crate::gall_ord::{GallOrd, PolarOrdinate};
 use crate::gall_errors::{Error, GallError};
 
@@ -34,11 +34,18 @@ pub trait Location:PolarOrdinate {
     }
 }
 
+fn calc_xy(dist:f64, ang:Option<f64>,center:(f64,f64)) -> (f64,f64) {
+    let (rel_y,rel_x) = match ang {
+        Some(angle) => (FRAC_PI_2 - angle).sin_cos(),
+        None => (0.0,0.0)
+    };
+    let (center_x,center_y) = center;
+    (dist*rel_x + center_x, dist*rel_y + center_y)
+}
+
 impl GallLoc {
     pub fn new(angle:f64, distance: f64, center_ref:Rc<Cell<(f64,f64)>>) -> GallLoc {
-        let (rel_y,rel_x) = (FRAC_PI_2 - angle).sin_cos();
-        let (center_x,center_y) = center_ref.get();
-        let pos = (distance*rel_x + center_x, distance*rel_y + center_y);
+        let pos = calc_xy(distance, Some(angle), center_ref.get());
         GallLoc { 
             ord: GallOrd::new(angle, distance),
             center_ref,  
@@ -46,19 +53,12 @@ impl GallLoc {
         }
     }
     fn update_xy(&mut self) {
-        let dist = self.dist();
-        let (rel_y,rel_x) = match self.ang() {
-            Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
-            None => (0.0,0.0)
-        };
-        let (center_x,center_y) = self.center_ref.get();
-        self.abs_svg.set((dist*rel_x + center_x, dist*rel_y + center_y));
+        self.abs_svg.set(calc_xy(self.dist(), self.ang(), self.center_ref.get()));
     }
     pub fn compute_loc(&mut self, ang:f64) -> (f64,f64) {
-        self.mut_ccw(ang);
+        _ = self.mut_ccw(ang);
         self.svg_ord()
     }
-    
     // pub fn rotate_ccw(&mut self, angle: f64) -> Option<()> {
     //     self.mut_ang(self.ang() + angle);
     //     Some(())
@@ -102,13 +102,14 @@ impl GallLoc {
 }
 
 impl GallRelLoc {
-    pub fn new(angle:f64, ang_offset:f64, distance:Rc<Cell<f64>>, dist_offset:f64, center_ref: Rc<Cell<(f64,f64)>>) -> GallRelLoc {
-        let (rel_y,rel_x) = (FRAC_PI_2 - angle).sin_cos();
-        let dist = distance.get();
-        let (center_x,center_y) = center_ref.get();
-        let pos = (dist*rel_x + center_x, dist*rel_y + center_y);
+    pub fn new(angle_ref:Rc<Cell<GallAng>>, ang_offset:f64, distance:Rc<Cell<f64>>, dist_offset:f64, center_ref: Rc<Cell<(f64,f64)>>) -> GallRelLoc {
+        let angle = match angle_ref.get().ang() {
+            Some(ang) =>  Some(ang + ang_offset),
+            None => None,
+        };
+        let pos = calc_xy(distance.get(), angle, center_ref.get());
         GallRelLoc {
-            angle: Rc::new(Cell::new(GallAng::new(Some(angle)))),
+            angle: angle_ref,
             ang_offset,
             dist_offset,
             distance,
@@ -116,27 +117,26 @@ impl GallRelLoc {
             abs_svg:Rc::new(Cell::new(pos)),
         }
     }
+    fn update_xy(&mut self) {
+        self.abs_svg.set(calc_xy(self.dist(), self.ang(), self.center_ref.get()));
+    }
+    fn base_ang(&self) -> Option<f64> {
+        self.angle.get().ang()
+    }
     pub fn set_dist(&mut self, dist_ref:Rc<Cell<f64>>) {
         self.distance = dist_ref;
     }
     pub fn set_ang(&mut self, ang_ref: Rc<Cell<GallAng>>) {
         self.angle = ang_ref
     }
-    fn update_xy(&mut self) {
-        let dist = self.dist();
-        let (rel_y,rel_x) = match self.ang() {
-            Some(ang) => (FRAC_PI_2 - ang).sin_cos(),
-            None => (0.0,0.0)
-        };
-        let (center_x,center_y) = self.center_ref.get();
-        self.abs_svg.set((dist*rel_x + center_x, dist*rel_y + center_y));
-    }
+    
 }
 
 impl Location for GallLoc {
     fn mut_center(&mut self, movement:(f64,f64)) {
         let (center_x,center_y) = self.center_ref.get();
         self.center_ref.set((center_x + movement.0, center_y + movement.1));
+        self.update_xy();
     }
     fn set_center(&mut self, new_center: Rc<Cell<(f64,f64)>>) {
         self.center_ref = new_center;
@@ -159,6 +159,7 @@ impl Location for GallRelLoc {
     fn mut_center(&mut self, movement:(f64,f64)) {
         let (center_x,center_y) = self.center_ref.get();
         self.center_ref.set((center_x + movement.0, center_y + movement.1));
+        self.update_xy();
     }
     fn set_center(&mut self, new_center: Rc<Cell<(f64,f64)>>) {
         self.center_ref = new_center;
@@ -197,26 +198,23 @@ impl PolarOrdinate for GallLoc {
 }
 
 impl PolarOrdinate for GallRelLoc {
-    fn mut_ang(&mut self, mut new_ang:f64) {
-        if let Some(ang) = self.angle.get().ang() {
-            while new_ang.is_sign_negative() {
-                new_ang += TAU;
-            }
-            while new_ang > TAU {
-                new_ang -= TAU;
-            } 
-            self.ang_offset = new_ang - ang;
-        }
+    fn mut_ang(&mut self, ang:f64) {
+        if let (Some(old_ang), Some(new_ang)) = (
+            self.base_ang(), gall_ang::constrain(Some(ang))) {
+            self.ang_offset = new_ang - old_ang;
+            self.update_xy();
+        } else {}//Don't panic if base ang is None
+        //self.update_xy();
     }
     fn mut_dist(&mut self, new_dist: f64) -> Result<(), Error> {
         if new_dist.is_sign_negative() {
             return Err(Error::new(GallError::NegativeDistanceErr))
         }
         self.dist_offset = new_dist - self.distance.get();
-        Ok(())
+        Ok(self.update_xy())
     }
     fn ang(&self) -> Option<f64> {
-        if let Some(ang) = self.angle.get().ang() {
+        if let Some(ang) = self.base_ang() {
             Some(self.ang_offset + ang)
         } else {
             None

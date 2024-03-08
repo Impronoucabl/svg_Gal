@@ -3,12 +3,12 @@
 <path d="M955.82336,1745.7874 A725,725,0,0,0,955.82336,1745.7874 A182.5,182.5,0,1,1,1092.1766,1745.7874 A725,725,0,1,0,955.82336,1745.7874 z" fill="black" stroke="none" stroke-width="0"/>
 <path d="M755.1155,1532.2579 A575,575,0,0,0,755.1155,1532.2579 A272.5,272.5,0,0,1,1292.8845,1532.2579 A575,575,0,1,0,755.1155,1532.2579 z" fill="green" stroke="none" stroke-width="0"/>
 <circle cx="1024" cy="1576.5" fill="none" r="97.5" stroke="red" stroke-width="67.5px"/>
-<circle cx="1024" cy="1804" fill="blue" r="25" stroke="none"/>
-<circle cx="1024" cy="1804" fill="blue" r="25" stroke="none"/>
-<circle cx="1024" cy="1804" fill="blue" r="25" stroke="none"/>
+<circle cx="1112.5926728752179" cy="1366.9586238643437" fill="blue" r="25" stroke="none"/>
+<circle cx="1024" cy="1349" fill="blue" r="25" stroke="none"/>
+<circle cx="935.4073271247821" cy="1366.9586238643437" fill="blue" r="25" stroke="none"/>
 <circle cx="1251.5" cy="1024" fill="none" r="227.49999999999997" stroke="black" stroke-width="90px"/>
 <circle cx="1414" cy="1024" fill="none" r="97.5" stroke="red" stroke-width="67.5px"/>
-<circle cx="1479" cy="1024" fill="blue" r="25" stroke="none"/>
-<circle cx="1479" cy="1024" fill="blue" r="25" stroke="none"/>
+<circle cx="1041.9586238643437" cy="935.4073271247819" fill="blue" r="25" stroke="none"/>
+<circle cx="1024" cy="1024" fill="blue" r="25" stroke="none"/>
 <circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
 </svg>
