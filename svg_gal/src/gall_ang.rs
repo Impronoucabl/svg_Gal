@@ -4,7 +4,7 @@ use crate::gall_errors::{Error, GallError};
 
 //GallAng is a simple wrapper around Option<f64> to enforce
 // the allowed range of 0 < angle < TAU
-#[derive(PartialEq,Default,Clone, Copy)]
+#[derive(PartialEq,Default,Clone,Copy)]
 pub struct GallAng {
     angle: Option<f64>,
 }

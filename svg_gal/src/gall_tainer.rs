@@ -19,7 +19,7 @@ pub struct GallTainer {
     stem_type: OnceCell<StemType>,
     pub stem: Vec<Stem>,
     pub vowel: Vec<GallVowel>,
-    //node: Vec<GallNode>,
+    node: Vec<GallNode>,
     pub dot: Vec<Dot>,
     //mark: Vec<GallMark>,
     pub buffer: (Rc<Cell<f64>>, Rc<Cell<(f64,f64)>>),
@@ -43,7 +43,7 @@ impl GallTainer {
             stem_type,
             stem:stem_vec,
             vowel:vowel_vec,
-            //node: Vec::new(),
+            node: Vec::new(),
             dot: Vec::new(),
             buffer: (Rc::new(Cell::new(-0.0)), Rc::new(Cell::new((-0.0,-0.0))))
         }
@@ -82,7 +82,7 @@ impl GallTainer {
                 }    
             } else {
                 for n in 0..d_mark.1 {
-                    let decor = self.create_dash(n - 1, ,word.get_radius());
+                    let decor = self.create_dash(n - 1, word.get_radius());
                     self.add_dash(decor);
                 }
             }
@@ -145,7 +145,7 @@ impl GallTainer {
             Config::DOT_RADIUS,     
         )
     }
-    pub fn create_dash(&self, num: i8, l_dist: &GallOrd, w_rad: Rc<Cell<f64>>) -> GallNode {
+    pub fn create_dash(&self, num: i8, w_rad: Rc<Cell<f64>>) -> GallNode {
         let (dist,center_ref) = self.buffer.clone();
         GallNode::new(
             GallRelLoc::new(
@@ -155,7 +155,8 @@ impl GallTainer {
                 0.0,
                 center_ref
             ),
-            ,     
+            //l_dist,
+            w_rad,     
         )
     }
     pub fn add_stem(&mut self, new_stem: Stem) {
@@ -186,6 +187,9 @@ impl GallTainer {
     }
     pub fn add_dot(&mut self, dot:Dot) {
         self.dot.push(dot)
+    }
+    pub fn add_dash(&mut self, dash: GallNode) {
+        self.node.push(dash)
     }
     pub fn thi_calc(&self) -> (f64,f64) {
         let (stem1,stem2) = self.stack_check();

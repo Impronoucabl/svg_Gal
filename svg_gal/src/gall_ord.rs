@@ -22,7 +22,7 @@ pub trait PolarOrdinate {
     }
 }
 
-#[derive(PartialEq,Default,Clone,Copy)]
+#[derive(PartialEq,Default,Clone)]
 pub struct GallOrd {
     angle: GallAng,
     distance: f64,
