@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
 use svg::Document;
-use svg::node::element::{Circle, Element, Path};
+use svg::node::element::{Circle, Element, Line, Path, Rectangle};
 use svg::node::element::path::Data;
 
 use crate::gall_circle::{ChildCircle, Circle as Cir, Dot, HollowCircle};
@@ -9,6 +9,7 @@ use crate::gall_config::Config;
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
+use crate::gall_pair::GallLinePair;
 use crate::gall_sentence::GallSentence;
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_tainer::GallTainer;
@@ -28,11 +29,55 @@ trait FreeRender {
     fn post_render(&self, vec:&mut Vec<Element>);
 }
 
+trait Basic {
+    fn get_shape(&self) -> Element;
+}
+impl<T:Basic> Renderable for T {
+    fn render(self, drawn:Document) -> Document {
+        drawn.add(self.get_shape())
+    }
+}
+impl<T:Basic> FreeRender for T {
+    fn post_render(&self, vec:&mut Vec<Element>) {
+        vec.push(self.get_shape().into())
+    }
+}
+
+pub fn create_svg() -> Document {
+    let drawn = Document::new().set("viewBox", (0, 0, Config::WIDTH, Config::HEIGHT));   
+    let background = Rectangle::new()
+        .set("x", 0)
+        .set("y", 0)
+        .set("width", Config::WIDTH)
+        .set("height", Config::HEIGHT)
+        .set("fill", Config::BG_COLOUR())
+        .set("stroke", "none");
+    drawn.add(background)
+}
+
+pub fn render_init(marks:Vec<GallLinePair>) -> (Document,Vec<Element>) {
+    let mut post_render = Vec::new();
+    for pair in marks {
+        pair.post_render(&mut post_render)
+    }
+    (create_svg(),post_render)
+}
+
+pub fn render_start<T:Renderable>(start_obj:T, drawn:Document) -> Document {
+    start_obj.render(drawn)
+}
+pub fn render_post(post_render:Vec<Element>, mut drawn: Document) -> Document {
+    for differed in post_render {
+        drawn = drawn.add(differed);
+    }  
+    drawn
+}
+
 impl Renderable for GallSentence {
     fn render(self, mut drawn:Document) -> Document {
         let circle = Circle::new()
             .set("fill", "none")
-            .set("stroke", Config::SKEL_COLOUR())
+            .set("stroke", Config::SENT_COLOUR())
             .set("stroke-width", self.thick())
             .set("cx", self.x())
             .set("cy", self.y())
@@ -309,18 +354,9 @@ impl Stem {
         }
     }
 }
-impl Renderable for GallVowel {
-    fn render(self, drawn:Document) -> Document {
-        drawn.add(self.get_shape())
-    }
-}
-impl FreeRender for GallVowel {
-    fn post_render(&self, vec:&mut Vec<Element>) {
-        vec.push(self.get_shape().into())
-    }
-}
-impl GallVowel {
-    fn get_shape(&self) -> Circle {
+
+impl Basic for GallVowel {
+    fn get_shape(&self) -> Element {
         Circle::new()
             .set("fill", "none")
             .set("stroke", Config::VOW_COLOUR())
@@ -328,50 +364,44 @@ impl GallVowel {
             .set("cx", self.x())
             .set("cy", self.y())
             .set("r", self.radius())
-    }
-}
-impl Renderable for Dot {
-    fn render(self, drawn:Document) -> Document {
-        drawn.add(self.get_shape())
-    }
-}
-impl FreeRender for Dot {
-    fn post_render(&self, vec:&mut Vec<Element>) {
-        vec.push(self.get_shape().into())
+            .into()
     }
 }
 
-impl Dot {
-    fn get_shape(&self) -> Circle {
+impl Basic for Dot {
+    fn get_shape(&self) -> Element {
         Circle::new()
             .set("fill", Config::DOT_COLOUR())
             .set("stroke", "none")
             .set("cx", self.x())
             .set("cy", self.y())
             .set("r", self.radius())
+            .into()
+    }
+}
+
+impl Basic for GallLinePair<'_> {
+    fn get_shape(&self) -> Element {
+        Line::new()
+            .set("stroke", Config::SKEL_COLOUR())
+            .set("x1", self.node1.x())
+            .set("y1", self.node1.y())
+            .set("x2", self.node2.x())
+            .set("y2", self.node2.y())
+            .into()
     }
 }
 
 //------ TOGGLE NODE_VISIBILITY in Config ------
 
-impl Renderable for GallNode {
-    fn render(self, drawn:Document) -> Document {
-        drawn.add(self.get_shape())
-    }
-}
-impl FreeRender for GallNode {
-    fn post_render(&self, vec:&mut Vec<Element>) {
-        vec.push(self.get_shape().into())
-    }
-}
-
-impl GallNode {
-    fn get_shape(&self) -> Circle {
+impl Basic for GallNode {
+    fn get_shape(&self) -> Element {
         Circle::new()
             .set("fill", Config::DEBUG_COLOUR())
             .set("stroke", "none")
             .set("cx", self.x())
             .set("cy", self.y())
             .set("r", Config::DOT_RADIUS*0.8)
+            .into()
     }
 }

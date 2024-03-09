@@ -9,6 +9,7 @@ use crate::gall_config::Config;
 use crate::gall_errors::{Error, GallError};
 use crate::gall_fn::{self, LetterMark};
 use crate::gall_loc::{GallLoc, Location};
+use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
 use crate::gall_tainer::GallTainer;
 
@@ -132,8 +133,16 @@ impl GallWord {
     pub fn spread(&mut self) {
         while let Some(_) = self.even_tainer_spread() {};
     }
+    pub fn collect_nodes(&self) -> Vec<&GallNode> {
+        let mut nodes = Vec::new();
+        for con in &self.tainer_vec {
+            let mut node_list = con.collect_nodes();
+            nodes.append(&mut node_list);
+        }
+        nodes
+    }
     pub fn basic(&mut self) {
-        todo!()
+        //todo!()
     }
 }
 

@@ -229,6 +229,13 @@ impl GallTainer {
         };
         (stem1,stem2)
     }
+    pub fn collect_nodes(&self) -> Vec<&GallNode> {
+        let mut nodes = Vec::with_capacity(self.node.len());
+        for node in &self.node {
+            nodes.push(node)
+        }
+        nodes
+    }
     // fn unpack(mut self) -> (Vec<Stem>,Vec<GallVowel>) {
     //     self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
     //     self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());

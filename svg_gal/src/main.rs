@@ -1,12 +1,8 @@
 use std::{cell::Cell, env, rc::Rc};
 
-use svg::node::element::{Rectangle, SVG};
-use svg::Document;
-
 use crate::gall_config::Config;
 use crate::gall_loc::GallLoc;
 use crate::gall_sentence::GallSentence;
-use crate::render::Renderable;
 
 mod gall_config;
 mod gall_fn;
@@ -21,19 +17,9 @@ mod gall_vowel;
 mod gall_tainer;
 mod gall_word;
 mod gall_sentence;
+mod gall_pair;
+mod pairing;
 mod render;
-
-fn create_svg() -> SVG {
-    let drawn = Document::new().set("viewBox", (0, 0, Config::WIDTH, Config::HEIGHT));   
-    let background = Rectangle::new()
-        .set("x", 0)
-        .set("y", 0)
-        .set("width", Config::WIDTH)
-        .set("height", Config::HEIGHT)
-        .set("fill", Config::BG_COLOUR())
-        .set("stroke", "none");
-    drawn.add(background)
-}
 
 fn main() {
     let ORIGIN = Rc::new(Cell::new((Config::WIDTH/2.0,Config::HEIGHT/2.0)));
@@ -62,9 +48,12 @@ fn main() {
     sent.generate(word_list);
     println!("Organizing...");
     sent.basic();
+    let node_vec = sent.collect_nodes();
+    let pairs = pairing::generate_pairs(node_vec);
     println!("Rendering...");
-    let mut drawn = create_svg();
-    drawn = sent.render(drawn);  
+    let (mut drawn, post_render) = render::render_init(pairs);
+    drawn = render::render_start(sent, drawn);
+    drawn = render::render_post(post_render, drawn);
     println!("Saving under {}", filename);
     match svg::save(filename + ".svg", &drawn) {
         Ok(_) => println!("Done!"),

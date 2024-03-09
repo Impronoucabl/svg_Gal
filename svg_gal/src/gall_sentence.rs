@@ -5,6 +5,7 @@ use crate::gall_circle::{Circle, HollowCircle};
 use crate::gall_errors::Error;
 use crate::gall_fn;
 use crate::gall_loc::{GallLoc, Location};
+use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
 use crate::gall_word::GallWord;
 
@@ -40,6 +41,14 @@ impl GallSentence {
         for wrd in &mut self.words {
             wrd.spread();
         }
+    }
+    pub fn collect_nodes(&self) -> Vec<&GallNode> {
+        let mut nodes = Vec::new();
+        for word in &self.words {
+            let mut node_list = word.collect_nodes();
+            nodes.append(&mut node_list);
+        }
+        nodes
     }
     pub fn basic(&mut self) {
         for word in &mut self.words {

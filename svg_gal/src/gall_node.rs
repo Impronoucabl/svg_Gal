@@ -13,8 +13,6 @@ pub struct GallNode {
     w_rad: Rc<Cell<f64>>,
 }
 
-//TODO:make Gall_pair
-
 impl GallNode  {
     pub fn new(loc:GallRelLoc, l_dist:Rc<Cell<f64>>, word_ord: Rc<Cell<f64>>) -> GallNode { //letter_ord: &'a GallOrd
         GallNode {
@@ -25,6 +23,9 @@ impl GallNode  {
     }
     pub fn thi(&self) -> Result<f64, Error> {
         gall_fn::thi(self.l_dist.get(), self.loc.dist(), self.w_rad.get())
+    }
+    pub fn theta(&self) -> Result<f64, Error> {
+        gall_fn::theta(self.l_dist.get(),self.loc.dist(),self.w_rad.get())
     }
 }
 impl PolarOrdinate for GallNode {

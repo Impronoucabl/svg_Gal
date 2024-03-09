@@ -9,4 +9,5 @@
 <circle cx="244.00005735674006" cy="1023.700873753694" fill="none" r="97.5" stroke="red" stroke-width="49.5px"/>
 <circle cx="528.7146264885778" cy="1152.2662325721196" fill="purple" r="20" stroke="none"/>
 <circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
+<line stroke="black" x1="1519.2853735114222" x2="528.7146264885778" y1="895.7337674278803" y2="1152.2662325721196"/>
 </svg>

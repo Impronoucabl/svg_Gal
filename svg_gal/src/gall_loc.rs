@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use std::f64::consts::{FRAC_PI_2, PI, TAU};
+use std::f64::consts::{FRAC_PI_2, PI};
 use std::rc::Rc;
 
 use crate::gall_ang::{self, GallAng};
@@ -79,24 +79,6 @@ impl GallLoc {
     // }
     // pub fn rotate_cw(&mut self, angle: GallAng) -> Option<()> {
     //     self.rotate_ccw(GallAng{angle:Some(0.0)} - angle)
-    // }
-    // pub fn step_ccw(&mut self) -> Option<()> {
-    //     let new_angle = self.get_ang().angle? + FRAC_PI_8/8.0;
-    //     if new_angle < TAU {
-    //         self.mut_ang(GallAng{angle:Some(new_angle)});
-    //         Some(())
-    //     } else {
-    //         None
-    //     }
-    // }
-    // pub fn step_cw(&mut self) -> Option<()> {
-    //     let new_angle = self.get_ang().angle? - FRAC_PI_8/8.0;
-    //     if new_angle >= 0.0 {
-    //         self.mut_ang(GallAng{angle:Some(new_angle)});
-    //         Some(())
-    //     } else {
-    //         None
-    //     }
     // }
     // pub fn flip_ang(&mut self) {
     //     self.rotate_ccw(GallAng{angle:Some(PI)});
