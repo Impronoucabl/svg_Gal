@@ -7,7 +7,9 @@ use svg::node::element::path::Data;
 use crate::gall_circle::{ChildCircle, Circle as Cir, Dot, HollowCircle};
 use crate::gall_config::Config;
 use crate::gall_loc::{GallLoc, Location};
+use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
+use crate::gall_sentence::GallSentence;
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_tainer::GallTainer;
 use crate::gall_vowel::GallVowel;
@@ -24,6 +26,22 @@ trait SkelPart {
 
 trait FreeRender {
     fn post_render(&self, vec:&mut Vec<Element>);
+}
+
+impl Renderable for GallSentence {
+    fn render(self, mut drawn:Document) -> Document {
+        let circle = Circle::new()
+            .set("fill", "none")
+            .set("stroke", Config::SKEL_COLOUR())
+            .set("stroke-width", self.thick())
+            .set("cx", self.x())
+            .set("cy", self.y())
+            .set("r", self.radius());
+        for word in self.words.into_iter() {
+            drawn = word.render(drawn);
+        }
+        drawn.add(circle)
+    }
 }
 
 impl Renderable for GallWord {
@@ -136,6 +154,11 @@ impl Renderable for GallTainer {
         for dot in self.dot {
             drawn = dot.render(drawn);
         }
+        if Config::NODE_VISIBILITY {
+            for node in self.node {
+                drawn = node.render(drawn);
+            }
+        }
         drawn
     }
 }
@@ -247,6 +270,9 @@ impl GallTainer {
         for dot in self.dot {
             dot.post_render(vec);
         }
+        for node in self.node {
+            node.post_render(vec);
+        }
     } 
 }
 
@@ -314,6 +340,7 @@ impl FreeRender for Dot {
         vec.push(self.get_shape().into())
     }
 }
+
 impl Dot {
     fn get_shape(&self) -> Circle {
         Circle::new()
@@ -322,5 +349,29 @@ impl Dot {
             .set("cx", self.x())
             .set("cy", self.y())
             .set("r", self.radius())
+    }
+}
+
+//------ TOGGLE NODE_VISIBILITY in Config ------
+
+impl Renderable for GallNode {
+    fn render(self, drawn:Document) -> Document {
+        drawn.add(self.get_shape())
+    }
+}
+impl FreeRender for GallNode {
+    fn post_render(&self, vec:&mut Vec<Element>) {
+        vec.push(self.get_shape().into())
+    }
+}
+
+impl GallNode {
+    fn get_shape(&self) -> Circle {
+        Circle::new()
+            .set("fill", Config::DEBUG_COLOUR())
+            .set("stroke", "none")
+            .set("cx", self.x())
+            .set("cy", self.y())
+            .set("r", Config::DOT_RADIUS*0.8)
     }
 }

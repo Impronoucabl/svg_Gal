@@ -74,6 +74,9 @@ impl PolarOrdinate for Dot {
     fn dist(&self) -> f64 {
         self.loc.dist()
     }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        self.loc.get_dist()
+    }
 }
 impl Location for Dot {
     fn mut_center(&mut self, movement:(f64,f64)) {

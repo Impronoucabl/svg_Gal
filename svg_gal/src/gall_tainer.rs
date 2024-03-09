@@ -19,10 +19,10 @@ pub struct GallTainer {
     stem_type: OnceCell<StemType>,
     pub stem: Vec<Stem>,
     pub vowel: Vec<GallVowel>,
-    node: Vec<GallNode>,
+    pub node: Vec<GallNode>,
     pub dot: Vec<Dot>,
     //mark: Vec<GallMark>,
-    pub buffer: (Rc<Cell<f64>>, Rc<Cell<(f64,f64)>>),
+    pub buffer: (Rc<Cell<f64>>, Rc<Cell<f64>>, Rc<Cell<(f64,f64)>>), //letter_distance, letter radius, letter position
 }
 
 impl GallTainer {
@@ -45,7 +45,7 @@ impl GallTainer {
             vowel:vowel_vec,
             node: Vec::new(),
             dot: Vec::new(),
-            buffer: (Rc::new(Cell::new(-0.0)), Rc::new(Cell::new((-0.0,-0.0))))
+            buffer: (Rc::new(Cell::new(-0.0)), Rc::new(Cell::new(-0.0)), Rc::new(Cell::new((-0.0,-0.0))))
         }
     }
     pub fn init(&mut self, stem_type:Option<StemType>, con_count:usize, ang:f64) -> usize {
@@ -101,7 +101,7 @@ impl GallTainer {
             GallLoc::new(
                 self.ang(),
                 dist,
-                word.get_center(),
+                word.pos_ref(),
             ),
             p_rad*Config::LETTER_FRAC_OF_WRD,
             thick,
@@ -124,7 +124,7 @@ impl GallTainer {
             GallLoc::new(
                 self.ang(),
                 dist,
-                word.get_center(),
+                word.pos_ref(),
             ),
             p_rad*Config::VOWEL_FRAC_OF_WRD,
             thick,
@@ -133,12 +133,12 @@ impl GallTainer {
         )
     }
     pub fn create_dot(&self, num: i8, w_rad: Rc<Cell<f64>>) -> Dot {
-        let (dist,center_ref) = self.buffer.clone();
+        let (_, letter_radius,center_ref) = self.buffer.clone();
         Dot::new(
             GallRelLoc::new(
                 self.get_ang(),
                 PI + Config::DEF_DOT_SPREAD * num as f64,
-                dist,
+                letter_radius,
                 0.0,
                 center_ref
             ),
@@ -147,16 +147,16 @@ impl GallTainer {
         )
     }
     pub fn create_dash(&self, num: i8, w_rad: Rc<Cell<f64>>) -> GallNode {
-        let (dist,center_ref) = self.buffer.clone();
+        let (letter_dist, letter_radius,center_ref) = self.buffer.clone();
         GallNode::new(
             GallRelLoc::new(
                 self.get_ang(),
                 PI + num as f64 * Config::DEF_DOT_SPREAD,
-                dist,
+                letter_radius,
                 0.0,
                 center_ref
             ),
-            //l_dist,
+            letter_dist,
             w_rad,     
         )
     }
@@ -164,7 +164,7 @@ impl GallTainer {
         if self.stem_type.get().unwrap() != &new_stem.stem_type {
             println!("Warning! Stem has different type to tainer")
         };
-        self.buffer = (new_stem.get_radius(),new_stem.pos_ref());
+        self.buffer = (new_stem.get_dist(), new_stem.get_radius(),new_stem.pos_ref());
         self.stem.push(new_stem);
         self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
     }
@@ -173,7 +173,7 @@ impl GallTainer {
             match stem {
                 StemType::J|StemType::B => match new_vowel.vowel_type {
                     VowelType::E|VowelType::I|VowelType::U => {
-                        self.buffer = (new_vowel.get_radius(),new_vowel.pos_ref());
+                        self.buffer = (new_vowel.get_dist(), new_vowel.get_radius(),new_vowel.pos_ref());
                         new_vowel.center_on_stem(&self.stem[0]);
                     },
                     VowelType::O1 => {

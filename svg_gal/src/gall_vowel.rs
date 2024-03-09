@@ -115,6 +115,9 @@ impl PolarOrdinate for GallVowel {
             },
         }
     }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        self.loc.get_dist()
+    }
 }
 impl ChildCircle for GallVowel {
     fn get_parent_radius(&self) -> Rc<Cell<f64>> {

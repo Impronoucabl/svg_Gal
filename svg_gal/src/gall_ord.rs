@@ -1,4 +1,7 @@
 
+use std::cell::Cell;
+use std::rc::Rc;
+
 use crate::gall_ang::GallAng;
 use crate::gall_errors::{Error, GallError};
 
@@ -7,6 +10,7 @@ pub trait PolarOrdinate {
     fn mut_dist(&mut self, new_dist: f64) -> Result<(), Error>;
     fn ang(&self) -> Option<f64>;
     fn dist(&self) -> f64;
+    fn get_dist(&self) -> Rc<Cell<f64>>;
     fn mut_ccw(&mut self, angle:f64) -> Result<(),Error> {
         match self.ang() {
             None => Err(Error::new(GallError::AngleUndefined)),
@@ -25,19 +29,19 @@ pub trait PolarOrdinate {
 #[derive(PartialEq,Default,Clone)]
 pub struct GallOrd {
     angle: GallAng,
-    distance: f64,
+    distance: Rc<Cell<f64>>,
 } 
 
 impl GallOrd {
     pub fn new(angle:f64, distance:f64) -> GallOrd {
         GallOrd { 
             angle: GallAng::new(Some(angle)), 
-            distance
+            distance: Rc::new(Cell::new(distance)),
         }
     } 
     //Checks if distance is 0, and if it is, set angle to 0.
     fn ord_check(&mut self) -> Result<(), Error> {
-        if self.distance == 0.0 {
+        if self.distance.get() == 0.0 {
             self.angle = GallAng::new(None);
             Ok(())
         } else {
@@ -54,17 +58,20 @@ impl PolarOrdinate for GallOrd {
         self.angle.ang()
     }
     fn dist(&self) -> f64 {
-        self.distance
+        self.distance.get()
     }
     fn mut_dist(&mut self, new_dist: f64) -> Result<(), Error>{
         if new_dist.is_sign_negative() {
             return Err(Error::new(GallError::NegativeDistanceErr))
         }
-        self.distance = new_dist;            
+        self.distance.set(new_dist);            
         self.ord_check()
     }    
     fn mut_ang(&mut self, new_angle:f64) {
         self.angle.mut_ang(Some(new_angle))
+    }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        self.distance.clone()
     }
 }
 

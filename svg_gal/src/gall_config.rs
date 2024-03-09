@@ -2,17 +2,20 @@
 pub struct Config {}
 
 impl Config {
+    pub const NODE_VISIBILITY: bool = true;
     pub const WIDTH:f64 = 2048.0;
     pub const HEIGHT:f64 = 2048.0;
     pub const STACK: bool = false;
-    pub const SENT_THICK: u16 = 20;
+    pub const SENT_RADIUS: f64 = 1020.0;
+    pub const SENT_THICK: f64 = 20.0;
     pub const LETTER_FRAC_OF_WRD: f64 = 0.35;
     pub const LETTER_THICK_FRAC: f64 = 0.6;
     pub const VOWEL_FRAC_OF_WRD : f64 = 0.15;
     pub const VOWEL_THICK_FRAC: f64 = 0.45;
     pub const DOT_RADIUS: f64 = 25.0;
-    pub const DEF_DOT_SPREAD: f64 = 0.4;
+    pub const DEF_DOT_SPREAD: f64 = 0.6;
     pub const COLLISION_DIST: f64 = 0.001;
+    pub const fn DEBUG_COLOUR() -> &'static str {"purple"}
     pub const fn BG_COLOUR() -> &'static str {"yellow"}
     pub const fn BG2_COLOUR() -> &'static str {"green"}
     pub const fn DOT_COLOUR() -> &'static str {"blue"}

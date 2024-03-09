@@ -77,7 +77,6 @@ impl GallWord {
     }
 }
 
-//impl ParentCircle for GallWord {}
 impl HollowCircle for GallWord {
     fn thick(&self) -> f64 {
         self.thickness.get()
@@ -135,5 +134,8 @@ impl PolarOrdinate for GallWord {
     }
     fn dist(&self) -> f64 {
         self.loc.dist()
+    }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        self.loc.get_dist()
     }
 }

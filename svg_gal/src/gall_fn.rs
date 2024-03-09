@@ -15,26 +15,12 @@ pub enum Decor {
     Dash,    
 }
 
-#[derive(PartialEq,Default)]
-pub enum  LetterType {
-    Digit,
-    EIU,
-    BStem,
-    JStem,
-    SStem,
-    ZStem,
-    A,
-    O1,
-    O2,
-    #[default]
-    Punctuation, //more for error case than anything
-}
 
 pub fn default_layouts(phrase_length:usize, num:usize) -> (f64,f64,f64,f64) {
     match phrase_length {
         //word_radius, word_thick, word_angle, word_dist
         0|1 => (650.0,75.0,0.0,0.0),
-        2 => (400.0,10.0,PI,200.0),
+        2 => (350.0,40.0, num as f64 * PI,400.0),
         len => (
             300.0,
             9.0,

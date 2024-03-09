@@ -1,26 +1,30 @@
-use std::cell::{Cell, OnceCell};
+use std::cell::Cell;
 use std::f64::consts::TAU;
 use std::rc::Rc;
 
 use crate::gall_errors::Error;
+use crate::gall_fn;
 use crate::gall_loc::{GallRelLoc, Location};
-use crate::gall_ord::{GallOrd, PolarOrdinate};
+use crate::gall_ord::PolarOrdinate;
 
 pub struct GallNode {
-    pub loc: GallRelLoc,
-    //l_dist: &'a GallOrd,//Rc<Cell<GallOrd>>,
+    loc: GallRelLoc,
+    l_dist: Rc<Cell<f64>>,
     w_rad: Rc<Cell<f64>>,
 }
 
 //TODO:make Gall_pair
 
 impl GallNode  {
-    pub fn new<'a>(loc:GallRelLoc, word_ord: Rc<Cell<f64>>) -> GallNode { //letter_ord: &'a GallOrd
+    pub fn new(loc:GallRelLoc, l_dist:Rc<Cell<f64>>, word_ord: Rc<Cell<f64>>) -> GallNode { //letter_ord: &'a GallOrd
         GallNode {
             loc,
-            //l_dist: letter_ord,
+            l_dist,
             w_rad: word_ord,
         }
+    }
+    pub fn thi(&self) -> f64 {
+        gall_fn::thi(self.l_dist.get(), self.loc.dist(), self.w_rad.get())
     }
 }
 impl PolarOrdinate for GallNode {
@@ -35,6 +39,9 @@ impl PolarOrdinate for GallNode {
     }
     fn dist(&self) -> f64 {
         self.loc.dist()
+    }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        self.l_dist.clone()
     }
 }
 impl Location for GallNode  {

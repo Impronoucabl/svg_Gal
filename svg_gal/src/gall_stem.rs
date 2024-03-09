@@ -29,8 +29,6 @@ impl Stem {
             thickness,
             parent_radius,
             parent_thickness,
-            //mut_parent_rad_fn: radius_fn_ptr,
-            //mut_parent_thick_fn: thick_fn_ptr,
             stem_type,
         }
     }
@@ -99,6 +97,9 @@ impl PolarOrdinate for Stem {
         self.check_dist(new_dist)?;
         self.loc.mut_dist(new_dist);
         Ok(())
+    }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        self.loc.get_dist()
     }
 }
 impl Location for Stem {

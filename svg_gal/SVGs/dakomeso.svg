@@ -1,0 +1,25 @@
+<svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+<rect fill="yellow" height="2048" stroke="none" width="2048" x="0" y="0"/>
+<path d="M985.28815,1812.074 A390,390,0,0,0,985.28815,1812.074 A98.5,98.5,0,1,1,1062.7119,1812.074 A390,390,0,1,0,985.28815,1812.074 z" fill="black" stroke="none" stroke-width="0"/>
+<path d="M879.3661,1698.1917 A310,310,0,0,0,879.3661,1698.1917 A146.5,146.5,0,0,1,1168.6339,1698.1917 A310,310,0,1,0,879.3661,1698.1917 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1024" cy="1844" fill="none" r="52.5" stroke="red" stroke-width="36px"/>
+<circle cx="1093.168702990892" cy="1620.3963871735643" fill="blue" r="25" stroke="none"/>
+<circle cx="1024" cy="1599" fill="blue" r="25" stroke="none"/>
+<circle cx="954.8312970091082" cy="1620.3963871735643" fill="blue" r="25" stroke="none"/>
+<circle cx="1146.5" cy="1424" fill="none" r="122.49999999999999" stroke="black" stroke-width="48px"/>
+<circle cx="1234" cy="1424" fill="none" r="52.5" stroke="red" stroke-width="36px"/>
+<circle cx="1045.3963871735643" cy="1354.8312970091083" fill="blue" r="25" stroke="none"/>
+<circle cx="1024" cy="1424" fill="blue" r="25" stroke="none"/>
+<path d="M1024,1014 A390,390,0,0,0,1401.3713,722.44226 A98.5,98.5,0,1,1,1401.3713,525.55774 A390,390,0,1,0,1024,1014 z" fill="black" stroke="none" stroke-width="0"/>
+<path d="M1024,934 A310,310,0,0,0,1310.7831,741.7092 A146.5,146.5,0,0,1,1310.7831,506.29077 A310,310,0,1,0,1024,934 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1234" cy="624" fill="none" r="52.5" stroke="red" stroke-width="36px"/>
+<circle cx="1296.8963871735643" cy="554.8312970091082" fill="purple" r="20" stroke="none"/>
+<circle cx="1275.5" cy="624" fill="purple" r="20" stroke="none"/>
+<circle cx="1296.8963871735643" cy="693.1687029908918" fill="purple" r="20" stroke="none"/>
+<circle cx="1024" cy="746.5" fill="none" r="122.49999999999999" stroke="black" stroke-width="48px"/>
+<circle cx="1024" cy="746.5" fill="none" r="52.5" stroke="red" stroke-width="36px"/>
+<circle cx="1093.168702990892" cy="645.3963871735644" fill="purple" r="20" stroke="none"/>
+<circle cx="1024" cy="624" fill="purple" r="20" stroke="none"/>
+<circle cx="954.8312970091082" cy="645.3963871735644" fill="purple" r="20" stroke="none"/>
+<circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
+</svg>

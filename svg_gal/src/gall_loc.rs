@@ -17,7 +17,7 @@ pub struct GallRelLoc {
     angle: Rc<Cell<GallAng>>,
     ang_offset: f64,
     dist_offset: f64,
-    distance: Rc<Cell<f64>>,
+    letter_radius: Rc<Cell<f64>>,
     center_ref: Rc<Cell<(f64,f64)>>, // abs xy
     abs_svg: Rc<Cell<(f64,f64)>>,
 }
@@ -102,17 +102,17 @@ impl GallLoc {
 }
 
 impl GallRelLoc {
-    pub fn new(angle_ref:Rc<Cell<GallAng>>, ang_offset:f64, distance:Rc<Cell<f64>>, dist_offset:f64, center_ref: Rc<Cell<(f64,f64)>>) -> GallRelLoc {
+    pub fn new(angle_ref:Rc<Cell<GallAng>>, ang_offset:f64, letter_radius:Rc<Cell<f64>>, dist_offset:f64, center_ref: Rc<Cell<(f64,f64)>>) -> GallRelLoc {
         let angle = match angle_ref.get().ang() {
             Some(ang) =>  Some(ang + ang_offset),
             None => None,
         };
-        let pos = calc_xy(distance.get(), angle, center_ref.get());
+        let pos = calc_xy(letter_radius.get(), angle, center_ref.get());
         GallRelLoc {
             angle: angle_ref,
             ang_offset,
             dist_offset,
-            distance,
+            letter_radius,
             center_ref,
             abs_svg:Rc::new(Cell::new(pos)),
         }
@@ -124,7 +124,7 @@ impl GallRelLoc {
         self.angle.get().ang()
     }
     pub fn set_dist(&mut self, dist_ref:Rc<Cell<f64>>) {
-        self.distance = dist_ref;
+        self.letter_radius = dist_ref;
     }
     pub fn set_ang(&mut self, ang_ref: Rc<Cell<GallAng>>) {
         self.angle = ang_ref
@@ -195,6 +195,9 @@ impl PolarOrdinate for GallLoc {
     fn dist(&self) -> f64 {
         self.ord.dist()
     }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        self.ord.get_dist()
+    }
 }
 
 impl PolarOrdinate for GallRelLoc {
@@ -210,7 +213,7 @@ impl PolarOrdinate for GallRelLoc {
         if new_dist.is_sign_negative() {
             return Err(Error::new(GallError::NegativeDistanceErr))
         }
-        self.dist_offset = new_dist - self.distance.get();
+        self.dist_offset = new_dist - self.letter_radius.get();
         Ok(self.update_xy())
     }
     fn ang(&self) -> Option<f64> {
@@ -221,6 +224,10 @@ impl PolarOrdinate for GallRelLoc {
         }
     }
     fn dist(&self) -> f64 {
-        self.dist_offset + self.distance.get()
+        self.dist_offset + self.letter_radius.get()
+    }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        todo!()
+        //self.letter_distance.clone()
     }
 }
