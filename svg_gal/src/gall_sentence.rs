@@ -37,6 +37,9 @@ impl GallSentence {
             );
             self.words.push(GallWord::new(words.0,words.1, loc, w_radius, w_thick));
         }
+        for wrd in &mut self.words {
+            wrd.spread();
+        }
     }
     pub fn basic(&mut self) {
         for word in &mut self.words {

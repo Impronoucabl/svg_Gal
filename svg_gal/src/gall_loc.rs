@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use std::f64::consts::{FRAC_PI_2, TAU};
+use std::f64::consts::{FRAC_PI_2, PI, TAU};
 use std::rc::Rc;
 
 use crate::gall_ang::{self, GallAng};
@@ -40,6 +40,11 @@ pub trait Location:PolarOrdinate {
     }
     fn dist2loc<T:Location>(&self, loc2:T) -> f64 {
         self.sq_dist_2_loc(loc2).sqrt()
+    }
+    fn ang2loc<T:Location>(&self, loc2:T) -> Option<f64> {
+        let (x1,y1) = self.svg_ord();
+        let (x2,y2) = loc2.svg_ord();
+        gall_ang::constrain(Some((y2-y1).atan2(x2-x1)+PI/2.0))
     }
 }
 

@@ -22,15 +22,16 @@ pub struct GallWord {
 impl GallWord {
     pub fn new(text:String, len_guess:usize, loc:GallLoc, radius: f64, thick:f64) -> GallWord {
         let tainer_vec = Vec::with_capacity(len_guess);
-        let word = GallWord{
+        let mut word = GallWord{
             loc,
             tainer_vec,
             radius: Rc::new(Cell::new(radius)),
             thickness: Rc::new(Cell::new(thick))
         };
-        word.populate(text, len_guess)
+        word.populate(text, len_guess);
+        word
     } 
-    fn populate(mut self, word:String, len_guess:usize) -> GallWord {
+    fn populate(&mut self, word:String, len_guess:usize) {
         let tainer_ang = TAU/(len_guess as f64); 
         let mut con_count:usize = 0;
         let mut con = self.get_con();
@@ -67,7 +68,6 @@ impl GallWord {
             con.populate(l_mark, d_mark, &self)
         }
         self.tainer_vec.push(con);
-        self
     }
     fn get_con(&self) -> GallTainer {
         GallTainer::new(LetterMark::GallMark)
@@ -129,8 +129,11 @@ impl GallWord {
             None
         }
     }
-    pub fn basic(&mut self) {
+    pub fn spread(&mut self) {
         while let Some(_) = self.even_tainer_spread() {};
+    }
+    pub fn basic(&mut self) {
+        todo!()
     }
 }
 
