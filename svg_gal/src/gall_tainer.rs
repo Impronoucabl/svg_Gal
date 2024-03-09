@@ -237,6 +237,28 @@ impl GallTainer {
     pub fn set_ang(&mut self, new_ang:Option<f64>) {
         _ = self.ang.set(GallAng::new(new_ang))
     }
+    pub fn bound_ccw_rotate(&mut self, angle: f64) -> Result<(), Error> {
+        if angle < 0.0 {
+            self.bound_cw_rotate(-angle)
+        } else {
+            if self.ang() + angle > TAU {
+                Err(Error::new(GallError::NoStepSpace))
+            } else {
+                Ok(self.rotate(angle)?)
+            }
+        }
+    }
+    pub fn bound_cw_rotate(&mut self, angle: f64) -> Result<(), Error> {
+        if angle < 0.0 {
+            self.bound_ccw_rotate(-angle)
+        } else {
+            if self.ang() - angle < 0.0 {
+                Err(Error::new(GallError::NoStepSpace))
+            } else {
+                Ok(self.rotate(-angle)?)
+            }
+        }
+    }
     pub fn rotate(&mut self, angle: f64) -> Result<(), Error> {
         let mut ang = self.ang.take();
         ang.rotate(angle).expect("tainer ang is None");
@@ -247,6 +269,12 @@ impl GallTainer {
             vowel.mut_ccw(angle)?;
         }
         self.ang.set(ang);
+        for node in &mut self.node {
+            node.update()
+        }
+        for dot in &mut self.dot {
+            dot.update()
+        }
         Ok(())
     }
     pub fn ang(&self) -> f64 {
@@ -256,17 +284,9 @@ impl GallTainer {
         self.ang.clone()
     }
     pub fn step_ccw(&mut self) -> Result<(), Error> {
-        if self.ang() + Config::COLLISION_DIST > TAU {
-            Err(Error::new(GallError::NoStepSpace))
-        } else {
-            Ok(self.rotate(Config::STEP_DIST)?)
-        }
+        self.bound_ccw_rotate(Config::COLLISION_DIST)
     }
     pub fn step_cw(&mut self) -> Result<(), Error> {
-        if self.ang() - Config::COLLISION_DIST > 0.0 {
-            Err(Error::new(GallError::NoStepSpace))
-        } else {
-            Ok(self.rotate(0.0-Config::STEP_DIST)?)
-        }
+        self.bound_cw_rotate(Config::COLLISION_DIST)
     }
 }

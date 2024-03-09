@@ -89,6 +89,9 @@ impl Location for GallSentence {
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
         self.loc.pos_ref()
     }
+    fn update(&mut self) {
+        self.loc.update()
+    }
 }
 impl PolarOrdinate for GallSentence {
     fn mut_ang(&mut self, new_ang:f64) {

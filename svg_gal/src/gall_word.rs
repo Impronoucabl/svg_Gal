@@ -106,39 +106,31 @@ impl GallWord {
     }
     fn even_tainer_spread(&mut self) -> Option<()> {
         let dists = self.gen_dist_vec()?;
-        let (mut floor, mut ceil) = (f64::MAX, -f64::MAX);
-        let (mut f_res, mut c_res) = (None, None);
-        for (dist, con) in zip(dists, &mut self.tainer_vec) {
-            if let Some(ord) = dist.partial_cmp(&floor) {
-                if ord == Ordering::Less {
-                    floor = dist;
-                    f_res = match con.step_ccw(){
-                        Ok(_) => Some(()),
-                        Err(_) => None
-                    };
-                }
+        let mut change = 0.0;
+        let mut loop_iter = zip(dists, &mut self.tainer_vec);
+        let (first, con1) = loop_iter.next().expect("empty?");
+        let mut left = first;
+        while let Some((right, con)) = loop_iter.next() {
+            let movement = (right - left)/2.0;
+            _ = con.bound_ccw_rotate(movement);
+            if movement > change {
+                change = movement
             }
-            if let Some(ord) = dist.partial_cmp(&ceil) {
-                if ord == Ordering::Greater {
-                    ceil = dist;
-                    c_res = match con.step_cw() {
-                        Ok(_) => Some(()),
-                        Err(_) => None
-                    };
-                }
-            }
+            left = right;
         }
-        Some(f_res.or(c_res)?)
+        let movement = (first - left)/2.0;
+        _ = con1.bound_ccw_rotate(movement);
+        if movement > change {
+            change = movement
+        }
+        if change > 2.0*Config::STEP_DIST {
+            Some(())
+        } else {
+            None
+        }
     }
     pub fn basic(&mut self) {
-        let mut count:usize = 0;
-        while let Some(_) = self.even_tainer_spread() {
-            count += 1;
-            println!("{}", count);
-            if count > 60 {
-                break;
-            }
-        };
+        while let Some(_) = self.even_tainer_spread() {};
     }
 }
 
@@ -185,6 +177,9 @@ impl Location for GallWord {
     }
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
         self.loc.pos_ref()
+    }
+    fn update(&mut self) {
+        self.loc.update()
     }
 }
 impl PolarOrdinate for GallWord {

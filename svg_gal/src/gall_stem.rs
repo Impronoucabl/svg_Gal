@@ -121,6 +121,9 @@ impl Location for Stem {
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
         self.loc.pos_ref()
     }
+    fn update(&mut self) {
+        self.loc.update()
+    }
 }
 impl ChildCircle for Stem {
     fn parent_radius(&self) -> f64 {

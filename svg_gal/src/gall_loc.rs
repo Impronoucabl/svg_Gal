@@ -28,6 +28,7 @@ pub trait Location:PolarOrdinate {
     fn get_center(&self) -> Rc<Cell<(f64,f64)>>;
     fn x(&self) -> f64;
     fn y(&self) -> f64;
+    fn update(&mut self);
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>>;
     fn svg_ord(&self) -> (f64,f64) {
         self.pos_ref().get()
@@ -162,6 +163,9 @@ impl Location for GallLoc {
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
         self.abs_svg.clone()
     }
+    fn update(&mut self) {
+        self.update_xy()
+    }
 }
 impl Location for GallRelLoc {
     fn mut_center(&mut self, movement:(f64,f64)) {
@@ -184,6 +188,9 @@ impl Location for GallRelLoc {
     }
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
         self.abs_svg.clone()
+    }
+    fn update(&mut self) {
+        self.update_xy()
     }
 }
 impl PolarOrdinate for GallLoc {

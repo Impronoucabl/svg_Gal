@@ -65,6 +65,9 @@ impl Location for GallVowel {
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
         self.loc.pos_ref()
     }
+    fn update(&mut self) {
+        self.loc.update()
+    }
 }
 impl PolarOrdinate for GallVowel {
     fn ang(&self) -> Option<f64> {

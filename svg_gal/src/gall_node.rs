@@ -63,4 +63,7 @@ impl Location for GallNode  {
     fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
         self.loc.pos_ref()
     }
+    fn update(&mut self) {
+        self.loc.update()
+    }
 }
