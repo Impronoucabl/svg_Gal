@@ -14,7 +14,7 @@ impl Config {
     pub const VOWEL_THICK_FRAC: f64 = 0.45;
     pub const DOT_RADIUS: f64 = 25.0;
     pub const DEF_DOT_SPREAD: f64 = 0.6;
-    pub const DEF_PAIR_THICK: i16 = 3;
+    pub const DEF_PAIR_THICK: i16 = 4;
     pub const COLLISION_DIST: f64 = 0.0001;
     pub const STEP_DIST: f64 = 2.0 * Config::COLLISION_DIST;
     pub const fn DEBUG_COLOUR() -> &'static str {"purple"}
@@ -25,6 +25,5 @@ impl Config {
     pub const fn VOW_COLOUR() -> &'static str {"red"}
     pub const fn SKEL_COLOUR() -> &'static str {"black"}
     pub const fn SENT_COLOUR() -> &'static str {"black"}
-    
 }
 

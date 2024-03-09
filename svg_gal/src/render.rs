@@ -384,6 +384,7 @@ impl Basic for GallLinePair<'_> {
     fn get_shape(&self) -> Element {
         Line::new()
             .set("stroke", Config::SKEL_COLOUR())
+            .set("stroke-width", self.thickness*2)
             .set("x1", self.node1.x())
             .set("y1", self.node1.y())
             .set("x2", self.node2.x())
