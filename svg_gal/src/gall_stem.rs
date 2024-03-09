@@ -95,7 +95,7 @@ impl PolarOrdinate for Stem {
     }
     fn mut_dist(&mut self, new_dist:f64) -> Result<(), Error> {
         self.check_dist(new_dist)?;
-        self.loc.mut_dist(new_dist);
+        self.loc.mut_dist(new_dist)?;
         Ok(())
     }
     fn get_dist(&self) -> Rc<Cell<f64>> {

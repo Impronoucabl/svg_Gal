@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
-use svg::{Document, Node};
-use svg::node::element::{Circle, Element, Path, SVG};
+use svg::Document;
+use svg::node::element::{Circle, Element, Path};
 use svg::node::element::path::Data;
 
 use crate::gall_circle::{ChildCircle, Circle as Cir, Dot, HollowCircle};

@@ -186,7 +186,7 @@ impl PolarOrdinate for GallLoc {
     fn mut_dist(&mut self, new_dist:f64)-> Result<(), Error> {
         match self.ord.mut_dist(new_dist) {
             Ok(_) => Ok(self.update_xy()),
-            Err(E) => Err(E),
+            Err(e) => Err(e),
         }
     }
     fn ang(&self) -> Option<f64> {

@@ -9,7 +9,7 @@ use crate::gall_errors::{Error, GallError};
 use crate::gall_fn::{self, Decor, LetterMark};
 use crate::gall_loc::{GallLoc, GallRelLoc, Location};
 use crate::gall_node::GallNode;
-use crate::gall_ord::{GallOrd, PolarOrdinate};
+use crate::gall_ord::PolarOrdinate;
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_vowel::{GallVowel, VowelType};
 use crate::gall_word::GallWord;
@@ -229,11 +229,11 @@ impl GallTainer {
         };
         (stem1,stem2)
     }
-    fn unpack(mut self) -> (Vec<Stem>,Vec<GallVowel>) {
-        self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
-        self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
-        (self.stem,self.vowel)
-    }
+    // fn unpack(mut self) -> (Vec<Stem>,Vec<GallVowel>) {
+    //     self.vowel.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
+    //     self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
+    //     (self.stem,self.vowel)
+    // }
     pub fn mut_ang(&mut self, new_ang:Option<f64>) {
         _ = self.ang.set(GallAng::new(new_ang))
     }

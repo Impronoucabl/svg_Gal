@@ -1,13 +1,11 @@
 use std::{cell::Cell, env, rc::Rc};
 
-use svg::node::element::{Circle,Rectangle, SVG};
+use svg::node::element::{Rectangle, SVG};
 use svg::Document;
 
 use crate::gall_config::Config;
-use crate::gall_fn::default_layouts;
-use crate::gall_loc::{GallLoc, Location};
+use crate::gall_loc::GallLoc;
 use crate::gall_sentence::GallSentence;
-use crate::gall_word::GallWord;
 use crate::render::Renderable;
 
 mod gall_config;
