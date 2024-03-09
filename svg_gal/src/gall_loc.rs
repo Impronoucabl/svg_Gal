@@ -32,6 +32,14 @@ pub trait Location:PolarOrdinate {
     fn svg_ord(&self) -> (f64,f64) {
         self.pos_ref().get()
     }
+    fn sq_dist_2_loc<T:Location>(&self, loc2:T) -> f64 {
+        let (x1,y1) = self.svg_ord();
+        let (x2,y2) = loc2.svg_ord();
+        (x2 - x1).powi(2) + (y2 - y1).powi(2)
+    }
+    fn dist2loc<T:Location>(&self, loc2:T) -> f64 {
+        self.sq_dist_2_loc(loc2).sqrt()
+    }
 }
 
 fn calc_xy(dist:f64, ang:Option<f64>,center:(f64,f64)) -> (f64,f64) {

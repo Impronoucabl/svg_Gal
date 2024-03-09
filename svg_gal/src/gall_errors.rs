@@ -20,9 +20,9 @@ pub enum GallError {
     VowelRadiusTooLong ,
     InvalidVowelDist ,
     DoNotMutTainer ,
-    TainerMissingStem ,
+    NoStepSpace ,
     BadTainerStem ,
-    StemAlreadySet,
+    LetterNotTouchingSkel,
     BadVowelType,
 }
 
@@ -49,9 +49,9 @@ impl fmt::Display for Error {
             GallError::VowelRadiusTooLong => "Vowel radius is too long",
             GallError::InvalidVowelDist => "Vowel radius is invalid",
             GallError::DoNotMutTainer =>"Do Not Mut Tainer",
-            GallError::TainerMissingStem =>"Tainer's stem type is none",
+            GallError::NoStepSpace =>"Stepping further will cross 6 o'clock",
             GallError::BadTainerStem =>"Stem has wrong stem type for Tainer",
-            GallError::StemAlreadySet=>"Tainer already contains a vowel or Stem",
+            GallError::LetterNotTouchingSkel=>"Letter is not touching skeleton",
             GallError::BadVowelType=>"Bad Vowel type",
             _ => "Unspecified Error",
         };

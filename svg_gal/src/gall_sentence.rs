@@ -38,6 +38,11 @@ impl GallSentence {
             self.words.push(GallWord::new(words.0,words.1, loc, w_radius, w_thick));
         }
     }
+    pub fn basic(&mut self) {
+        for word in &mut self.words {
+            word.basic()
+        }
+    }
 }
 
 impl HollowCircle for GallSentence {

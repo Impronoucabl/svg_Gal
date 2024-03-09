@@ -23,7 +23,7 @@ impl GallNode  {
             w_rad: word_ord,
         }
     }
-    pub fn thi(&self) -> f64 {
+    pub fn thi(&self) -> Result<f64, Error> {
         gall_fn::thi(self.l_dist.get(), self.loc.dist(), self.w_rad.get())
     }
 }

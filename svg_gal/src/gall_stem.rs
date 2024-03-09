@@ -129,12 +129,6 @@ impl ChildCircle for Stem {
     fn parent_thick(&self) -> f64 {
         self.parent_thickness.get()
     }
-    // fn mut_parent_radius(&mut self, new_radius:f64) -> Result<(),Error> {
-    //     (self.mut_parent_rad_fn)(new_radius)
-    // }
-    // fn mut_parent_thick(&mut self, new_thick:f64) -> Result<(),Error> {
-    //     (self.mut_parent_thick_fn)(new_thick)
-    // }
     fn get_parent_radius(&self) -> Rc<Cell<f64>> {
         self.parent_radius.clone()
     }

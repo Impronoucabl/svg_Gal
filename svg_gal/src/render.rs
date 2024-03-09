@@ -166,8 +166,8 @@ impl Renderable for GallTainer {
 impl SkelPart for GallTainer {
     fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> ((Data,Data),(f64,f64)) {
         let (stem1, stem2) = self.stack_check();
-        let (thi_inner,thi_outer) = self.thi_calc();
-        let (theta_inner,theta_outer) = self.theta_calc();
+        let (thi_inner,thi_outer) = self.thi_calc().unwrap();
+        let (theta_inner,theta_outer) = self.theta_calc().unwrap();
         if thi_inner.is_nan() || thi_outer.is_nan() {
             println!("Skeleton letter not touching skeleton");
             panic!();
@@ -232,7 +232,7 @@ impl SkelPart for GallTainer {
     }
     fn part_init(&self) -> ((Data, Data),(f64,f64),(f64,f64), (f64,f64)) {
         let (stem1, stem2) = self.stack_check();
-        let (thi_inner,thi_outer) = self.thi_calc();
+        let (thi_inner,thi_outer) = self.thi_calc().unwrap();
         let (inner_init_angle, outer_init_angle) = (
             stem1.ang().unwrap() - thi_inner,
             stem2.ang().unwrap() - thi_outer

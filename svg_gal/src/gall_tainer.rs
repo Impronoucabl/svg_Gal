@@ -1,5 +1,5 @@
 use std::cell::{Cell, OnceCell};
-use std::f64::consts::PI;
+use std::f64::consts::{PI, TAU};
 use std::rc::Rc;
 
 use crate::gall_ang::GallAng;
@@ -52,7 +52,7 @@ impl GallTainer {
         if let Some(stem) = stem_type {
             self.stem_type.get_or_init(||stem);
         };
-        self.mut_ang(Some(con_count as f64 * ang));
+        self.set_ang(Some(con_count as f64 * ang));
         con_count + 1
     }
     pub fn stem_type(&self) -> Option<&StemType> {
@@ -192,33 +192,33 @@ impl GallTainer {
     pub fn add_dash(&mut self, dash: GallNode) {
         self.node.push(dash)
     }
-    pub fn thi_calc(&self) -> (f64,f64) {
+    pub fn thi_calc(&self) -> Result<(f64,f64), Error> {
         let (stem1,stem2) = self.stack_check();
         let thi_inner = gall_fn::thi(
             stem1.dist(),
             stem1.outer_radius(), 
             stem1.parent_inner(),
-        );
+        )?;
         let thi_outer = gall_fn::thi(
             stem2.dist(),
             stem2.inner_radius(), 
             stem2.parent_outer(),
-        );
-        (thi_inner,thi_outer)
+        )?;
+        Ok((thi_inner,thi_outer))
     }
-    pub fn theta_calc(&self) -> (f64,f64) {
+    pub fn theta_calc(&self) -> Result<(f64,f64), Error> {
         let (stem1,stem2) = self.stack_check();
         let theta_inner = gall_fn::theta(
             stem1.dist(),
             stem1.outer_radius(), 
             stem1.parent_inner(),
-        );
+        )?;
         let theta_outer = gall_fn::theta(
             stem2.dist(),
             stem2.inner_radius(), 
             stem2.parent_outer(),
-        );
-        (theta_inner,theta_outer)
+        )?;
+        Ok((theta_inner,theta_outer))
     }
     pub fn stack_check(&self) -> (&Stem, &Stem) {
         let stem1 = self.stem.first().unwrap();
@@ -234,13 +234,39 @@ impl GallTainer {
     //     self.stem.sort_by(|a,b|b.radius().partial_cmp(&a.radius()).unwrap());
     //     (self.stem,self.vowel)
     // }
-    pub fn mut_ang(&mut self, new_ang:Option<f64>) {
+    pub fn set_ang(&mut self, new_ang:Option<f64>) {
         _ = self.ang.set(GallAng::new(new_ang))
+    }
+    pub fn rotate(&mut self, angle: f64) -> Result<(), Error> {
+        let mut ang = self.ang.take();
+        ang.rotate(angle).expect("tainer ang is None");
+        for stem in &mut self.stem {
+            stem.mut_ccw(angle)?;
+        }
+        for vowel in &mut self.vowel {
+            vowel.mut_ccw(angle)?;
+        }
+        self.ang.set(ang);
+        Ok(())
     }
     pub fn ang(&self) -> f64 {
         self.ang.get().ang().unwrap()
     }
     pub fn get_ang(&self) -> Rc<Cell<GallAng>> {
         self.ang.clone()
+    }
+    pub fn step_ccw(&mut self) -> Result<(), Error> {
+        if self.ang() + Config::COLLISION_DIST > TAU {
+            Err(Error::new(GallError::NoStepSpace))
+        } else {
+            Ok(self.rotate(Config::STEP_DIST)?)
+        }
+    }
+    pub fn step_cw(&mut self) -> Result<(), Error> {
+        if self.ang() - Config::COLLISION_DIST > 0.0 {
+            Err(Error::new(GallError::NoStepSpace))
+        } else {
+            Ok(self.rotate(0.0-Config::STEP_DIST)?)
+        }
     }
 }

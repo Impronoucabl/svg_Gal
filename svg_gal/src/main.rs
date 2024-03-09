@@ -49,6 +49,7 @@ fn main() {
         filename += &raw_word;
         word_list.push(gall_fn::string_parse(raw_word));
     }   
+    println!("Generating...");
     let mut sent = GallSentence::new(
         GallLoc::new(
             0.0,
@@ -58,8 +59,9 @@ fn main() {
         Config::SENT_RADIUS,
         Config::SENT_THICK,
     );
-    println!("Generating...");
     sent.generate(word_list);
+    println!("Organizing...");
+    sent.basic();
     println!("Rendering...");
     let mut drawn = create_svg();
     drawn = sent.render(drawn);  

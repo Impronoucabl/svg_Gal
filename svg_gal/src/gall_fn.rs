@@ -1,6 +1,6 @@
 use std::f64::consts::{PI, TAU};
 
-use crate::{gall_stem::StemType, gall_vowel::VowelType};
+use crate::{gall_errors::{Error, GallError}, gall_stem::StemType, gall_vowel::VowelType};
 
 #[derive(PartialEq)]
 pub enum LetterMark {
@@ -19,7 +19,7 @@ pub enum Decor {
 pub fn default_layouts(phrase_length:usize, num:usize) -> (f64,f64,f64,f64) {
     match phrase_length {
         //word_radius, word_thick, word_angle, word_dist
-        0|1 => (650.0,75.0,0.0,0.0),
+        0|1 => (650.0,55.0,0.0,0.0),
         2 => (350.0,40.0, num as f64 * PI,400.0),
         len => (
             300.0,
@@ -146,20 +146,20 @@ pub fn dot_lookup(letter:&char) -> (Option<Decor>,i8) {
     (dot, decor_num)
 }
 
-pub fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
+pub fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> Result<f64, Error> {
     let thi = ((big_radius.powf(2.0) + letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*big_radius)).acos();
     if thi == std::f64::NAN {
-        0.0 //could do math error?
+        Err(Error::new(GallError::LetterNotTouchingSkel))
     } else {
-        thi
+        Ok(thi)
     }
 }
 
-pub fn theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> f64 {
+pub fn theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> Result<f64, Error> {
     let theta = ((big_radius.powf(2.0) - letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*letter_radius)).acos();
     if theta == std::f64::NAN {
-        0.0 //could do math error?
+        Err(Error::new(GallError::LetterNotTouchingSkel))
     } else {
-        theta
+        Ok(theta)
     }
 }

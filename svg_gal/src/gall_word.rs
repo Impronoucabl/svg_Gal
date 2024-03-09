@@ -1,4 +1,6 @@
+use std::cmp::{max, max_by, Ordering};
 use std::f64::consts::TAU;
+use std::iter::zip;
 use std::{cell::Cell, f64::consts::PI};
 use std::rc::Rc;
 
@@ -73,6 +75,70 @@ impl GallWord {
     fn check_radius(&self, new_radius:f64) -> Result<(),Error> {
         //todo!();
         Ok(())
+    }
+    fn gen_edge_vec(&self) -> Option<Vec<(f64,f64)>> {
+        let mut edge_vec = Vec::with_capacity(self.tainer_vec.len());
+        for con in &self.tainer_vec {
+            if let Ok((i_thi, o_thi)) = con.thi_calc() {
+                let thi = max_by(i_thi,o_thi, |a,b|a.partial_cmp(b).expect("thi is NaN"));
+                let edges = (con.ang() - thi, con.ang() + thi);
+                edge_vec.push(edges)
+            } else {
+                edge_vec.push((con.ang(),con.ang()))
+            }
+        }
+        Some(edge_vec)
+    }
+    fn gen_dist_vec(&self) -> Option<Vec<f64>> {
+        let mut edge_iter = self.gen_edge_vec()?.into_iter();
+        let mut dists = Vec::with_capacity(self.tainer_vec.len());
+        if let Some((first, mut current_edge)) = edge_iter.next() {
+            while let Some((cw_edge,ccw_edge)) = edge_iter.next() {
+                dists.push(cw_edge - current_edge);
+                current_edge = ccw_edge;
+            }
+            dists.push(first + TAU - current_edge);
+            Some(dists)
+        } else {
+            println!("Empty tainer_vec");
+            None
+        }
+    }
+    fn even_tainer_spread(&mut self) -> Option<()> {
+        let dists = self.gen_dist_vec()?;
+        let (mut floor, mut ceil) = (f64::MAX, -f64::MAX);
+        let (mut f_res, mut c_res) = (None, None);
+        for (dist, con) in zip(dists, &mut self.tainer_vec) {
+            if let Some(ord) = dist.partial_cmp(&floor) {
+                if ord == Ordering::Less {
+                    floor = dist;
+                    f_res = match con.step_ccw(){
+                        Ok(_) => Some(()),
+                        Err(_) => None
+                    };
+                }
+            }
+            if let Some(ord) = dist.partial_cmp(&ceil) {
+                if ord == Ordering::Greater {
+                    ceil = dist;
+                    c_res = match con.step_cw() {
+                        Ok(_) => Some(()),
+                        Err(_) => None
+                    };
+                }
+            }
+        }
+        Some(f_res.or(c_res)?)
+    }
+    pub fn basic(&mut self) {
+        let mut count:usize = 0;
+        while let Some(_) = self.even_tainer_spread() {
+            count += 1;
+            println!("{}", count);
+            if count > 60 {
+                break;
+            }
+        };
     }
 }
 
