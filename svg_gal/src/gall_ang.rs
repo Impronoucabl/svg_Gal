@@ -9,29 +9,32 @@ pub struct GallAng {
     angle: Option<f64>,
 }
 
-pub fn constrain(angle:Option<f64>) -> Option<f64> {
-    match angle {
-        Some(mut ang) => {
-            while ang >= TAU {
-                ang -= TAU
-            };
-            while ang < 0.0 {
-                ang += TAU
-            };
-            Some(ang)
-        }
-        None => None
+pub fn constrain_opt(angle:Option<f64>) -> Option<f64> {
+    if let Some(ang) = angle {
+        Some(constrain(ang))
+    } else {
+        None
     }
+}
+
+pub fn constrain(mut ang:f64) -> f64 {
+    while ang >= TAU {
+        ang -= TAU
+    };
+    while ang < 0.0 {
+        ang += TAU
+    };
+    ang
 }
 
 impl GallAng {
     pub fn new(angle: Option<f64>) -> GallAng {
         GallAng {
-            angle: constrain(angle)
+            angle: constrain_opt(angle)
         }
     }
     pub fn mut_ang(&mut self, angle:Option<f64>){
-        self.angle = constrain(angle);
+        self.angle = constrain_opt(angle);
     }
     pub fn rotate(&mut self, angle:f64) -> Result<(),Error>{
         match self.angle {

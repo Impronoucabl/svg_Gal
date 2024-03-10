@@ -74,4 +74,3 @@ impl PolarOrdinate for GallOrd {
         self.distance.clone()
     }
 }
-

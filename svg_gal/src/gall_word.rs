@@ -112,19 +112,19 @@ impl GallWord {
         let (first, con1) = loop_iter.next().expect("empty?");
         let mut left = first;
         while let Some((right, con)) = loop_iter.next() {
-            let movement = (right - left)/2.0;
+            let movement = (right - left)/3.0;
             _ = con.bound_ccw_rotate(movement);
             if movement > change {
                 change = movement
             }
             left = right;
         }
-        let movement = (first - left)/2.0;
+        let movement = (first - left)/3.0;
         _ = con1.bound_ccw_rotate(movement);
         if movement > change {
             change = movement
         }
-        if change > 2.0*Config::STEP_DIST {
+        if change > Config::COLLISION_DIST {
             Some(())
         } else {
             None
@@ -133,9 +133,9 @@ impl GallWord {
     pub fn spread(&mut self) {
         while let Some(_) = self.even_tainer_spread() {};
     }
-    pub fn collect_nodes(&self) -> Vec<&GallNode> {
+    pub fn collect_nodes(&mut self) -> Vec<&mut GallNode> {
         let mut nodes = Vec::new();
-        for con in &self.tainer_vec {
+        for con in &mut self.tainer_vec {
             let mut node_list = con.collect_nodes();
             nodes.append(&mut node_list);
         }

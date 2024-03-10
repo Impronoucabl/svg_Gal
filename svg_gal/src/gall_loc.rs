@@ -6,6 +6,13 @@ use crate::gall_ang::{self, GallAng};
 use crate::gall_ord::{GallOrd, PolarOrdinate};
 use crate::gall_errors::{Error, GallError};
 
+trait LocHolder {
+    fn loc(&mut self) -> GallLoc;
+}
+trait RelHolder {
+    fn loc(&mut self) -> GallRelLoc;
+}
+
 #[derive(PartialEq,Default,Clone)]
 pub struct GallLoc {
     ord: GallOrd,
@@ -33,18 +40,23 @@ pub trait Location:PolarOrdinate {
     fn svg_ord(&self) -> (f64,f64) {
         self.pos_ref().get()
     }
-    fn sq_dist_2_loc<T:Location>(&self, loc2:T) -> f64 {
+    fn sq_dist_2_loc<T:Location>(&self, loc2:&T) -> f64 {
         let (x1,y1) = self.svg_ord();
         let (x2,y2) = loc2.svg_ord();
         (x2 - x1).powi(2) + (y2 - y1).powi(2)
     }
-    fn dist2loc<T:Location>(&self, loc2:T) -> f64 {
+    fn dist2loc<T:Location>(&self, loc2:&T) -> f64 {
         self.sq_dist_2_loc(loc2).sqrt()
     }
-    fn ang2loc<T:Location>(&self, loc2:T) -> Option<f64> {
+    fn ang2loc<T:Location>(&self, loc2:&T) -> f64 {
         let (x1,y1) = self.svg_ord();
         let (x2,y2) = loc2.svg_ord();
-        gall_ang::constrain(Some((y2-y1).atan2(x2-x1)+PI/2.0))
+        gall_ang::constrain((y2-y1).atan2(x2-x1)+PI/2.0)
+    }
+    fn cent_ang2cent_ang<T:Location>(&self, loc2:&T) -> f64 {
+        let (x1,y1) = self.get_center().get();
+        let (x2,y2) = loc2.get_center().get();
+        gall_ang::constrain((y2-y1).atan2(x2-x1)+PI/2.0)
     }
 }
 
@@ -180,6 +192,7 @@ impl Location for GallRelLoc {
         self.update_xy()
     }
 }
+
 impl PolarOrdinate for GallLoc {
     fn mut_ang(&mut self, new_angle:f64) {
         self.ord.mut_ang(new_angle);
@@ -205,7 +218,7 @@ impl PolarOrdinate for GallLoc {
 impl PolarOrdinate for GallRelLoc {
     fn mut_ang(&mut self, ang:f64) {
         if let (Some(old_ang), Some(new_ang)) = (
-            self.base_ang(), gall_ang::constrain(Some(ang))) {
+            self.base_ang(), gall_ang::constrain_opt(Some(ang))) {
             self.ang_offset = new_ang - old_ang;
             self.update_xy();
         } else {}//Don't panic if base ang is None

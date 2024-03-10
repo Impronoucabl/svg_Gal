@@ -1,9 +1,9 @@
 use std::cell::Cell;
-use std::f64::consts::TAU;
+use std::f64::consts::{PI, TAU};
 use std::rc::Rc;
 
 use crate::gall_errors::Error;
-use crate::gall_fn;
+use crate::{gall_ang, gall_fn};
 use crate::gall_loc::{GallRelLoc, Location};
 use crate::gall_ord::PolarOrdinate;
 
@@ -26,6 +26,36 @@ impl GallNode  {
     }
     pub fn theta(&self) -> Result<f64, Error> {
         gall_fn::theta(self.l_dist.get(),self.loc.dist(),self.w_rad.get())
+    }
+    fn broken_gap(&self) -> bool {
+        if let (Some(ang),Ok(thi)) = (self.ang(),self.thi()) {
+            ang + PI - thi > TAU || ang - PI + thi < 0.0 
+        } else {
+            false
+        }
+    }
+    fn ang_bounds(&self) -> (f64,f64) {
+        if let (Some(ang),Ok(theta)) = (self.ang(),self.theta()) {
+            (gall_ang::constrain(ang - theta + PI), 
+            gall_ang::constrain(ang + theta - PI))
+        } else {(0.0,TAU)}
+    }
+    pub fn node_test(&self, node2:&GallNode)-> bool {
+        //pass on true
+        self.center_test(node2) &&
+        self.angle_test(node2)
+    }
+    pub fn center_test(&self, node2: &GallNode) -> bool {
+        self.get_center() != node2.get_center()
+    }
+    pub fn angle_test(&self, node2:&GallNode) -> bool {
+        let ang = self.cent_ang2cent_ang(node2);
+        let (cw, ccw) = self.ang_bounds();
+        if self.broken_gap() {
+            ang < cw || ang > ccw
+        } else {
+            ang > cw && ang < ccw
+        }
     }
 }
 impl PolarOrdinate for GallNode {

@@ -47,7 +47,7 @@ fn main() {
     );
     sent.generate(word_list);
     println!("Organizing...");
-    sent.basic();
+    //sent.basic();
     let node_vec = sent.collect_nodes();
     let pairs = pairing::generate_pairs(node_vec);
     println!("Rendering...");

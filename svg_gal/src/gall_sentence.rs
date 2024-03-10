@@ -42,9 +42,9 @@ impl GallSentence {
             wrd.spread();
         }
     }
-    pub fn collect_nodes(&self) -> Vec<&GallNode> {
+    pub fn collect_nodes(&mut self) -> Vec<&mut GallNode> {
         let mut nodes = Vec::new();
-        for word in &self.words {
+        for word in &mut self.words {
             let mut node_list = word.collect_nodes();
             nodes.append(&mut node_list);
         }

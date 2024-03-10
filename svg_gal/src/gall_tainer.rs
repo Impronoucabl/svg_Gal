@@ -229,9 +229,9 @@ impl GallTainer {
         };
         (stem1,stem2)
     }
-    pub fn collect_nodes(&self) -> Vec<&GallNode> {
+    pub fn collect_nodes(&mut self) -> Vec<&mut GallNode> {
         let mut nodes = Vec::with_capacity(self.node.len());
-        for node in &self.node {
+        for node in &mut self.node {
             nodes.push(node)
         }
         nodes
