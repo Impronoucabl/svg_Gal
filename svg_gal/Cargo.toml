@@ -8,4 +8,5 @@ edition = "2021"
 
 [dependencies]
 resvg = "0.40.0"
-svg = "0.15.1"
+svg = "0.16.0"
+rand = "0.8.5"

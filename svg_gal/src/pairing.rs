@@ -1,4 +1,9 @@
+extern crate rand;
+
 use std::f64::consts::PI;
+
+use rand::rngs::ThreadRng;
+use rand::seq::SliceRandom;
 
 use crate::gall_loc::Location;
 use crate::gall_node::GallNode;
@@ -25,8 +30,9 @@ fn unique_pair_test(node1:&mut GallNode, node2: &mut GallNode, pair_vec: &mut Ve
     true
 }
 
-fn base_loop<'a>(spare_list:Vec<&'a mut GallNode>, pair_list:&mut Vec<GallLinePair<'a>>) -> Vec<&'a mut GallNode> {
+fn base_loop<'a>(mut spare_list:Vec<&'a mut GallNode>, pair_list:&mut Vec<GallLinePair<'a>>, rng:&mut ThreadRng) -> Vec<&'a mut GallNode> {
     let mut new_spare = Vec::new();
+    spare_list.shuffle(rng);
     let mut iter_loop = spare_list.into_iter();
     let node0 = iter_loop.next().expect("empty node list");
     new_spare.push(node0);
@@ -47,12 +53,20 @@ fn base_loop<'a>(spare_list:Vec<&'a mut GallNode>, pair_list:&mut Vec<GallLinePa
     new_spare
 }
 
-pub fn generate_pairs(node_vec:Vec<&mut GallNode>) -> Vec<GallLinePair> {
+pub fn generate_pairs(node_vec:Vec<&mut GallNode>) -> (Vec<GallLinePair>, Vec<&mut GallNode>) {
+    let mut rng = rand::thread_rng();
     let mut pair_list = Vec::new();
-    let mut spare_list = Vec::new();
-    spare_list = base_loop(node_vec, &mut pair_list);
-    if spare_list.len() > 0 {
-        spare_list = base_loop(spare_list, &mut pair_list);
+    let length = node_vec.len();
+    let limit = match length {
+        0|1 => return (pair_list,node_vec),
+        len => (len+1)/2,
+    };
+    let mut retries:usize = 0;
+    let mut spare_list = base_loop(node_vec, &mut pair_list, &mut rng);
+    while spare_list.len() > 1 && retries < limit {
+        spare_list = base_loop(spare_list, &mut pair_list,&mut rng);
+        retries += 1;
     }
-    pair_list
+    (pair_list, spare_list)
+    
 }

@@ -49,7 +49,7 @@ fn main() {
     println!("Organizing...");
     //sent.basic();
     let node_vec = sent.collect_nodes();
-    let pairs = pairing::generate_pairs(node_vec);
+    let (pairs, spares) = pairing::generate_pairs(node_vec);
     println!("Rendering...");
     let (mut drawn, post_render) = render::render_init(pairs);
     drawn = render::render_start(sent, drawn);
