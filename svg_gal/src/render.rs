@@ -98,7 +98,7 @@ impl Renderable for GallWord {
         let circle = Circle::new()
             .set("fill", "none")
             .set("stroke", Config::SKEL_COLOUR())
-            .set("stroke-width", self.thick())
+            .set("stroke-width", self.thick()*2.0)
             .set("cx", self.x())
             .set("cy", self.y())
             .set("r", self.radius());
@@ -152,10 +152,9 @@ impl GallWord {
             (data, fin_ang) = tainer.part_render(data, fin_ang);
             tainer.post_render(&mut post_render); //render non-skel stems
         };
-        let (fin_i, fin_o) = fin_ang;
         let (inner_sweep, outer_sweep) = (
-            (if fin_i > PI {TAU} else {0.0} + init_angles.0 - fin_i).abs() <= PI,
-            (if fin_o > PI {TAU} else {0.0} + init_angles.1 - fin_o).abs() <= PI
+            (TAU + init_angles.0 - fin_ang.0) >= PI,
+            (TAU + init_angles.1 - fin_ang.1) >= PI
         );
         let closed_inner_loop = data.0.elliptical_arc_to((
             radius.0, radius.0,
@@ -214,13 +213,9 @@ impl Renderable for GallTainer {
 
 impl SkelPart for GallTainer {
     fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> ((Data,Data),(f64,f64)) {
-        let (stem1, stem2) = self.stack_check();
+        let (stem1, stem2) = self.stack_check().expect("Tainer not a Skel part");
         let (thi_inner,thi_outer) = self.thi_calc().unwrap();
         let (theta_inner,theta_outer) = self.theta_calc().unwrap();
-        if thi_inner.is_nan() || thi_outer.is_nan() {
-            println!("Skeleton letter not touching skeleton");
-            panic!();
-        };
         let (w_in_rad, w_ou_rad) = (
             stem1.parent_inner(), stem2.parent_outer());
         let (l_in_big_rad, l_ou_smal_rad) = (
@@ -280,19 +275,19 @@ impl SkelPart for GallTainer {
         )
     }
     fn part_init(&self) -> ((Data, Data),(f64,f64),(f64,f64), (f64,f64)) {
-        let (stem1, stem2) = self.stack_check();
+        let (stem1, stem2) = self.stack_check().expect("Tainer not a skel part");
         let (thi_inner,thi_outer) = self.thi_calc().unwrap();
         let (inner_init_angle, outer_init_angle) = (
-            stem1.ang().unwrap() - thi_inner,
-            stem2.ang().unwrap() - thi_outer
+            0.0_f64.min(stem1.ang().unwrap() - thi_inner),
+            0.0_f64.min(stem2.ang().unwrap() - thi_outer)
         );
         let mut tracker = GallLoc::new(
-            0.0_f64.min(inner_init_angle),
+            inner_init_angle,
             stem1.parent_inner(), 
             stem1.get_center(),
         );
         let inner_continuum = tracker.pos_ref().get();
-        tracker.mut_ang_d(stem2.parent_outer(), 0.0_f64.min(outer_init_angle));
+        tracker.mut_ang_d(stem2.parent_outer(), outer_init_angle);
         let outer_continuum = tracker.pos_ref().get();
         (
             (

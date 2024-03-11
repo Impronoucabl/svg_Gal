@@ -193,7 +193,7 @@ impl GallTainer {
         self.node.push(dash)
     }
     pub fn thi_calc(&self) -> Result<(f64,f64), Error> {
-        let (stem1,stem2) = self.stack_check();
+        let (stem1,stem2) = self.stack_check()?;
         let thi_inner = gall_fn::thi(
             stem1.dist(),
             stem1.outer_radius(), 
@@ -207,7 +207,7 @@ impl GallTainer {
         Ok((thi_inner,thi_outer))
     }
     pub fn theta_calc(&self) -> Result<(f64,f64), Error> {
-        let (stem1,stem2) = self.stack_check();
+        let (stem1,stem2) = self.stack_check()?;
         let theta_inner = gall_fn::theta(
             stem1.dist(),
             stem1.outer_radius(), 
@@ -220,14 +220,17 @@ impl GallTainer {
         )?;
         Ok((theta_inner,theta_outer))
     }
-    pub fn stack_check(&self) -> (&Stem, &Stem) {
-        let stem1 = self.stem.first().unwrap();
-        let stem2 = if Config::STACK {
-            self.stem.last().unwrap()
+    pub fn stack_check(&self) -> Result<(&Stem, &Stem),Error> {
+        if let Some(stem1) = self.stem.first() {
+            let stem2 = if Config::STACK {
+                self.stem.last().unwrap()
+            } else {
+                stem1 // stem1 > stem2
+            };
+            Ok((stem1,stem2))
         } else {
-            stem1 // stem1 > stem2
-        };
-        (stem1,stem2)
+            Err(Error::new(GallError::NoStemInTainer))
+        }
     }
     pub fn collect_nodes(&mut self) -> Vec<&mut GallNode> {
         let mut nodes = Vec::with_capacity(self.node.len());

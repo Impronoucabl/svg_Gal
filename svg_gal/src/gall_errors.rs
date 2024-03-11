@@ -21,7 +21,7 @@ pub enum GallError {
     InvalidVowelDist ,
     DoNotMutTainer ,
     NoStepSpace ,
-    BadTainerStem ,
+    NoStemInTainer ,
     LetterNotTouchingSkel,
     BadVowelType,
 }
@@ -50,7 +50,7 @@ impl fmt::Display for Error {
             GallError::InvalidVowelDist => "Vowel radius is invalid",
             GallError::DoNotMutTainer =>"Do Not Mut Tainer",
             GallError::NoStepSpace =>"Stepping further will cross 6 o'clock",
-            GallError::BadTainerStem =>"Stem has wrong stem type for Tainer",
+            GallError::NoStemInTainer =>"Tainer stemtype is None",
             GallError::LetterNotTouchingSkel=>"Letter is not touching skeleton",
             GallError::BadVowelType=>"Bad Vowel type",
             _ => "Unspecified Error",
