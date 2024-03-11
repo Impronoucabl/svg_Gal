@@ -1,4 +1,4 @@
-use std::f64::consts::PI;
+use std::f64::consts::{PI, TAU};
 
 use svg::Document;
 use svg::node::element::{Circle, Element, Line, Path, Rectangle};
@@ -152,9 +152,10 @@ impl GallWord {
             (data, fin_ang) = tainer.part_render(data, fin_ang);
             tainer.post_render(&mut post_render); //render non-skel stems
         };
+        let (fin_i, fin_o) = fin_ang;
         let (inner_sweep, outer_sweep) = (
-            (init_angles.0 - fin_ang.0).abs() <= PI,
-            (init_angles.1 - fin_ang.1).abs() <= PI,
+            (if fin_i > PI {TAU} else {0.0} + init_angles.0 - fin_i).abs() <= PI,
+            (if fin_o > PI {TAU} else {0.0} + init_angles.1 - fin_o).abs() <= PI
         );
         let closed_inner_loop = data.0.elliptical_arc_to((
             radius.0, radius.0,

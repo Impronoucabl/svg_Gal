@@ -1,0 +1,11 @@
+<svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+<rect fill="yellow" height="2048" stroke="none" width="2048" x="0" y="0"/>
+<path d="M1024,1729 A705,705,0,0,0,1218.4447,346.34503 A194.5,194.5,0,0,1,829.5914,346.3347 A705,705,0,0,0,1024,1729 z" fill="black" stroke="none" stroke-width="0"/>
+<path d="M1024,1619 A595,595,0,0,0,1248.5896,473.01495 A260.5,260.5,0,0,1,799.43976,473.003 A595,595,0,0,0,1024,1619 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1024.0207492275017" cy="244.00000027598105" fill="none" r="97.5" stroke="red" stroke-width="49.5px"/>
+<circle cx="979.5699049320666" cy="564.115669419046" fill="purple" r="20" stroke="none"/>
+<circle cx="1024" cy="1251.5" fill="none" r="227.49999999999997" stroke="black" stroke-width="66px"/>
+<circle cx="1024" cy="1804" fill="none" r="97.5" stroke="red" stroke-width="49.5px"/>
+<circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
+<line stroke="black" stroke-width="8" x1="979.5699049320666" x2="695.574467012765" y1="564.115669419046" y2="1989.679382239287"/>
+</svg>

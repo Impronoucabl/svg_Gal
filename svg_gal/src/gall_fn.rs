@@ -148,7 +148,7 @@ pub fn dot_lookup(letter:&char) -> (Option<Decor>,i8) {
 
 pub fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> Result<f64, Error> {
     let thi = ((big_radius.powf(2.0) + letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*big_radius)).acos();
-    if thi == std::f64::NAN {
+    if thi.is_nan() {
         Err(Error::new(GallError::LetterNotTouchingSkel))
     } else {
         Ok(thi)
@@ -157,7 +157,7 @@ pub fn thi(letter_distance:f64, letter_radius:f64,big_radius:f64) -> Result<f64,
 
 pub fn theta(letter_distance:f64, letter_radius:f64,big_radius:f64) -> Result<f64, Error> {
     let theta = ((big_radius.powf(2.0) - letter_distance.powf(2.0) - letter_radius.powf(2.0))/(2.0*letter_distance*letter_radius)).acos();
-    if theta == std::f64::NAN {
+    if theta.is_nan() {
         Err(Error::new(GallError::LetterNotTouchingSkel))
     } else {
         Ok(theta)

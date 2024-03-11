@@ -1,0 +1,24 @@
+<svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+<rect fill="yellow" height="2048" stroke="none" width="2048" x="0" y="0"/>
+<path d="M985.28815,1812.074 A390,390,0,0,0,985.28815,1812.074 A98.5,98.5,0,1,1,1062.7119,1812.074 A390,390,0,0,0,985.28815,1812.074 z" fill="black" stroke="none" stroke-width="0"/>
+<path d="M879.3661,1698.1917 A310,310,0,0,0,879.3661,1698.1917 A146.5,146.5,0,0,1,1168.6339,1698.1917 A310,310,0,0,0,879.3661,1698.1917 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1024" cy="1721.5" fill="none" r="52.5" stroke="red" stroke-width="36px"/>
+<circle cx="1049.4416982062164" cy="1841.328919682954" fill="purple" r="20" stroke="none"/>
+<circle cx="1008.5030203736766" cy="1599.984183653068" fill="purple" r="20" stroke="none"/>
+<circle cx="1024.0039104313366" cy="1301.500000062414" fill="none" r="122.49999999999999" stroke="black" stroke-width="48px"/>
+<circle cx="1024.0067035965772" cy="1214.0000001069957" fill="none" r="52.5" stroke="red" stroke-width="36px"/>
+<circle cx="954.8319800574346" cy="1402.601404841715" fill="blue" r="25" stroke="none"/>
+<circle cx="1024" cy="1424" fill="blue" r="25" stroke="none"/>
+<circle cx="1093.169385968735" cy="1402.605820832959" fill="blue" r="25" stroke="none"/>
+<path d="M1024,1014 A390,390,0,0,0,1122.4543,246.63182 A98.5,98.5,0,1,1,925.56976,246.62553 A390,390,0,0,0,1024,1014 z" fill="black" stroke="none" stroke-width="0"/>
+<path d="M1024,934 A310,310,0,0,0,1141.7184,337.22067 A146.5,146.5,0,0,1,906.2999,337.21317 A310,310,0,0,0,1024,934 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1024.011172660962" cy="274.0000001783262" fill="none" r="52.5" stroke="red" stroke-width="36px"/>
+<circle cx="954.8400084123831" cy="351.1014049698552" fill="blue" r="25" stroke="none"/>
+<circle cx="1024.0080283549485" cy="372.5000001281401" fill="blue" r="25" stroke="none"/>
+<circle cx="1093.1774143236835" cy="351.1058209610992" fill="blue" r="25" stroke="none"/>
+<circle cx="1024" cy="974" fill="none" r="122.49999999999999" stroke="black" stroke-width="48px"/>
+<circle cx="1024" cy="974" fill="none" r="52.5" stroke="red" stroke-width="36px"/>
+<circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
+<line stroke="black" stroke-width="8" x1="1049.4416982062164" x2="1091.9905295257963" y1="1841.328919682954" y2="2041.731441930926"/>
+<line stroke="black" stroke-width="8" x1="1008.5030203736766" x2="807.9186704031025" y1="1599.984183653068" y2="27.150533430630276"/>
+</svg>
