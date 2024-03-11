@@ -1,7 +1,7 @@
-use std::cmp::{max, max_by, Ordering};
+use std::cmp::max_by;
 use std::f64::consts::TAU;
 use std::iter::zip;
-use std::{cell::Cell, f64::consts::PI};
+use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::gall_circle::{Circle, HollowCircle};

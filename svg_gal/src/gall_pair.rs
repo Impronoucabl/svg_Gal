@@ -2,12 +2,10 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::gall_ang;
-use crate::gall_circle::Circle;
 use crate::gall_config::Config;
 use crate::gall_loc::Location;
 use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
-use crate::gall_sentence::GallSentence;
 
 pub struct GallLine<'a> {
     pub node: &'a GallNode,

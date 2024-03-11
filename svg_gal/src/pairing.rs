@@ -12,7 +12,6 @@ use crate::gall_loc::Location;
 use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
 use crate::gall_pair::{GallLine, GallLinePair};
-use crate::gall_sentence::GallSentence;
 
 fn align_nodes(node1:&mut GallNode, node2: &mut GallNode) {
     let ang1 = node1.cent_ang2cent_ang(node2);
