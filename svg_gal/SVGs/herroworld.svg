@@ -1,0 +1,31 @@
+<svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+<rect fill="yellow" height="2048" stroke="none" width="2048" x="0" y="0"/>
+<path d="M965.6523,1854.553 A385,385,0,0,0,965.6523,1854.553 A101.5,101.5,0,1,1,1082.3478,1854.553 A385,385,0,0,0,1190.8152,1127.0164 A168.5,168.5,0,0,1,857.2512,1126.9844 A385,385,0,0,0,965.6523,1854.553 z" fill="black" stroke="none" stroke-width="0"/>
+<path d="M881.4627,1754.9059 A315,315,0,0,0,881.4627,1754.9059 A143.5,143.5,0,0,1,1166.5374,1754.9059 A315,315,0,0,0,1202.5746,1214.508 A210.5,210.5,0,0,1,845.47504,1214.4738 A315,315,0,0,0,881.4627,1754.9059 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1024" cy="1771.5" fill="none" r="52.5" stroke="red" stroke-width="31.5px"/>
+<circle cx="993.7746267772826" cy="1652.787419312242" fill="purple" r="20" stroke="none"/>
+<circle cx="1024" cy="1649" fill="purple" r="20" stroke="none"/>
+<circle cx="1024.0201107897042" cy="1264.0000009629616" fill="none" r="52.5" stroke="red" stroke-width="31.5px"/>
+<circle cx="917.0208029888071" cy="1259.3908531073166" fill="blue" r="25" stroke="none"/>
+<circle cx="1024.0173814682444" cy="1292.500000832274" fill="blue" r="25" stroke="none"/>
+<circle cx="1131.020299424224" cy="1259.4113469115516" fill="blue" r="25" stroke="none"/>
+<path d="M922.50073,945.3797 A385,385,0,0,0,922.50073,945.3797 A101.5,101.5,0,1,1,1125.4993,945.3797 A385,385,0,0,0,1406.535,617.49615 A101.5,101.5,0,1,1,1375.4832,416.8866 A385,385,0,0,0,667.5455,428.5175 A101.5,101.5,0,1,1,640.3325,541.99567 A385,385,0,0,0,922.50073,945.3797 z" fill="black" stroke="none" stroke-width="0"/>
+<path d="M904.5518,865.47406 A315,315,0,0,0,904.5518,865.47406 A143.5,143.5,0,0,1,1143.4482,865.47406 A315,315,0,0,0,1330.3154,647.4567 A143.5,143.5,0,0,1,1293.7722,411.3718 A315,315,0,0,0,784.0779,369.88635 A143.5,143.5,0,0,1,717.5996,647.1014 A315,315,0,0,0,904.5518,865.47406 z" fill="green" stroke="none" stroke-width="0"/>
+<circle cx="1024" cy="784" fill="none" r="52.5" stroke="red" stroke-width="31.5px"/>
+<circle cx="1024" cy="1067.5" fill="purple" r="20" stroke="none"/>
+<circle cx="1120.633473792934" cy="869.7124064489351" fill="purple" r="20" stroke="none"/>
+<circle cx="1280.1395964202595" cy="464.36024248270473" fill="blue" r="25" stroke="none"/>
+<circle cx="1269.5755011508495" cy="535.9878541185964" fill="blue" r="25" stroke="none"/>
+<circle cx="1301.3005688831752" cy="601.069609894717" fill="blue" r="25" stroke="none"/>
+<circle cx="816.888444980068" cy="595.4628550173684" fill="blue" r="25" stroke="none"/>
+<circle cx="853.8247927118816" cy="533.190701740339" fill="blue" r="25" stroke="none"/>
+<circle cx="849.148173329659" cy="460.939445082222" fill="blue" r="25" stroke="none"/>
+<circle cx="1033.9670834312417" cy="451.9061539311884" fill="none" r="122.49999999999999" stroke="black" stroke-width="42px"/>
+<circle cx="956.8015232680551" cy="547.0467148119276" fill="blue" r="25" stroke="none"/>
+<circle cx="1023.9999999999999" cy="574" fill="blue" r="25" stroke="none"/>
+<circle cx="1094.6802657292683" cy="558.3023920942296" fill="blue" r="25" stroke="none"/>
+<circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
+<line stroke="black" stroke-width="8" x1="1024" x2="1024" y1="1649" y2="1067.5"/>
+<line stroke="black" stroke-width="8" x1="993.7746267772826" x2="597.741916597062" y1="1652.787419312242" y2="97.3371452714564"/>
+<line stroke="black" stroke-width="8" x1="1120.633473792934" x2="1788.8177902339637" y1="869.7124064489351" y2="349.1268654468182"/>
+</svg>

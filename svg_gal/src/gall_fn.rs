@@ -20,7 +20,7 @@ pub fn default_layouts(phrase_length:usize, num:usize) -> (f64,f64,f64,f64) {
     match phrase_length {
         //word_radius, word_thick, word_angle, word_dist
         0|1 => (650.0,55.0,0.0,0.0),
-        2 => (400.0,40.0, num as f64 * PI,400.0),
+        2 => (350.0,35.0, num as f64 * PI,450.0),
         3 => (350.0,35.0, num as f64 * TAU/3.0,450.0),
         4 => (325.0,32.5, num as f64 * PI/2.0,525.0),
         len => (

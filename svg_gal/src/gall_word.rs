@@ -66,7 +66,7 @@ impl GallWord {
                      
                 }
             } //At this point the con tainer should be initialised.
-            con.populate(l_mark, d_mark, &self)
+            con.populate(l_mark, d_mark, repeat, &self)
         }
         self.tainer_vec.push(con);
     }
@@ -124,7 +124,7 @@ impl GallWord {
         if movement > change {
             change = movement
         }
-        if change > Config::COLLISION_DIST {
+        if change > Config::STEP_DIST {
             Some(())
         } else {
             None
