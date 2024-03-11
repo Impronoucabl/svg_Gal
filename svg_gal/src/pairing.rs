@@ -78,9 +78,9 @@ pub fn extend_spares<'a>(spare_vec:Vec<&'a mut GallNode>, radius:Rc<Cell<f64>>, 
     let mut lines = Vec::new();
     for node in spare_vec {
         let mut ang = rng.gen_range(0.0..TAU);
-        //while !node.angle_test(ang) {
-        //    ang = rng.gen_range(0.0..TAU);
-        //}
+        while !node.angle_test(ang) {
+            ang = rng.gen_range(0.0..TAU);
+        }
         node.mut_ang(ang);
         lines.push(GallLine::new(node, radius.clone(), center.clone()));
     }

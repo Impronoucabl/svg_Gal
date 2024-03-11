@@ -57,7 +57,7 @@ impl GallNode  {
         if self.broken_gap() {
             ang < cw || ang > ccw
         } else {
-            ang > cw && ang < ccw
+            ang < cw && ang > ccw
         }
     }
 }
