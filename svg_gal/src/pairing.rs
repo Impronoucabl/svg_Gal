@@ -1,18 +1,21 @@
 extern crate rand;
 
-use std::f64::consts::PI;
+use std::cell::Cell;
+use std::f64::consts::{PI, TAU};
+use std::rc::Rc;
 
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
+use rand::Rng;
 
 use crate::gall_loc::Location;
 use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
-use crate::gall_pair::GallLinePair;
+use crate::gall_pair::{GallLine, GallLinePair};
+use crate::gall_sentence::GallSentence;
 
 fn align_nodes(node1:&mut GallNode, node2: &mut GallNode) {
     let ang1 = node1.cent_ang2cent_ang(node2);
-    println!("{}", ang1);
     node1.mut_ang(ang1);
     node2.mut_ang(ang1+PI);
 }
@@ -69,5 +72,17 @@ pub fn generate_pairs(node_vec:Vec<&mut GallNode>) -> (Vec<GallLinePair>, Vec<&m
         retries += 1;
     }
     (pair_list, spare_list)
-    
+}
+pub fn extend_spares<'a>(spare_vec:Vec<&'a mut GallNode>, radius:Rc<Cell<f64>>, center:Rc<Cell<(f64,f64)>>) -> Vec<GallLine<'a>>{
+    let mut rng = rand::thread_rng();
+    let mut lines = Vec::new();
+    for node in spare_vec {
+        let mut ang = rng.gen_range(0.0..TAU);
+        //while !node.angle_test(ang) {
+        //    ang = rng.gen_range(0.0..TAU);
+        //}
+        node.mut_ang(ang);
+        lines.push(GallLine::new(node, radius.clone(), center.clone()));
+    }
+    lines
 }

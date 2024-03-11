@@ -9,7 +9,7 @@ use crate::gall_config::Config;
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
-use crate::gall_pair::GallLinePair;
+use crate::gall_pair::{GallLine, GallLinePair};
 use crate::gall_sentence::GallSentence;
 use crate::gall_stem::{Stem, StemType};
 use crate::gall_tainer::GallTainer;
@@ -55,10 +55,13 @@ pub fn create_svg() -> Document {
     drawn.add(background)
 }
 
-pub fn render_init(marks:Vec<GallLinePair>) -> (Document,Vec<Element>) {
+pub fn render_init(pairs:Vec<GallLinePair>, lines: Vec<GallLine>) -> (Document,Vec<Element>) {
     let mut post_render = Vec::new();
-    for pair in marks {
+    for pair in pairs {
         pair.post_render(&mut post_render)
+    }
+    for line in lines {
+        line.post_render(&mut post_render)
     }
     (create_svg(),post_render)
 }
@@ -376,6 +379,20 @@ impl Basic for Dot {
             .set("cx", self.x())
             .set("cy", self.y())
             .set("r", self.radius())
+            .into()
+    }
+}
+
+impl Basic for GallLine<'_> {
+    fn get_shape(&self) -> Element {
+        let (x,y) = self.get_endpoint();
+        Line::new()
+            .set("stroke", Config::SKEL_COLOUR())
+            .set("stroke-width", self.thickness*2)
+            .set("x1", self.node.x())
+            .set("y1", self.node.y())
+            .set("x2", x)
+            .set("y2", y)
             .into()
     }
 }

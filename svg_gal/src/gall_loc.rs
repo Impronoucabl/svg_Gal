@@ -60,13 +60,17 @@ pub trait Location:PolarOrdinate {
     }
 }
 
-fn calc_xy(dist:f64, ang:Option<f64>,center:(f64,f64)) -> (f64,f64) {
+fn calc_rel_xy(dist:f64, ang:Option<f64>) -> (f64,f64) {
     let (rel_y,rel_x) = match ang {
         Some(angle) => (FRAC_PI_2 - angle).sin_cos(),
         None => (0.0,0.0)
     };
-    let (center_x,center_y) = center;
-    (dist*rel_x + center_x, dist*rel_y + center_y)
+    (dist*rel_x, dist*rel_y)
+}
+
+fn calc_xy(dist:f64, ang:Option<f64>,center:(f64,f64)) -> (f64,f64) {
+    let (r_x,r_y) = calc_rel_xy(dist, ang);
+    (r_x + center.0, r_y + center.1)
 }
 
 impl GallLoc {

@@ -12,7 +12,9 @@ pub struct GallAng {
 pub fn svg_ang2gall_ang(svg_ang:f64) -> f64{
     constrain(-svg_ang+PI/2.0)
 }
-
+pub fn gall_ang2svg_ang(gall_ang:f64) -> f64{
+    (PI/2.0-gall_ang)
+}
 pub fn constrain_opt(angle:Option<f64>) -> Option<f64> {
     if let Some(ang) = angle {
         Some(constrain(ang))
@@ -20,7 +22,6 @@ pub fn constrain_opt(angle:Option<f64>) -> Option<f64> {
         None
     }
 }
-
 pub fn constrain(mut ang:f64) -> f64 {
     while ang >= TAU {
         ang -= TAU

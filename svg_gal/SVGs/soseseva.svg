@@ -4,21 +4,24 @@
 <path d="M799.4251,1574.9911 A595,595,0,0,0,799.4251,1574.9911 A260.5,260.5,0,0,1,1248.575,1574.9911 A595,595,0,0,0,1574.928,1248.7294 A260.5,260.5,0,0,1,1575.054,799.57965 A595,595,0,0,0,1248.7935,473.09808 A260.5,260.5,0,0,1,799.6437,472.91995 A595,595,0,0,0,473.07196,799.27057 A260.5,260.5,0,0,1,472.946,1248.4204 A595,595,0,0,0,799.4251,1574.9911 z" fill="green" stroke="none" stroke-width="0"/>
 <circle cx="1024" cy="1414" fill="none" r="97.5" stroke="red" stroke-width="49.5px"/>
 <circle cx="1184.8893496149035" cy="1546.1557673384173" fill="purple" r="20" stroke="none"/>
-<circle cx="1024" cy="1479.5" fill="purple" r="20" stroke="none"/>
-<circle cx="1024.045116953173" cy="1479.5000044737133" fill="purple" r="20" stroke="none"/>
+<circle cx="809.2972533800802" cy="1782.2261961942945" fill="purple" r="20" stroke="none"/>
+<circle cx="1024.0451169531727" cy="1479.5000044737133" fill="purple" r="20" stroke="none"/>
 <circle cx="1673.999974435925" cy="1024.1823000190054" fill="none" r="97.5" stroke="red" stroke-width="49.5px"/>
-<circle cx="1546.1876506163576" cy="863.2703107701643" fill="purple" r="20" stroke="none"/>
 <circle cx="1546.110623523153" cy="1185.0357879123223" fill="purple" r="20" stroke="none"/>
 <circle cx="1479.4999820854828" cy="1024.1277502440876" fill="purple" r="20" stroke="none"/>
+<circle cx="1764.1705635080295" cy="803.9921601635851" fill="purple" r="20" stroke="none"/>
 <circle cx="1024.2578111559185" cy="374.00005112814983" fill="none" r="97.5" stroke="red" stroke-width="49.5px"/>
+<circle cx="953.2634450080968" cy="124.86539354344706" fill="purple" r="20" stroke="none"/>
+<circle cx="1214.019749695454" cy="215.49457953796775" fill="purple" r="20" stroke="none"/>
 <circle cx="1024.225783076815" cy="568.5000492501734" fill="purple" r="20" stroke="none"/>
-<circle cx="1024.1806661254166" cy="568.5000358290341" fill="purple" r="20" stroke="none"/>
-<circle cx="1185.083222551687" cy="501.9212982044619" fill="purple" r="20" stroke="none"/>
 <circle cx="244.0000306768901" cy="1023.7812399771933" fill="none" r="97.5" stroke="red" stroke-width="49.5px"/>
 <circle cx="568.5000179145172" cy="1023.8722497559122" fill="purple" r="20" stroke="none"/>
 <circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
-<line stroke="black" stroke-width="8" x1="1546.1876506163576" x2="1185.083222551687" y1="863.2703107701643" y2="501.9212982044619"/>
-<line stroke="black" stroke-width="8" x1="1024.045116953173" x2="1024.225783076815" y1="1479.5000044737133" y2="568.5000492501734"/>
-<line stroke="black" stroke-width="8" x1="1184.8893496149035" x2="1546.110623523153" y1="1546.1557673384173" y2="1185.0357879123223"/>
-<line stroke="black" stroke-width="8" x1="568.5000179145172" x2="1479.4999820854828" y1="1023.8722497559122" y2="1024.1277502440876"/>
+<line stroke="black" stroke-width="8" x1="1024.225783076815" x2="1024.0451169531727" y1="568.5000492501734" y2="1479.5000044737133"/>
+<line stroke="black" stroke-width="8" x1="1479.4999820854828" x2="568.5000179145172" y1="1024.1277502440876" y2="1023.8722497559122"/>
+<line stroke="black" stroke-width="8" x1="1546.110623523153" x2="1184.8893496149035" y1="1185.0357879123223" y2="1546.1557673384173"/>
+<line stroke="black" stroke-width="8" x1="1764.1705635080295" x2="NaN" y1="803.9921601635851" y2="NaN"/>
+<line stroke="black" stroke-width="8" x1="1214.019749695454" x2="NaN" y1="215.49457953796775" y2="NaN"/>
+<line stroke="black" stroke-width="8" x1="809.2972533800802" x2="NaN" y1="1782.2261961942945" y2="NaN"/>
+<line stroke="black" stroke-width="8" x1="953.2634450080968" x2="-647.9118212784683" y1="124.86539354344706" y2="-1972.1337889907318"/>
 </svg>

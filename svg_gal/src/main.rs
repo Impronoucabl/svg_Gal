@@ -1,7 +1,8 @@
 use std::{cell::Cell, env, rc::Rc};
 
+use crate::gall_circle::Circle;
 use crate::gall_config::Config;
-use crate::gall_loc::GallLoc;
+use crate::gall_loc::{GallLoc, Location};
 use crate::gall_sentence::GallSentence;
 
 mod gall_config;
@@ -48,10 +49,12 @@ fn main() {
     sent.generate(word_list);
     println!("Organizing...");
     //sent.basic();
+    let (ext_rad, ext_cent) = (sent.get_radius(),sent.get_center());
     let node_vec = sent.collect_nodes();
     let (pairs, spares) = pairing::generate_pairs(node_vec);
+    let lines = pairing::extend_spares(spares, ext_rad,ext_cent);
     println!("Rendering...");
-    let (mut drawn, post_render) = render::render_init(pairs);
+    let (mut drawn, post_render) = render::render_init(pairs, lines);
     drawn = render::render_start(sent, drawn);
     drawn = render::render_post(post_render, drawn);
     println!("Saving under {}", filename);

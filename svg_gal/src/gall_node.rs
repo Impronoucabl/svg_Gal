@@ -43,13 +43,16 @@ impl GallNode  {
     pub fn node_test(&self, node2:&GallNode)-> bool {
         //pass on true
         self.center_test(node2) &&
-        self.angle_test(node2)
+        self.node_angle_test(node2)
     }
     pub fn center_test(&self, node2: &GallNode) -> bool {
         self.get_center() != node2.get_center()
     }
-    pub fn angle_test(&self, node2:&GallNode) -> bool {
+    pub fn node_angle_test(&self, node2:&GallNode) -> bool {
         let ang = self.cent_ang2cent_ang(node2);
+        self.angle_test(ang)
+    }
+    pub fn angle_test(&self, ang:f64) -> bool {
         let (cw, ccw) = self.ang_bounds();
         if self.broken_gap() {
             ang < cw || ang > ccw
