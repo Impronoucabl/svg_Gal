@@ -12,8 +12,9 @@ use crate::gall_pair::GallLinePair;
 
 fn align_nodes(node1:&mut GallNode, node2: &mut GallNode) {
     let ang1 = node1.cent_ang2cent_ang(node2);
+    println!("{}", ang1);
     node1.mut_ang(ang1);
-    node2.mut_ang(ang1-PI);
+    node2.mut_ang(ang1+PI);
 }
 
 fn unique_pair_test(node1:&mut GallNode, node2: &mut GallNode, pair_vec: &mut Vec<GallLinePair>) -> bool {
@@ -22,8 +23,8 @@ fn unique_pair_test(node1:&mut GallNode, node2: &mut GallNode, pair_vec: &mut Ve
     for pair in pair_vec {
         let cent1 = pair.node1.get_center();
         let cent2 = pair.node2.get_center();
-        if center_ref1 == cent1 && center_ref2 == cent2 ||
-        center_ref2 == cent1 && center_ref1 == cent2 {
+        if (center_ref1 == cent1 && center_ref2 == cent2) ||
+        (center_ref2 == cent1 && center_ref1 == cent2) {
             return false
         }
     }
@@ -59,7 +60,7 @@ pub fn generate_pairs(node_vec:Vec<&mut GallNode>) -> (Vec<GallLinePair>, Vec<&m
     let length = node_vec.len();
     let limit = match length {
         0|1 => return (pair_list,node_vec),
-        len => (len+1)/2,
+        len => len/2 + 1,
     };
     let mut retries:usize = 0;
     let mut spare_list = base_loop(node_vec, &mut pair_list, &mut rng);

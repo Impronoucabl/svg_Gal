@@ -51,12 +51,12 @@ pub trait Location:PolarOrdinate {
     fn ang2loc<T:Location>(&self, loc2:&T) -> f64 {
         let (x1,y1) = self.svg_ord();
         let (x2,y2) = loc2.svg_ord();
-        gall_ang::constrain((y2-y1).atan2(x2-x1)+PI/2.0)
+        gall_ang::svg_ang2gall_ang((y2-y1).atan2(x2-x1))
     }
     fn cent_ang2cent_ang<T:Location>(&self, loc2:&T) -> f64 {
         let (x1,y1) = self.get_center().get();
         let (x2,y2) = loc2.get_center().get();
-        gall_ang::constrain((y2-y1).atan2(x2-x1)+PI/2.0)
+        gall_ang::svg_ang2gall_ang((y2-y1).atan2(x2-x1))
     }
 }
 
@@ -217,8 +217,8 @@ impl PolarOrdinate for GallLoc {
 
 impl PolarOrdinate for GallRelLoc {
     fn mut_ang(&mut self, ang:f64) {
-        if let (Some(old_ang), Some(new_ang)) = (
-            self.base_ang(), gall_ang::constrain_opt(Some(ang))) {
+        if let Some(old_ang) = self.base_ang() {
+            let new_ang = gall_ang::constrain(ang);
             self.ang_offset = new_ang - old_ang;
             self.update_xy();
         } else {}//Don't panic if base ang is None

@@ -1,4 +1,4 @@
-use std::f64::consts::TAU;
+use std::f64::consts::{PI, TAU};
 
 use crate::gall_errors::{Error, GallError};
 
@@ -7,6 +7,10 @@ use crate::gall_errors::{Error, GallError};
 #[derive(PartialEq,Default,Clone,Copy)]
 pub struct GallAng {
     angle: Option<f64>,
+}
+
+pub fn svg_ang2gall_ang(svg_ang:f64) -> f64{
+    constrain(-svg_ang+PI/2.0)
 }
 
 pub fn constrain_opt(angle:Option<f64>) -> Option<f64> {
