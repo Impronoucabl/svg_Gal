@@ -4,9 +4,9 @@ use std::rc::Rc;
 use crate::gall_circle::{Circle, HollowCircle};
 use crate::gall_errors::Error;
 use crate::gall_fn;
-use crate::gall_loc::{GallLoc, Location};
+use crate::gall_loc::{GallLoc, LocHolder, Location};
 use crate::gall_node::GallNode;
-use crate::gall_ord::PolarOrdinate;
+use crate::gall_ord::{GallOrd, OrdHolder, PolarOrdinate};
 use crate::gall_word::GallWord;
 
 pub struct GallSentence {
@@ -82,43 +82,19 @@ impl Circle for GallSentence {
         Ok(())
     }
 }
-impl Location for GallSentence {
-    fn mut_center(&mut self, movement:(f64,f64)) {
-        self.loc.mut_center(movement)
+impl LocHolder for GallSentence {
+    fn loc(&self) -> &GallLoc {
+        &self.loc
     }
-    fn set_center(&mut self, new_center:Rc<Cell<(f64,f64)>>) {
-        self.loc.set_center(new_center)
-    }
-    fn get_center(&self) -> Rc<Cell<(f64,f64)>> {
-        self.loc.get_center()
-    }
-    fn x(&self) -> f64 {
-        self.loc.x()
-    }
-    fn y(&self) -> f64 {
-        self.loc.y()
-    }
-    fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
-        self.loc.pos_ref()
-    }
-    fn update(&mut self) {
-        self.loc.update()
+    fn mut_loc(&mut self) -> &mut GallLoc {
+        &mut self.loc
     }
 }
-impl PolarOrdinate for GallSentence {
-    fn mut_ang(&mut self, new_ang:f64) {
-        self.loc.mut_ang(new_ang)
+impl OrdHolder for GallSentence {
+    fn ord(&self) -> &GallOrd {
+        &self.loc.ord
     }
-    fn mut_dist(&mut self, new_dist: f64) -> Result<(), Error> {
-        self.loc.mut_dist(new_dist)
-    }
-    fn ang(&self) -> Option<f64> {
-        self.loc.ang()
-    }
-    fn dist(&self) -> f64 {
-        self.loc.dist()
-    }
-    fn get_dist(&self) -> Rc<Cell<f64>> {
-        self.loc.get_dist()
+    fn mut_ord(&mut self) -> &mut GallOrd {
+        &mut self.loc.ord
     }
 }

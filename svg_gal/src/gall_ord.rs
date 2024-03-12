@@ -26,6 +26,10 @@ pub trait PolarOrdinate {
     }
 }
 
+pub trait OrdHolder {
+    fn ord(&self) -> &GallOrd;
+    fn mut_ord(&mut self) -> &mut GallOrd;
+}
 #[derive(PartialEq,Default,Clone)]
 pub struct GallOrd {
     angle: GallAng,
@@ -72,5 +76,23 @@ impl PolarOrdinate for GallOrd {
     }
     fn get_dist(&self) -> Rc<Cell<f64>> {
         self.distance.clone()
+    }
+}
+
+impl<T:OrdHolder> PolarOrdinate for T {
+    fn mut_ang(&mut self, new_ang:f64) {
+        self.mut_ord().mut_ang(new_ang)
+    }
+    fn mut_dist(&mut self, new_dist: f64) -> Result<(), Error> {
+        self.mut_ord().mut_dist(new_dist)
+    }
+    fn ang(&self) -> Option<f64> {
+        self.ord().ang()
+    }
+    fn dist(&self) -> f64 {
+        self.ord().dist()
+    }
+    fn get_dist(&self) -> Rc<Cell<f64>> {
+        self.ord().get_dist()
     }
 }

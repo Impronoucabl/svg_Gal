@@ -3,19 +3,21 @@ use std::f64::consts::{FRAC_PI_2, PI};
 use std::rc::Rc;
 
 use crate::gall_ang::{self, GallAng};
-use crate::gall_ord::{GallOrd, PolarOrdinate};
+use crate::gall_ord::{GallOrd, OrdHolder, PolarOrdinate};
 use crate::gall_errors::{Error, GallError};
 
-trait LocHolder {
-    fn loc(&mut self) -> GallLoc;
+pub trait LocHolder {
+    fn loc(&self) -> &GallLoc;
+    fn mut_loc(&mut self) -> &mut GallLoc;
 }
-trait RelHolder {
-    fn loc(&mut self) -> GallRelLoc;
+pub trait RelHolder {
+    fn loc(&self) -> &GallRelLoc;
+    fn mut_loc(&mut self) -> &mut GallRelLoc;
 }
 
 #[derive(PartialEq,Default,Clone)]
 pub struct GallLoc {
-    ord: GallOrd,
+    pub ord: GallOrd,
     center_ref: Rc<Cell<(f64,f64)>>, // abs xy
     abs_svg: Rc<Cell<(f64,f64)>>,
 }
@@ -194,6 +196,30 @@ impl Location for GallRelLoc {
     }
     fn update(&mut self) {
         self.update_xy()
+    }
+}
+
+impl<T:LocHolder + OrdHolder> Location for T {
+    fn mut_center(&mut self, movement:(f64,f64)) {
+        self.mut_loc().mut_center(movement)
+    }
+    fn set_center(&mut self, new_center:Rc<Cell<(f64,f64)>>) {
+        self.mut_loc().set_center(new_center)
+    }
+    fn get_center(&self) -> Rc<Cell<(f64,f64)>> {
+        self.loc().get_center()
+    }
+    fn x(&self) -> f64 {
+        self.loc().x()
+    }
+    fn y(&self) -> f64 {
+        self.loc().y()
+    }
+    fn pos_ref(&self) -> Rc<Cell<(f64,f64)>> {
+        self.loc().pos_ref()
+    }
+    fn update(&mut self) {
+        self.mut_loc().update()
     }
 }
 

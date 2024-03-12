@@ -11,6 +11,7 @@ impl Config {
     pub const LETTER_FRAC_OF_WRD: f64 = 0.35;
     pub const LETTER_THICK_FRAC: f64 = 0.6;
     pub const STACK_SEP_DIST: f64 = 25.0;
+    pub const CONSEC_LETT_GROWTH: f64 = 15.0;
     pub const VOWEL_FRAC_OF_WRD : f64 = 0.15;
     pub const VOWEL_THICK_FRAC: f64 = 0.45;
     pub const DOT_RADIUS: f64 = 25.0;

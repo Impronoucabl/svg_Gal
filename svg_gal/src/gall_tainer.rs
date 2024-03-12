@@ -64,18 +64,18 @@ impl GallTainer {
     pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<Decor>, i8), repeat:bool, word: &GallWord) {
         match l_mark {
             LetterMark::Stem(stem) => {
-                self.add_stem(self.create_stem(stem, word));
+                let letter = self.create_stem(stem, word);
                 if repeat {
-                    let letter = self.create_stem(stem, word);
-                    self.add_stem(letter);
+                    self.add_stem(self.create_stem(stem, word));
                 };
+                self.add_stem(letter);
             },
             LetterMark::GallVowel(vow) => {
-                self.add_vowel(self.create_vowel(vow,word));
+                let letter = self.create_vowel(vow,word);
                 if repeat {
-                    let letter = self.create_vowel(vow,word);
-                    self.add_vowel(letter);
+                    self.add_vowel(self.create_vowel(vow,word));
                 };
+                self.add_vowel(letter);
             },
             LetterMark::Digit(num) => todo!(),
             LetterMark::GallMark => {},//todo!(),
@@ -96,6 +96,7 @@ impl GallTainer {
     }
     pub fn create_stem(&self, stem:StemType, word: &GallWord) -> Stem {
         let rank = self.stem.len();
+        //TODO: If rank == 0 { init radius buffer} else take buffer & add to it
         let (p_rad, p_thick) = (word.radius(), word.thick()*Config::LETTER_THICK_FRAC);
         let (dist,thick) = match stem {
             StemType::J => (p_rad*(0.7 - Config::LETTER_FRAC_OF_WRD),p_thick),
@@ -110,7 +111,7 @@ impl GallTainer {
                 word.pos_ref(),
             ),
             p_rad*Config::LETTER_FRAC_OF_WRD + rank as f64 * (Config::STACK_SEP_DIST+2.0*thick),
-            thick,
+            thick + rank as f64 * (Config::CONSEC_LETT_GROWTH),
             stem,
             word
         )
