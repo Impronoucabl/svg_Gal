@@ -48,7 +48,8 @@ impl GallWord {
             } else {
                 match &l_mark {
                     LetterMark::Stem(stem) => {
-                        if (!Config::STACK && !con.stem.is_empty()) || (Some(stem) != con.stem_type()) {
+                        if (!Config::STACK && !con.is_empty()) || 
+                        (Some(stem) != con.stem_type()) || (!con.vowel.is_empty()) {
                             self.tainer_vec.push(con);
                             con = self.get_con();
                             con_count = con.init(Some(*stem), con_count, tainer_ang);
@@ -59,6 +60,9 @@ impl GallWord {
                             self.tainer_vec.push(con);
                             con = self.get_con();
                             con_count = con.init(None, con_count, tainer_ang);
+                        } else if !con.stem.is_empty() {
+                            con.populate_o1(repeat, &self);
+                            continue;
                         }
                     },
                     LetterMark::Digit(_) => {todo!()},
@@ -142,7 +146,9 @@ impl GallWord {
         nodes
     }
     pub fn basic(&mut self) {
-        //todo!()
+        for con in &mut self.tainer_vec {
+            con.stem_sort();
+        }
     }
 }
 

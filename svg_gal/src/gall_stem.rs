@@ -18,8 +18,7 @@ pub struct Stem {
     pub stem_type: StemType,
 }
 impl Stem {
-    pub fn new<T:HollowCircle>(loc:GallLoc, radius: f64, thickness:f64, stem_type: StemType, parent:&T) -> Stem {
-        let radius = Rc::new(Cell::new(radius));
+    pub fn new<T:HollowCircle>(loc:GallLoc, radius: Rc<Cell<f64>>, thickness:f64, stem_type: StemType, parent:&T) -> Stem {
         let thickness = Rc::new(Cell::new(thickness));
         let parent_radius = parent.get_radius().clone();
         let parent_thickness = parent.get_thickness().clone();

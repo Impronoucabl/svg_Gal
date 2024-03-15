@@ -48,7 +48,7 @@ fn main() {
     );
     sent.generate(word_list);
     println!("Organizing...");
-    //sent.basic();
+    sent.basic();
     let (ext_rad, ext_cent) = (sent.get_radius(),sent.get_center());
     let node_vec = sent.collect_nodes();
     let (pairs, spares) = pairing::generate_pairs(node_vec);
