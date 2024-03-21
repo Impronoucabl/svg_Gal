@@ -163,7 +163,13 @@ impl GallWord {
         let mut post_render = Vec::new();
         for tainer in skel {
             (data, fin_ang) = tainer.part_render(data, fin_ang)?;
-            tainer.stack_render(&mut post_render); // render skel letter gaps
+            if !tainer.stem.is_empty() {
+                if tainer.stem_type() == Some(&StemType::B) {
+                    tainer.b_stack_render(&mut post_render);
+                } else {
+                    tainer.t_stack_render(&mut post_render); // render skel letter gaps
+                }
+            }
             tainer.post_render(&mut post_render); //render non-skel stems
         };
         let (inner_sweep, outer_sweep) = (
@@ -227,7 +233,6 @@ impl Renderable for GallTainer {
 
 impl SkelPart for GallTainer {
     fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> Result<((Data,Data),(f64,f64)), Error> {
-        //TODO: Split the rendering between Bs & Ts - T is fine as is, but B to render only the largest stem
         let (stem1, stem2) = self.stack_check()?;
         let (thi_inner,thi_outer) = self.thi_calc()?;
         let (theta_inner,theta_outer) = self.theta_calc()?;
@@ -336,29 +341,23 @@ impl FreeRender for GallTainer {
 }
 
 impl GallTainer {
-    fn stack_render(&self, vec: &mut Vec<Element>) {
-        if self.stem.is_empty() {
-            return
-        }
+    fn t_stack_render(&self, vec: &mut Vec<Element>) {
         let stem = self.stem.first().expect("There should be more than 1 stem");
         let ang = self.ang();
-        let (is_b, dist, thi2, theta2, colour) = if self.stem_type() == Some(&StemType::B) {
-            (true, stem.parent_outer(), stem.outer_thi().unwrap(), stem.outer_theta2().unwrap(), Config::SENT_COLOUR())
-        } else {
-            (false, stem.parent_inner(), stem.inner_thi2().unwrap(), stem.inner_theta2().unwrap(), Config::WRD_COLOUR())
-        };
+        let dist = stem.parent_inner();
         let mut tracker = GallLoc::new(
             ang,
             dist,
             stem.get_center()
         );
         let mut first = true;
+        let (thi2, theta2) = (stem.inner_thi2().unwrap(), stem.inner_theta2().unwrap());
         tracker.mut_ang(ang - thi2);
         let mut pos1 = tracker.pos_ref().get();
         tracker.mut_ang(ang + thi2);
         let pos2 = tracker.pos_ref().get();
         let mut path = Path::new()
-            .set("fill", colour)
+            .set("fill", Config::WRD_COLOUR())
             .set("stroke-width", 0.0)
             .set("stroke", "none");
         let mut data = Data::new()
@@ -375,20 +374,12 @@ impl GallTainer {
                 first = false;
                 continue;
             }
-            let (thi, thi2, theta, theta2) = if is_b {
-                (
-                    stem.outer_thi2().unwrap(), 
-                    stem.outer_thi().unwrap(), 
-                    stem.outer_theta().unwrap(), 
-                    stem.outer_theta2().unwrap()
-                )
-            } else {
-                (
-                    stem.inner_thi().unwrap(), 
-                    stem.inner_thi2().unwrap(), 
-                    stem.inner_theta().unwrap(), 
-                    stem.inner_theta2().unwrap())
-            };
+            let (thi, thi2, theta, theta2) = (
+                stem.inner_thi().unwrap(), 
+                stem.inner_thi2().unwrap(), 
+                stem.inner_theta().unwrap(), 
+                stem.inner_theta2().unwrap()
+            );
             tracker.mut_ang(ang + thi);
             let pos3 = tracker.pos_ref().get();
             tracker.mut_ang(ang - thi);
@@ -421,7 +412,7 @@ impl GallTainer {
             tracker.mut_ang(ang + thi2);
             let pos2 = tracker.pos_ref().get();
             path = Path::new()
-                .set("fill", colour)
+                .set("fill", Config::WRD_COLOUR())
                 .set("stroke-width", 0.0)
                 .set("stroke", "none");
             data = Data::new().move_to(pos1).elliptical_arc_to((
@@ -431,6 +422,66 @@ impl GallTainer {
                 1,
                 pos2.0, pos2.1,
             ));
+        }
+    }
+    fn b_stack_render(&self, vec: &mut Vec<Element>) {
+        let stem = self.stem.first().expect("There should be more than 1 stem");
+        let ang = self.ang();
+        let dist = stem.parent_outer();
+        let mut tracker = GallLoc::new(
+            ang,
+            dist,
+            stem.get_center()
+        );
+        let mut first = true;
+        for stem in &self.stem {
+            if first {
+                first = false;
+                continue;
+            }
+            let (thi, thi2, theta, theta2) = (
+                stem.outer_thi().unwrap(),
+                stem.outer_thi2().unwrap(), 
+                stem.outer_theta().unwrap(),
+                stem.outer_theta2().unwrap()
+            );
+            tracker.mut_ang(ang - thi2);
+            let pos1 = tracker.pos_ref().get();
+            tracker.mut_ang(ang - thi);
+            let pos4 = tracker.pos_ref().get();
+            tracker.mut_ang(ang + thi);
+            let pos3 = tracker.pos_ref().get();
+            tracker.mut_ang(ang + thi2);
+            let pos2 = tracker.pos_ref().get();
+            let data = Data::new()
+                .move_to(pos1)
+                .elliptical_arc_to((
+                    stem.outer_radius(), stem.outer_radius(), 
+                    0,
+                    if theta2 * 2.0 > PI {0} else {1},
+                    1,
+                    pos2.0, pos2.1,
+                )).elliptical_arc_to((
+                    dist, dist, 
+                    0,0,1,
+                    pos3.0, pos3.1,
+                )).elliptical_arc_to((
+                    stem.inner_radius(), stem.inner_radius(), 
+                    0,
+                    if theta * 2.0 > PI {0} else {1},
+                    0,
+                    pos4.0, pos4.1,
+                )).elliptical_arc_to((
+                    dist, dist, 
+                    0,0,1,
+                    pos1.0, pos1.1,
+                )).close();
+            let path = Path::new()
+                .set("fill",Config::SENT_SKEL_COLOUR())
+                .set("stroke-width", 0.0)
+                .set("stroke", "none")
+                .set("d", data);
+            vec.push(path.into());
         }
     }
 }

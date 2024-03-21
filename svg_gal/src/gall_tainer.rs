@@ -263,7 +263,11 @@ impl GallTainer {
     }
     pub fn stack_check(&self) -> Result<(&Stem, &Stem), Error> {
         if let (Some(stem1), Some(stem2)) = (self.stem.first(), self.stem.last()) {
-            Ok((stem1, stem2))
+            if self.stem_type() == Some(&StemType::B) {
+                Ok((stem1, stem1))
+            } else {
+                Ok((stem1, stem2))
+            }
         } else {
             Err(Error::new(GallError::NoStemInTainer))
         }

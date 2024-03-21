@@ -138,8 +138,9 @@ pub fn dot_lookup(letter:&char) -> (Option<Decor>,i8) {
             'C'|'Q'|'c'|'q' => 4,
             '\u{e300}'|'\u{e400}'|'\u{e700}'|'\u{e900}'=> 1, //PH, WH, GH, QU
             '\u{e100}'|'\u{e500}'=> 2, //CH, SH
+            '\u{e800}' => 3, //NG, 
             '\u{e200}'|'\u{e600}'|'\u{ea03}'|'\u{ea11}'=> 4, //ND, NT, CC, QQ
-            '\u{ea07}'|'\u{ea09}'|'\u{ea0e}'|'\u{ea15}'|'\u{ea16}' => 1,
+            '\u{ea07}'|'\u{ea09}'|'\u{ea0e}'|'\u{ea15}'|'\u{ea16}' => 1, // GG, II, NN, UU, VV
             '\u{ea08}'|'\u{ea0b}'|'\u{ea10}'|'\u{ea17}'|'\u{ea18}'|'\u{ea19}' => 2,
             '\u{ea04}'|'\u{ea06}'|'\u{ea0c}'|'\u{ea0d}'|'\u{ea12}'|'\u{ea13}'|'\u{ea20}' => 3,
             _ => 0

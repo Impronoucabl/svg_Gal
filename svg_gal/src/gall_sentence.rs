@@ -27,9 +27,9 @@ impl GallSentence {
         }
     }
     pub fn generate(&mut self, word_list:Vec<(String,usize)>) {
-        let word_len = word_list.len();
+        let sentence_length = word_list.len();
         for (num,words) in word_list.into_iter().enumerate() {
-            let (w_radius, w_thick, word_ang, dist) = gall_fn::default_layouts(word_len, num);
+            let (w_radius, w_thick, word_ang, dist) = gall_fn::default_layouts(sentence_length, num);
             //create word struct
             let loc = GallLoc::new(
                 word_ang,

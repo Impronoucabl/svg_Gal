@@ -1,0 +1,13 @@
+<svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+<rect fill="yellow" height="2048" stroke="none" width="2048" x="0" y="0"/>
+<circle cx="1024" cy="1024" fill="orange" r="1000" stroke="none"/>
+<circle cx="1024" cy="1024" fill="none" r="650" stroke="black" stroke-width="110"/>
+<circle cx="1024" cy="1674" fill="none" r="227.49999999999997" stroke="black" stroke-width="66px"/>
+<circle cx="897.4329475487065" cy="1863.0424059141005" fill="purple" r="20" stroke="none"/>
+<circle cx="958.4076751197123" cy="1456.1608462263985" fill="purple" r="20" stroke="none"/>
+<circle cx="1005.0587499599454" cy="1900.7101211832417" fill="purple" r="20" stroke="none"/>
+<circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="40"/>
+<line stroke="black" stroke-width="8" x1="958.4076751197123" x2="555.4737398501811" y1="1456.1608462263985" y2="117.97398296184451"/>
+<line stroke="black" stroke-width="8" x1="897.4329475487065" x2="793.8846622361345" y1="1863.0424059141005" y2="2017.7036436110225"/>
+<line stroke="black" stroke-width="8" x1="1005.0587499599454" x2="993.1261681713464" y1="1900.7101211832417" y2="2043.5326412176394"/>
+</svg>
