@@ -3,6 +3,7 @@ pub struct Config {}
 
 impl Config {
     pub const NODE_VISIBILITY: bool = true;
+    pub const ENABLE_CANVAS: bool = true;
     pub const WIDTH:f64 = 2048.0;
     pub const HEIGHT:f64 = 2048.0;
     pub const STACK: bool = true;
@@ -20,12 +21,13 @@ impl Config {
     pub const COLLISION_DIST: f64 = 0.0001;
     pub const STEP_DIST: f64 = 2.0 * Config::COLLISION_DIST;
     pub const fn DEBUG_COLOUR() -> &'static str {"purple"}
-    pub const fn BG_COLOUR() -> &'static str {"yellow"}
-    pub const fn BG2_COLOUR() -> &'static str {"green"}
+    pub const fn CANVAS_COLOUR() -> &'static str {"yellow"}
+    pub const fn SENT_COLOUR() -> &'static str {"orange"}
+    pub const fn WRD_COLOUR() -> &'static str {"green"}
     pub const fn DOT_COLOUR() -> &'static str {"blue"}
     pub const fn JZ_COLOUR() -> &'static str {"black"}
     pub const fn VOW_COLOUR() -> &'static str {"red"}
     pub const fn SKEL_COLOUR() -> &'static str {"black"}
-    pub const fn SENT_COLOUR() -> &'static str {"black"}
+    pub const fn SENT_SKEL_COLOUR() -> &'static str {"black"}
 }
 

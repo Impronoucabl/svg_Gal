@@ -103,6 +103,41 @@ impl Stem {
             self.parent_outer(),
         )
     }
+    pub fn outer_thi2(&self) -> Result<f64,Error> {
+        gall_fn::thi(
+            self.dist(),
+            self.outer_radius(), 
+            self.parent_outer(),
+        )
+    }
+    pub fn inner_theta(&self) -> Result<f64, Error> {
+        gall_fn::theta(
+            self.dist(),
+            self.outer_radius(), 
+            self.parent_inner(),
+        )
+    }
+    pub fn inner_theta2(&self) -> Result<f64, Error> {
+        gall_fn::theta(
+            self.dist(),
+            self.inner_radius(), 
+            self.parent_inner(),
+        )
+    }
+    pub fn outer_theta(&self) -> Result<f64, Error> {
+        gall_fn::theta(
+            self.dist(),
+            self.inner_radius(), 
+            self.parent_outer(),
+        )
+    }
+    pub fn outer_theta2(&self) -> Result<f64, Error> {
+        gall_fn::theta(
+            self.dist(),
+            self.outer_radius(), 
+            self.parent_outer(),
+        )
+    }
 }
 impl PolarOrdinate for Stem {
     fn ang(&self) -> Option<f64> {

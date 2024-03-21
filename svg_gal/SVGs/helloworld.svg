@@ -3,7 +3,7 @@
 <path d="M965.6523,1854.553 A385,385,0,0,0,965.6523,1854.553 A101.5,101.5,0,1,1,1082.3478,1854.553 A385,385,0,1,0,965.6523,1854.553 z" fill="black" stroke="none" stroke-width="0"/>
 <path d="M881.4627,1754.9059 A315,315,0,0,0,881.4627,1754.9059 A143.5,143.5,0,0,1,1166.5374,1754.9059 A315,315,0,1,0,881.4627,1754.9059 z" fill="green" stroke="none" stroke-width="0"/>
 <circle cx="1024" cy="1771.5" fill="none" r="52.5" stroke="red" stroke-width="31.5px"/>
-<circle cx="932.3185305777517" cy="1852.7450500927741" fill="purple" r="20" stroke="none"/>
+<circle cx="1033.1247772388515" cy="1893.6596841856647" fill="purple" r="20" stroke="none"/>
 <circle cx="1024" cy="1649" fill="purple" r="20" stroke="none"/>
 <circle cx="1024.0117312939942" cy="1351.5000005617276" fill="none" r="122.49999999999999" stroke="black" stroke-width="42px"/>
 <circle cx="1024.0117312939942" cy="1351.5000005617276" fill="none" r="122.49999999999999" stroke="black" stroke-width="42px"/>
@@ -17,7 +17,7 @@
 <circle cx="1024" cy="725.5" fill="blue" r="25" stroke="none"/>
 <circle cx="900.0609770897897" cy="763.8388325273256" fill="blue" r="25" stroke="none"/>
 <circle cx="1024" cy="1067.5" fill="purple" r="20" stroke="none"/>
-<circle cx="1068.6699332243215" cy="830.9348998784701" fill="purple" r="20" stroke="none"/>
+<circle cx="950.9950068863549" cy="846.6306908610383" fill="purple" r="20" stroke="none"/>
 <circle cx="841.7500118925074" cy="473.29849949931435" fill="blue" r="25" stroke="none"/>
 <circle cx="907.6403117335965" cy="443.2887803341067" fill="blue" r="25" stroke="none"/>
 <circle cx="945.0771608141918" cy="381.31622843861015" fill="blue" r="25" stroke="none"/>
@@ -27,6 +27,6 @@
 <circle cx="1069.1444830636156" cy="630.6046862586678" fill="blue" r="25" stroke="none"/>
 <circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="20"/>
 <line stroke="black" stroke-width="8" x1="1024" x2="1024" y1="1649" y2="1067.5"/>
-<line stroke="black" stroke-width="8" x1="932.3185305777517" x2="756.7167357509974" y1="1852.7450500927741" y2="2008.3574841755396"/>
-<line stroke="black" stroke-width="8" x1="1068.6699332243215" x2="1368.9732288735177" y1="830.9348998784701" y2="64.10757302675859"/>
+<line stroke="black" stroke-width="8" x1="950.9950068863549" x2="454.57613994637825" y1="846.6306908610383" y2="177.7397163982979"/>
+<line stroke="black" stroke-width="8" x1="1033.1247772388515" x2="1044.339371565929" y1="1893.6596841856647" y2="2043.7971906042412"/>
 </svg>

@@ -193,9 +193,9 @@ impl GallTainer {
         if self.state.stem_type.get().unwrap() != &stem {
             println!("Warning! Stem has different type to tainer")
         };
-        let rank = self.stem.len() as f64 - if repeat {1.0} else {0.0};
-        let thick = word.thick()*Config::LETTER_THICK_FRAC + rank * Config::CONSEC_LETT_GROWTH;
-        let loc = if rank <= 0.0 {
+        let rank = self.stem.len();
+        let thick = word.thick()*Config::LETTER_THICK_FRAC + (rank as f64 - if repeat {1.0} else {0.0}) * Config::CONSEC_LETT_GROWTH;
+        let loc = if rank <= 0 {
             self.init_state_lett(stem, word)
         } else {
             let rad = self.state.letter_rad.clone();
@@ -259,17 +259,7 @@ impl GallTainer {
     }
     pub fn theta_calc(&self) -> Result<(f64,f64), Error> {
         let (stem1,stem2) = self.stack_check()?;
-        let theta_inner = gall_fn::theta(
-            stem1.dist(),
-            stem1.outer_radius(), 
-            stem1.parent_inner(),
-        )?;
-        let theta_outer = gall_fn::theta(
-            stem2.dist(),
-            stem2.inner_radius(), 
-            stem2.parent_outer(),
-        )?;
-        Ok((theta_inner,theta_outer))
+        Ok((stem1.inner_theta()?,stem2.outer_theta()?))
     }
     pub fn stack_check(&self) -> Result<(&Stem, &Stem), Error> {
         if let (Some(stem1), Some(stem2)) = (self.stem.first(), self.stem.last()) {
