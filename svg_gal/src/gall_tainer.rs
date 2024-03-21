@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::gall_ang::GallAng;
 use crate::gall_circle::{ChildCircle, Circle, Dot, HollowCircle};
 use crate::gall_config::Config;
-use crate::gall_errors::{Error, GallError};
+use crate::gall_errors::{self, Error, GallError};
 use crate::gall_fn::{self, Decor, LetterMark};
 use crate::gall_loc::{GallLoc, GallRelLoc, Location};
 use crate::gall_node::GallNode;
@@ -83,19 +83,16 @@ impl GallTainer {
     pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<Decor>, i8), repeat:bool, word: &GallWord) {
         match l_mark {
             LetterMark::Stem(stem) => {
-                let letter = self.create_stem(stem, word);
+                self.add_stem(stem, word, false);
                 if repeat {
-                    let lett = self.create_stem(stem, word);
-                    self.add_stem(lett);
-                };
-                self.add_stem(letter);
+                    self.add_stem(stem, word, true);
+                };                
             },
             LetterMark::GallVowel(vow) => {
-                let letter = self.create_vowel(vow,word);
+                self.add_vowel(vow,word, false);
                 if repeat {
-                    self.add_vowel(self.create_vowel(vow,word));
+                    self.add_vowel(vow,word, true);
                 };
-                self.add_vowel(letter);
             },
             LetterMark::Digit(num) => todo!(),
             LetterMark::GallMark => {},//todo!(),
@@ -103,31 +100,28 @@ impl GallTainer {
         if let Some(dot) = d_mark.0 {
             if dot == Decor::Dot {
                 for n in 0..d_mark.1 {
-                    let decor = self.create_dot(n - 1, word.get_radius());
-                    self.add_dot(decor);
+                    self.add_dot(n - 1, word.get_radius());
                 }    
             } else {
                 for n in 0..d_mark.1 {
-                    let decor = self.create_dash(n - 1, word.get_radius());
-                    self.add_dash(decor);
+                    self.add_dash(n - 1, word.get_radius());
                 }
             }
         }
     }
-    pub fn populate_o1(&mut self, repeat:bool, word: &GallWord) {
-        let letter = self.create_vowel(VowelType::O1,word);
-        if repeat {
-            self.add_vowel(self.create_vowel(VowelType::O1,word));
-        };
-        self.add_vowel(letter);
-    }
-    fn init_buff_lett(&mut self, stem:StemType, word:&GallWord) -> GallLoc {
+    // pub fn populate_o1(&mut self, repeat:bool, word: &GallWord) {
+    //     let letter = self.create_vowel(VowelType::O1,word);
+    //     if repeat {
+    //         self.add_vowel(self.create_vowel(VowelType::O1,word));
+    //     };
+    //     self.add_vowel(letter);
+    // }
+    fn init_state_lett(&mut self, stem:StemType, word:&GallWord) -> GallLoc {
         let p_rad = word.radius();
-        let p_thick = word.thick()*Config::LETTER_THICK_FRAC;
         let dist = match stem {
             StemType::J => p_rad*(0.7 - Config::LETTER_FRAC_OF_WRD),
             StemType::B => p_rad*(1.2 - Config::LETTER_FRAC_OF_WRD),
-            StemType::S => p_rad + p_thick,
+            StemType::S => p_rad + word.thick()*Config::LETTER_THICK_FRAC,
             StemType::Z => p_rad,
         };
         let rad = p_rad*Config::LETTER_FRAC_OF_WRD;
@@ -136,14 +130,73 @@ impl GallTainer {
             dist,
             word.pos_ref(),
         );
+        self.state.letter_dist = Rc::new(Cell::new(dist));
+        self.state.letter_pos = loc.pos_ref();
         self.state.letter_rad = Rc::new(Cell::new(rad));
         loc
     }
-    pub fn create_stem(&mut self, stem:StemType, word: &GallWord) -> Stem {
-        let rank = self.stem.len() as f64;
-        let thick = word.thick()*Config::LETTER_THICK_FRAC;
-        let loc = if rank == 0.0 {
-            self.init_buff_lett(stem, word)
+    fn init_state_vow(&mut self, vow:VowelType, word: &GallWord) -> GallLoc {
+        let mut loc = GallLoc::new(
+            self.ang(),
+            1.0,
+            word.pos_ref(),
+        ); 
+        if self.state.letter_dist.get() < 0.0 {
+            let p_rad = word.radius();
+            let dist = match vow {
+                VowelType::A => p_rad*1.2,
+                VowelType::E => p_rad,
+                VowelType::I => p_rad,
+                VowelType::O1 => p_rad*0.6,
+                VowelType::O2 => p_rad*0.6,
+                VowelType::U => p_rad,
+            };
+            _ = loc.mut_dist(dist);
+            self.state.letter_dist = Rc::new(Cell::new(dist));
+            self.state.letter_pos = loc.pos_ref();
+        } else {
+            let dist = self.state.letter_dist.get();
+            _ = loc.mut_dist(dist);
+        };
+        let rad = word.radius()*Config::VOWEL_FRAC_OF_WRD;
+        self.state.letter_rad = Rc::new(Cell::new(rad));
+        self.state.vowel = true;
+        loc
+    }
+    pub fn add_dot(&mut self, num: i8, w_rad: Rc<Cell<f64>>) {
+        self.dot.push(Dot::new(
+            GallRelLoc::new(
+                self.get_ang(),
+                PI + Config::DEF_DOT_SPREAD * f64::from(num),
+                self.state.letter_rad.clone(),
+                0.0,
+                self.state.letter_pos.clone(),
+            ),
+            Config::DOT_RADIUS,
+            w_rad,     
+        ))
+    }
+    pub fn add_dash(&mut self, num: i8, w_rad: Rc<Cell<f64>>) {
+        self.node.push(GallNode::new(
+            GallRelLoc::new(
+                self.get_ang(),
+                PI + num as f64 * Config::DEF_DOT_SPREAD,
+                self.state.letter_rad.clone(),
+                0.0,
+                self.state.letter_pos.clone(),
+            ),
+            self.state.letter_dist.clone(),
+            w_rad,     
+        ))
+    }
+    pub fn add_stem(&mut self, stem: StemType, word: &GallWord, repeat: bool) {
+        if self.state.stem_type.get().unwrap() != &stem {
+            println!("Warning! Stem has different type to tainer")
+        };
+        let rank = self.stem.len() as f64 - if repeat {1.0} else {0.0};
+        let thick = word.thick()*Config::LETTER_THICK_FRAC + rank * Config::CONSEC_LETT_GROWTH;
+        let loc = if rank <= 0.0 {
+            self.init_state_lett(stem, word)
         } else {
             let rad = self.state.letter_rad.clone();
             let new_rad = rad.get() + Config::STACK_SEP_DIST+2.0*thick;
@@ -154,118 +207,55 @@ impl GallTainer {
                 word.pos_ref(),
             )
         };
-        // let (p_rad, p_thick) = (word.radius(), word.thick()*Config::LETTER_THICK_FRAC);
-        // let (dist,thick) = match stem {
-        //     StemType::J => (p_rad*(0.7 - Config::LETTER_FRAC_OF_WRD),p_thick),
-        //     StemType::B => (p_rad*(1.2 - Config::LETTER_FRAC_OF_WRD),p_thick),
-        //     StemType::S => (p_rad + p_thick, p_thick),
-        //     StemType::Z => (p_rad, p_thick),
-        // };
-        Stem::new(
+        self.stem.push(Stem::new(
             loc,
             self.state.letter_rad.clone(),
-            thick + rank * (Config::CONSEC_LETT_GROWTH),
+            thick,
             stem,
             word
-        )
+        ));
     }
-    pub fn create_vowel(&self, vow:VowelType, word: &GallWord) -> GallVowel {
-        let rank = self.vowel.len() as f64;
-        let (p_rad, p_thick) = (word.radius(), word.thick()*Config::VOWEL_THICK_FRAC);
-        let (dist,thick) = match vow {
-            VowelType::A => (p_rad*1.2, p_thick),
-            VowelType::E => (p_rad, p_thick),
-            VowelType::I => (p_rad, p_thick),
-            VowelType::O1 => (p_rad*0.6, p_thick),
-            VowelType::O2 => (p_rad*0.6, p_thick),
-            VowelType::U => (p_rad, p_thick),
-        };
-        GallVowel::new(
+    pub fn add_vowel(&mut self, vow:VowelType, word: &GallWord, repeat:bool) {
+        let rank = self.vowel.len() as f64 - if repeat {1.0} else {0.0};
+        let thick = word.thick()*Config::VOWEL_THICK_FRAC + rank * Config::CONSEC_LETT_GROWTH;
+        let loc = if rank <= 0.0 {
+            self.init_state_vow(vow, word)
+        } else {
+            let rad = self.state.letter_rad.clone();
+            let new_rad = rad.get() + Config::STACK_SEP_DIST+2.0*thick;
+            self.state.letter_rad = Rc::new(Cell::new(new_rad));
             GallLoc::new(
                 self.ang(),
-                dist,
+                self.state.letter_dist.get(),
                 word.pos_ref(),
-            ),
-            p_rad*Config::VOWEL_FRAC_OF_WRD  + rank * (Config::STACK_SEP_DIST+2.0*thick),
-            thick + rank * (Config::CONSEC_LETT_GROWTH),
-            vow,
-            word
-        )
-    }
-    pub fn create_dot(&self, num: i8, w_rad: Rc<Cell<f64>>) -> Dot {
-        Dot::new(
-            GallRelLoc::new(
-                self.get_ang(),
-                PI + Config::DEF_DOT_SPREAD * num as f64,
-                self.state.letter_rad.clone(),
-                0.0,
-                self.state.letter_pos.clone(),
-            ),
-            Config::DOT_RADIUS,
-            w_rad,     
-        )
-    }
-    pub fn create_dash(&self, num: i8, w_rad: Rc<Cell<f64>>) -> GallNode {
-        GallNode::new(
-            GallRelLoc::new(
-                self.get_ang(),
-                PI + num as f64 * Config::DEF_DOT_SPREAD,
-                self.state.letter_rad.clone(),
-                0.0,
-                self.state.letter_pos.clone(),
-            ),
-            self.state.letter_dist.clone(),
-            w_rad,     
-        )
-    }
-    pub fn add_stem(&mut self, new_stem: Stem) {
-        if self.state.stem_type.get().unwrap() != &new_stem.stem_type {
-            println!("Warning! Stem has different type to tainer")
+            )
         };
-        self.state.letter_dist = new_stem.get_dist();
-        self.state.letter_rad = new_stem.get_radius();
-        self.state.letter_pos = new_stem.pos_ref();
-        self.stem.push(new_stem);
-    }
-    pub fn add_vowel(&mut self, mut new_vowel: GallVowel) {
         if let Some(stem) = self.state.stem_type.get() {
             match stem {
-                StemType::J|StemType::B => match new_vowel.vowel_type {
-                    VowelType::E|VowelType::I|VowelType::U => {
-                        self.state.letter_dist = new_vowel.get_dist();
-                        self.state.letter_rad = new_vowel.get_radius();
-                        self.state.letter_pos = new_vowel.pos_ref();
-                        new_vowel.center_on_stem(&self.stem[0]);
-                    },
-                    VowelType::O1 => {
-                        new_vowel.o_attach_init(&self.stem[0]);
-                    },
-                    _ => {},
-                },
+                // StemType::J|StemType::B => match vow {
+                //     VowelType::E|VowelType::I|VowelType::U => {
+                //         new_vowel.center_on_stem(&self.stem[0]);
+                //     },
+                //     VowelType::O1 => {
+                //         new_vowel.o_attach_init(&self.stem[0]);
+                //     },
+                //     _ => {},
+                // },
                 _ => {},
             }
         }
-        self.vowel.push(new_vowel);
-    }
-    pub fn add_dot(&mut self, dot:Dot) {
-        self.dot.push(dot)
-    }
-    pub fn add_dash(&mut self, dash: GallNode) {
-        self.node.push(dash)
+        self.vowel.push(GallVowel::new(
+            loc,
+            self.state.letter_rad.clone(),
+            thick,
+            vow,
+            word
+        ))
     }
     pub fn thi_calc(&self) -> Result<(f64,f64), Error> {
         let (stem1,stem2) = self.stack_check()?;
-        let thi_inner = gall_fn::thi(
-            stem1.dist(),
-            stem1.outer_radius(), 
-            stem1.parent_inner(),
-        )?;
-        let thi_outer = gall_fn::thi(
-            stem2.dist(),
-            stem2.inner_radius(), 
-            stem2.parent_outer(),
-        )?;
-        Ok((thi_inner,thi_outer))
+        Ok((stem1.inner_thi()?,stem2.outer_thi()?))
+        
     }
     pub fn theta_calc(&self) -> Result<(f64,f64), Error> {
         let (stem1,stem2) = self.stack_check()?;
@@ -281,14 +271,9 @@ impl GallTainer {
         )?;
         Ok((theta_inner,theta_outer))
     }
-    pub fn stack_check(&self) -> Result<(&Stem, &Stem),Error> {
-        if let Some(stem1) = self.stem.first() {
-            let stem2 = if Config::STACK {
-                self.stem.last().unwrap()
-            } else {
-                stem1 // stem1 > stem2
-            };
-            Ok((stem1,stem2))
+    pub fn stack_check(&self) -> Result<(&Stem, &Stem), Error> {
+        if let (Some(stem1), Some(stem2)) = (self.stem.first(), self.stem.last()) {
+            Ok((stem1, stem2))
         } else {
             Err(Error::new(GallError::NoStemInTainer))
         }
@@ -309,7 +294,7 @@ impl GallTainer {
     //     (self.stem,self.vowel)
     // }
     pub fn set_ang(&mut self, new_ang:Option<f64>) {
-        _ = self.state.angle.set(GallAng::new(new_ang))
+        self.state.angle.set(GallAng::new(new_ang))
     }
     pub fn bound_ccw_rotate(&mut self, angle: f64) -> Result<(), Error> {
         if angle < 0.0 {

@@ -6,6 +6,7 @@ use svg::node::element::path::Data;
 
 use crate::gall_circle::{ChildCircle, Circle as Cir, Dot, HollowCircle};
 use crate::gall_config::Config;
+use crate::gall_errors::Error;
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_node::GallNode;
 use crate::gall_ord::PolarOrdinate;
@@ -22,7 +23,7 @@ pub trait Renderable {
 
 trait SkelPart {
     fn part_init(&self) -> ((Data, Data),(f64,f64),(f64,f64),(f64,f64));
-    fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> ((Data,Data),(f64,f64));
+    fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> Result<((Data,Data),(f64,f64)), Error>;
 }
 
 trait FreeRender {
@@ -106,7 +107,7 @@ impl Renderable for GallWord {
         drawn = if skel.len() == 0 {
             drawn.add(circle)
         } else {
-            GallWord::skel_render(skel, radius, drawn)
+            GallWord::skel_render(skel, radius, drawn).unwrap()
         };
         for tainer in divot {
             drawn = tainer.render(drawn);
@@ -144,12 +145,13 @@ impl GallWord {
         }
         (skel,divot,mark)
     }
-    fn skel_render(skel:Vec<GallTainer>, radius:(f64,f64), mut drawn:Document) -> Document {
+    fn skel_render(skel:Vec<GallTainer>, radius:(f64,f64), mut drawn:Document) -> Result<Document, Error> {
         let (mut data,inner_join, outer_join, init_angles) = skel[0].part_init();
         let mut fin_ang: (f64,f64) = init_angles;
         let mut post_render = Vec::new();
         for tainer in skel {
-            (data, fin_ang) = tainer.part_render(data, fin_ang);
+            (data, fin_ang) = tainer.part_render(data, fin_ang)?;
+            tainer.stack_render(&mut post_render); // render skel letter gaps
             tainer.post_render(&mut post_render); //render non-skel stems
         };
         let (inner_sweep, outer_sweep) = (
@@ -187,7 +189,7 @@ impl GallWord {
         for differed in post_render {
             drawn = drawn.add(differed);
         }  
-        drawn
+        Ok(drawn)
     }
 }
 
@@ -212,10 +214,10 @@ impl Renderable for GallTainer {
 }
 
 impl SkelPart for GallTainer {
-    fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> ((Data,Data),(f64,f64)) {
-        let (stem1, stem2) = self.stack_check().expect("Tainer not a Skel part");
-        let (thi_inner,thi_outer) = self.thi_calc().unwrap();
-        let (theta_inner,theta_outer) = self.theta_calc().unwrap();
+    fn part_render(&self, inner_outer:(Data,Data), start_ang:(f64,f64)) -> Result<((Data,Data),(f64,f64)), Error> {
+        let (stem1, stem2) = self.stack_check()?;
+        let (thi_inner,thi_outer) = self.thi_calc()?;
+        let (theta_inner,theta_outer) = self.theta_calc()?;
         let (w_in_rad, w_ou_rad) = (
             stem1.parent_inner(), stem2.parent_outer());
         let (l_in_big_rad, l_ou_smal_rad) = (
@@ -269,14 +271,14 @@ impl SkelPart for GallTainer {
             1,
             outer_letter_finish.0, outer_letter_finish.1
         ));
-        (
+        Ok((
             (inner_data,outer_data),
             (final_in_ang,final_ou_ang),
-        )
+        ))
     }
     fn part_init(&self) -> ((Data, Data),(f64,f64),(f64,f64), (f64,f64)) {
-        let (stem1, stem2) = self.stack_check().expect("Tainer not a skel part");
-        let (thi_inner,thi_outer) = self.thi_calc().unwrap();
+        let (stem1, stem2) = self.stack_check().expect("Tainer is empty"); 
+        let (thi_inner,thi_outer) = (stem1.inner_thi().expect(""),stem2.outer_thi().expect(""));
         let (inner_init_angle, outer_init_angle) = (
             0.0_f64.min(stem1.ang().unwrap() - thi_inner),
             0.0_f64.min(stem2.ang().unwrap() - thi_outer)
@@ -303,21 +305,96 @@ impl SkelPart for GallTainer {
         )
     }
 }
-impl GallTainer {
-    fn post_render(self, vec: &mut Vec<Element>) {
-        for stem in self.stem {
+impl FreeRender for GallTainer {
+    fn post_render(&self, vec: &mut Vec<Element>) {
+        for stem in &self.stem {
             stem.post_render(vec);
         }
-        for vow in self.vowel {
+        for vow in &self.vowel {
             vow.post_render(vec);
         }
-        for dot in self.dot {
+        for dot in &self.dot {
             dot.post_render(vec);
         }
-        for node in self.node {
+        for node in &self.node {
             node.post_render(vec);
         }
     } 
+}
+
+impl GallTainer {
+    fn stack_render(&self, vec: &mut Vec<Element>) {
+        if self.stem.is_empty() {
+            return
+        }
+        let sweep_flag = if self.stem_type() == Some(&StemType::B) {1} else {0};
+        let stem = self.stem.first().expect("There should be more than 1 stem");
+        let ang = self.ang();
+        let mut tracker = GallLoc::new(
+            ang,
+            stem.parent_inner(),
+            stem.get_center()
+        );
+        let mut first = true;
+        let thi2 = stem.inner_thi2().unwrap();
+        tracker.mut_ang(ang - thi2);
+        let mut pos1 = tracker.pos_ref().get();
+        tracker.mut_ang(ang + thi2);
+        let pos2 = tracker.pos_ref().get();
+        let mut path = Path::new()
+            .set("fill", Config::BG2_COLOUR())
+            .set("stroke-width", 0.0)
+            .set("stroke", "none");
+        let mut data = Data::new()
+            .move_to(pos1)
+            .elliptical_arc_to((
+                stem.inner_radius(), stem.inner_radius(), 
+                0,
+                sweep_flag,
+                1,
+                pos2.0, pos2.1,
+            ));
+        for stem in &self.stem {
+            if first {
+                first = false;
+                continue;
+            }
+            let (thi, thi2) = (stem.inner_thi().unwrap(), stem.inner_thi2().unwrap());
+            tracker.mut_ang(ang + thi);
+            let pos3 = tracker.pos_ref().get();
+            tracker.mut_ang(ang - thi);
+            let pos4 = tracker.pos_ref().get();
+            data = data
+                .elliptical_arc_to((
+                    stem.parent_inner(), stem.parent_inner(),
+                    0,0,1,
+                    pos3.0, pos3.1
+                )).elliptical_arc_to((
+                    stem.outer_radius(),stem.outer_radius(), 
+                    0, sweep_flag, 0,
+                    pos4.0, pos4.1
+                )).elliptical_arc_to((
+                    stem.parent_inner(), stem.parent_inner(),
+                    0,0,1,
+                    pos1.0, pos1.1
+                )).close();
+            path = path.set("d", data);
+            vec.push(path.into());
+            tracker.mut_ang(ang - thi2);
+            pos1 = tracker.pos_ref().get();
+            tracker.mut_ang(ang + thi2);
+            let pos2 = tracker.pos_ref().get();
+            path = Path::new()
+                .set("fill", Config::BG2_COLOUR())
+                .set("stroke-width", 0.0)
+                .set("stroke", "none");
+            data = Data::new().move_to(pos1).elliptical_arc_to((
+                stem.inner_radius(), stem.inner_radius(),  
+                0, sweep_flag, 1,
+                pos2.0, pos2.1,
+            ));
+        }
+    }
 }
 
 impl Renderable for Stem {
@@ -332,12 +409,12 @@ impl Renderable for Stem {
 impl FreeRender for Stem {
     fn post_render(&self, vec:&mut Vec<Element>) {
         if let Some(circle) = self.get_shape() {
-            vec.push(circle.into())
+            vec.push(circle)
         }
     }
 }
 impl Stem {
-    fn get_shape(&self) -> Option<Circle> {
+    fn get_shape(&self) -> Option<Element> {
         match self.stem_type {
             StemType::J|StemType::Z => {
                 let circle = Circle::new()
@@ -346,10 +423,11 @@ impl Stem {
                     .set("stroke-width", (self.thick()*2.0).to_string()+"px")
                     .set("cx", self.x())
                     .set("cy", self.y())
-                    .set("r", self.radius());
+                    .set("r", self.radius())
+                    .into();
                 Some(circle)
             },
-            StemType::B|StemType::S => None,//TODO: Stack gaps
+            StemType::B|StemType::S => None,
         }
     }
 }

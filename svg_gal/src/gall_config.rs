@@ -5,7 +5,7 @@ impl Config {
     pub const NODE_VISIBILITY: bool = true;
     pub const WIDTH:f64 = 2048.0;
     pub const HEIGHT:f64 = 2048.0;
-    pub const STACK: bool = false;
+    pub const STACK: bool = true;
     pub const SENT_RADIUS: f64 = 1020.0;
     pub const SENT_THICK: f64 = 20.0;
     pub const LETTER_FRAC_OF_WRD: f64 = 0.35;

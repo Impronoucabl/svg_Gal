@@ -21,8 +21,8 @@ pub struct GallVowel {
 }
 
 impl GallVowel {
-    pub fn new<T:HollowCircle>(loc:GallLoc, radius: f64, thickness:f64, vowel_type: VowelType, parent:&T) -> GallVowel {
-        let radius = Rc::new(Cell::new(radius));
+    pub fn new<T:HollowCircle>(loc:GallLoc, radius: Rc<Cell<f64>>, thickness:f64, vowel_type: VowelType, parent:&T) -> GallVowel {
+        let radius = radius;
         let thickness = Rc::new(Cell::new(thickness));
         let parent_radius = parent.get_radius().clone();
         let parent_thickness = parent.get_thickness().clone();

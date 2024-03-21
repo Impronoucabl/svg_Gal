@@ -12,6 +12,7 @@ use crate::gall_loc::{GallLoc, LocHolder};
 use crate::gall_node::GallNode;
 use crate::gall_ord::{GallOrd, OrdHolder};
 use crate::gall_tainer::GallTainer;
+use crate::gall_vowel::VowelType;
 
 pub struct GallWord {
     loc: GallLoc,
@@ -55,13 +56,13 @@ impl GallWord {
                             con_count = con.init(Some(*stem), con_count, tainer_ang);
                         }
                     },
-                    LetterMark::GallVowel(_) => {
+                    LetterMark::GallVowel(vow) => {
                         if !Config::STACK && !con.vowel.is_empty() {
                             self.tainer_vec.push(con);
                             con = self.get_con();
                             con_count = con.init(None, con_count, tainer_ang);
-                        } else if !con.stem.is_empty() {
-                            con.populate_o1(repeat, &self);
+                        } else if !con.stem.is_empty() && vow == &VowelType::O2{
+                            //con.populate_o1(repeat, &self);
                             continue;
                         }
                     },

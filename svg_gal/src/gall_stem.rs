@@ -2,6 +2,7 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::gall_errors::{Error, GallError};
+use crate::gall_fn;
 use crate::gall_loc::{GallLoc, Location};
 use crate::gall_circle::{ChildCircle, Circle, HollowCircle};
 use crate::gall_ord::PolarOrdinate;
@@ -80,6 +81,27 @@ impl Stem {
         } else {
             Ok(())
         }
+    }
+    pub fn inner_thi(&self) -> Result<f64, Error> {
+        gall_fn::thi(
+            self.dist(),
+            self.outer_radius(), 
+            self.parent_inner(),
+        )
+    }
+    pub fn inner_thi2(&self) -> Result<f64, Error> {
+        gall_fn::thi(
+            self.dist(),
+            self.inner_radius(), 
+            self.parent_inner(),
+        )
+    }
+    pub fn outer_thi(&self) -> Result<f64,Error> {
+        gall_fn::thi(
+            self.dist(),
+            self.inner_radius(), 
+            self.parent_outer(),
+        )
     }
 }
 impl PolarOrdinate for Stem {
