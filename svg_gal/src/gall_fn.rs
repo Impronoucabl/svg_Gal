@@ -14,7 +14,37 @@ pub enum Decor {
     Dot,
     Dash,    
 }
-
+pub enum Size {
+    Small,
+    Med,
+    Large,
+}
+pub struct ProcessedWord {
+    pub word: String,
+    pub length: usize,
+    pub vowels: usize,
+    pub size: Size,
+    pub a_flag: bool,
+    pub z_stem: bool,
+    pub s_stem: bool,
+} 
+pub fn basic_angle(word_list:Vec<ProcessedWord>, small_weight:i32,avg_weight:i32,large_weight:i32) -> f64 {
+    let mut pool = 0;
+    for word in word_list {
+        match word.size {
+            Size::Large => pool += large_weight,
+            Size::Med => pool += avg_weight,
+            Size::Small => pool += small_weight,
+        }
+        if word.a_flag {
+            pool += 2
+        }
+        if word.z_stem {
+            pool += 3
+        }
+    }
+    TAU/f64::from(pool) 
+} 
 
 pub fn default_layouts(phrase_length:usize, num:usize) -> (f64,f64,f64,f64) {
     match phrase_length {
@@ -24,21 +54,59 @@ pub fn default_layouts(phrase_length:usize, num:usize) -> (f64,f64,f64,f64) {
         3 => (350.0,35.0, num as f64 * TAU/3.0,450.0),
         4 => (325.0,32.5, num as f64 * PI/2.0,525.0),
         len => (
-            275.0,
-            20.0,
+            300.0 - 8.5*len as f64,
+            20.0 - 0.1*len as f64,
             num as f64*TAU/(len as f64),
-            500.0,
+            500.0 + 20.0*len as f64,
         ),//Circular pattern
         //TODO: spiral pattern?
     }
 }
 
-pub fn string_parse(raw_word:String) -> (String, usize) {
+pub fn string_parse(raw_word:String) -> ProcessedWord {
     let mut word = raw_word.to_lowercase();
     word = replace_two_char(word);
     word = replace_repeat_char(word);
-    //add more fancy parsing bits here
-    (word, raw_word.len())
+    let (length, vowels, a_flag, z_stem, s_stem) = letter_count(&word);
+    let size = match length {
+        0..=4 => {Size::Small},
+        5..=9 => {Size::Med},
+        _ => {Size::Large}
+    };
+    ProcessedWord{
+        word,
+        length,
+        vowels,
+        size,
+        a_flag,
+        z_stem,
+        s_stem,
+    }
+}
+
+fn letter_count(word:&String) -> (usize, usize, bool, bool, bool) {
+    let mut vow_count = 0;
+    let mut count = 0;
+    let mut a_flag = false;
+    let mut z_stem = false;
+    let mut s_stem = false;
+    for letter in word.chars() {
+        count += 1;
+        match letter {
+            'E'|'e'|'I'|'i'|'O'|'o'|'U'|'u' => vow_count += 1,
+            '\u{ea05}'|'\u{ea09}'|'\u{ea0f}'|'\u{ea15}' => vow_count += 2,
+            'A'|'a' => {vow_count += 1; a_flag = true},
+            '\u{ea01}' => {vow_count += 2; a_flag = true},
+            'R'|'r'|'S'|'s'|'T'|'t'|'W'|'w'|'V'|'v' => s_stem = true,
+            '\u{ea12}'..='\u{ea17}' => s_stem = true, //repeats
+            '\u{e400}'|'\u{e500}'|'\u{e600}' => s_stem = true, //WH, SH, NT
+            'Q'|'q'|'X'|'x'|'Y'|'y'|'Z'|'z' => z_stem = true,
+            '\u{ea11}'|'\u{ea18}'..='\u{ea1a}' => z_stem = true, //repeats
+            '\u{e000}'|'\u{e700}'|'\u{e800}'|'\u{e900}' => z_stem = true, //TH, GH,NG, QU
+            _ => {},
+        }
+    }
+    (count, vow_count, a_flag, z_stem, s_stem)
 }
 
 fn replace_repeat_char(lowercase_str:String) -> String {
@@ -68,11 +136,12 @@ fn replace_repeat_char(lowercase_str:String) -> String {
         .replace("ww", &'\u{ea17}'.to_string())
         .replace("xx", &'\u{ea18}'.to_string())
         .replace("yy", &'\u{ea19}'.to_string())
-        .replace("zz", &'\u{ea20}'.to_string())
+        .replace("zz", &'\u{ea1a}'.to_string())
 }
 
 fn replace_two_char(lowercase_str:String) -> String {
     // \u{f8ff} is last available unicode in private use space.
+    //TODO: Add precursor/middle vowels
     lowercase_str
         .replace("ch", &'\u{e100}'.to_string())
         .replace("nd", &'\u{e200}'.to_string())
@@ -105,11 +174,11 @@ pub fn stem_lookup(letter:&char) -> (LetterMark, bool) {
         '\u{ea02}'|'\u{ea04}'|'\u{ea06}'|'\u{ea07}'|'\u{ea08}'  => LetterMark::Stem(StemType::B), // repeat BStems
         '\u{ea03}'|'\u{ea0a}'|'\u{ea0b}'|'\u{ea0c}'|'\u{ea0d}'|'\u{ea0e}'|'\u{ea10}' => LetterMark::Stem(StemType::J), // repeat JStems
         '\u{ea12}'|'\u{ea13}'|'\u{ea14}'|'\u{ea16}'|'\u{ea17}'  => LetterMark::Stem(StemType::S), // repeat TStems
-        '\u{ea11}'|'\u{ea18}'|'\u{ea19}'|'\u{ea20}'             => LetterMark::Stem(StemType::Z), // repeat ZStems
+        '\u{ea11}'|'\u{ea18}'|'\u{ea19}'|'\u{ea1a}'             => LetterMark::Stem(StemType::Z), // repeat ZStems
         _ => LetterMark::GallMark //TODO
     };
     let repeat = match letter {
-        '\u{ea01}'..='\u{ea20}' => true,
+        '\u{ea01}'..='\u{ea1a}' => true,
         _ => false
     };
     (stem,repeat)
@@ -124,8 +193,8 @@ pub fn dot_lookup(letter:&char) -> (Option<Decor>,i8) {
         '\u{e000}'..='\u{e0ff}' => None, // TH & variants
         '\u{e800}'..='\u{e9ff}' => Some(Decor::Dash), // QU, NG & variants
         '\u{e100}'..='\u{e7ff}' => Some(Decor::Dot), // Other two letter variants
-        '\u{ea03}'|'\u{ea04}'|'\u{ea0b}'|'\u{ea0c}'|'\u{ea11}'|'\u{ea12}'|'\u{ea19}'|'\u{ea20}'=> Some(Decor::Dot), //repeat dots
-        '\u{ea06}'|'\u{ea07}'|'\u{ea08}'|'\u{ea09}'|'\u{ea0d}'|'\u{ea0e}'|'\u{ea10}'|'\u{ea13}'|'\u{ea15}'|'\u{ea16}'|'\u{ea17}'|'\u{ea18}'=> Some(Decor::Dash), //repeat dashes
+        '\u{ea03}'|'\u{ea04}'|'\u{ea0b}'|'\u{ea0c}'|'\u{ea11}'|'\u{ea12}'|'\u{ea19}'|'\u{ea1a}'=> Some(Decor::Dot), //repeat dots
+        '\u{ea06}'..='\u{ea09}'|'\u{ea0d}'|'\u{ea0e}'|'\u{ea10}'|'\u{ea13}'|'\u{ea15}'..='\u{ea18}'=> Some(Decor::Dash), //repeat dashes
         '\u{ea01}'|'\u{ea02}'|'\u{ea05}'|'\u{ea0f}'|'\u{ea14}' => None, //repeat nones
         _ => None
     };
@@ -140,9 +209,9 @@ pub fn dot_lookup(letter:&char) -> (Option<Decor>,i8) {
             '\u{e100}'|'\u{e500}'=> 2, //CH, SH
             '\u{e800}' => 3, //NG, 
             '\u{e200}'|'\u{e600}'|'\u{ea03}'|'\u{ea11}'=> 4, //ND, NT, CC, QQ
-            '\u{ea07}'|'\u{ea09}'|'\u{ea0e}'|'\u{ea15}'|'\u{ea16}' => 1, // GG, II, NN, UU, VV
-            '\u{ea08}'|'\u{ea0b}'|'\u{ea10}'|'\u{ea17}'|'\u{ea18}'|'\u{ea19}' => 2,
-            '\u{ea04}'|'\u{ea06}'|'\u{ea0c}'|'\u{ea0d}'|'\u{ea12}'|'\u{ea13}'|'\u{ea20}' => 3,
+            '\u{ea07}'|'\u{ea09}'|'\u{ea0e}'|'\u{ea15}'|'\u{ea16}' => 1, //GG, II, NN, UU, VV
+            '\u{ea08}'|'\u{ea0b}'|'\u{ea10}'|'\u{ea17}'|'\u{ea18}'|'\u{ea19}' => 2, //HH, KK, PP, WW, XX, YY,
+            '\u{ea04}'|'\u{ea06}'|'\u{ea0c}'|'\u{ea0d}'|'\u{ea12}'|'\u{ea13}'|'\u{ea1a}' => 3, //DD, FF, LL, MM, RR, SS, ZZ
             _ => 0
         }
     };

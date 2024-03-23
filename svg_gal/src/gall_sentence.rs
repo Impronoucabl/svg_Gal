@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::gall_circle::{Circle, HollowCircle};
 use crate::gall_errors::Error;
-use crate::gall_fn;
+use crate::gall_fn::{self, ProcessedWord};
 use crate::gall_loc::{GallLoc, LocHolder, Location};
 use crate::gall_node::GallNode;
 use crate::gall_ord::{GallOrd, OrdHolder, PolarOrdinate};
@@ -26,9 +26,9 @@ impl GallSentence {
             thickness: Rc::new(Cell::new(thickness)),
         }
     }
-    pub fn generate(&mut self, word_list:Vec<(String,usize)>) {
+    pub fn generate(&mut self, word_list:Vec<ProcessedWord>) {
         let sentence_length = word_list.len();
-        for (num,words) in word_list.into_iter().enumerate() {
+        for (num,word) in word_list.into_iter().enumerate() {
             let (w_radius, w_thick, word_ang, dist) = gall_fn::default_layouts(sentence_length, num);
             //create word struct
             let loc = GallLoc::new(
@@ -36,7 +36,7 @@ impl GallSentence {
                 dist,
                 self.pos_ref(),
             );
-            self.words.push(GallWord::new(words.0,words.1, loc, w_radius, w_thick));
+            self.words.push(GallWord::new(word.word,word.length, loc, w_radius, w_thick));
         }
         for wrd in &mut self.words {
             wrd.spread();
