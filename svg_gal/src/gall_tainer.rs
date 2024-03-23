@@ -28,7 +28,7 @@ pub struct GallTainer {
     pub vowel: Vec<GallVowel>,
     pub node: Vec<GallNode>,
     pub dot: Vec<Dot>,
-    //mark: Vec<GallMark>,
+    pub mark: Vec<()>, //GallMark>,
     state: TainerState,
 }
 
@@ -53,7 +53,7 @@ impl GallTainer {
             LetterMark::Digit(_) => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
             LetterMark::Stem(mark) => (Some(mark),Vec::with_capacity(1), Vec::new()),
             LetterMark::GallVowel(_) => (None, Vec::new(), Vec::with_capacity(1)),
-             _ => (None,Vec::new(), Vec::new())
+            LetterMark::GallMark => (None,Vec::new(), Vec::new())
         };
         let buffer = TainerState::new();
         if let Some(stem) = mark_type {
@@ -64,6 +64,7 @@ impl GallTainer {
             vowel:vowel_vec,
             node: Vec::new(),
             dot: Vec::new(),
+            mark: Vec::new(),
             state: buffer,
         }
     }
@@ -78,7 +79,7 @@ impl GallTainer {
         self.state.stem_type.get()
     }
     pub fn is_empty(&self) -> bool {
-        self.stem.is_empty() && self.vowel.is_empty()
+        self.stem.is_empty() && self.vowel.is_empty() && self.mark.is_empty()
     }
     pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<Decor>, i8), repeat:bool, word: &GallWord) {
         match l_mark {
@@ -94,7 +95,20 @@ impl GallTainer {
                     self.add_vowel(vow,word, true);
                 };
             },
-            LetterMark::Digit(num) => todo!(),
+            LetterMark::Digit(mut num) => {
+                self.add_digit(word);
+                if num.is_negative() {
+                    //add negative mark
+                    num = num.abs();
+                };
+                if num >= 5 {
+                    self.add_dot(1, word.get_radius());
+                    num -= 5;
+                };
+                for _ in 0..=num {
+                    //add marks
+                }
+            },
             LetterMark::GallMark => {},//todo!(),
         }
         if let Some(dot) = d_mark.0 {
@@ -161,6 +175,20 @@ impl GallTainer {
         let rad = word.radius()*Config::VOWEL_FRAC_OF_WRD;
         self.state.letter_rad = Rc::new(Cell::new(rad));
         self.state.vowel = true;
+        loc
+    }
+    fn init_state_digit(&mut self, word:&GallWord) -> GallLoc {
+        let p_rad = word.radius();
+        let dist = p_rad*(0.7 - Config::LETTER_FRAC_OF_WRD);
+        let rad = p_rad*Config::LETTER_FRAC_OF_WRD;
+        let loc = GallLoc::new(
+            self.ang(),
+            dist,
+            word.pos_ref(),
+        );
+        self.state.letter_dist = Rc::new(Cell::new(dist));
+        self.state.letter_pos = loc.pos_ref();
+        self.state.letter_rad = Rc::new(Cell::new(rad));
         loc
     }
     pub fn add_dot(&mut self, num: i8, w_rad: Rc<Cell<f64>>) {
@@ -251,6 +279,29 @@ impl GallTainer {
             vow,
             word
         ))
+    }
+    pub fn add_digit(&mut self, word: &GallWord) {
+        let rank = self.stem.len();
+        let thick = word.thick()*Config::LETTER_THICK_FRAC;
+        let loc = if rank <= 0 {
+            self.init_state_digit(word)
+        } else {
+            let rad = self.state.letter_rad.clone();
+            let new_rad = rad.get() - Config::NUM_SEP_DIST+2.0*thick;
+            self.state.letter_rad = Rc::new(Cell::new(new_rad));
+            GallLoc::new(
+                self.ang(),
+                self.state.letter_dist.get(),
+                word.pos_ref(),
+            )
+        };
+        self.stem.push(Stem::new(
+            loc,
+            self.state.letter_rad.clone(),
+            thick,
+            StemType::J,
+            word
+        ));
     }
     pub fn thi_calc(&self) -> Result<(f64,f64), Error> {
         let (stem1,stem2) = self.stack_check()?;

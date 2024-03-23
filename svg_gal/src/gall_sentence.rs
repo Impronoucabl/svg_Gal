@@ -36,7 +36,7 @@ impl GallSentence {
                 dist,
                 self.pos_ref(),
             );
-            self.words.push(GallWord::new(word.word,word.length, loc, w_radius, w_thick));
+            self.words.push(GallWord::new(word, loc, w_radius, w_thick));
         }
         for wrd in &mut self.words {
             wrd.spread();

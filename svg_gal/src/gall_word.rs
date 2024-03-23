@@ -7,10 +7,11 @@ use std::rc::Rc;
 use crate::gall_circle::{Circle, HollowCircle};
 use crate::gall_config::Config;
 use crate::gall_errors::{Error, GallError};
-use crate::gall_fn::{self, LetterMark};
+use crate::gall_fn::{self, LetterMark, ProcessedWord};
 use crate::gall_loc::{GallLoc, LocHolder};
 use crate::gall_node::GallNode;
 use crate::gall_ord::{GallOrd, OrdHolder};
+use crate::gall_stem::StemType;
 use crate::gall_tainer::GallTainer;
 use crate::gall_vowel::VowelType;
 
@@ -22,29 +23,35 @@ pub struct GallWord {
 }
 
 impl GallWord {
-    pub fn new(text:String, len_guess:usize, loc:GallLoc, radius: f64, thick:f64) -> GallWord {
-        let tainer_vec = Vec::with_capacity(len_guess);
+    pub fn new(processed_word:ProcessedWord, loc:GallLoc, radius: f64, thick:f64) -> GallWord {
+        let tainer_vec = Vec::with_capacity(processed_word.length);
         let mut word = GallWord{
             loc,
             tainer_vec,
             radius: Rc::new(Cell::new(radius)),
             thickness: Rc::new(Cell::new(thick))
         };
-        word.populate(text, len_guess);
+        word.populate(processed_word);
         word
     } 
-    fn populate(&mut self, word:String, len_guess:usize) {
-        let tainer_ang = TAU/(len_guess as f64); 
+    fn populate(&mut self, mut processed_word:ProcessedWord) {
+        let word = processed_word.word;
+        let tainer_ang = TAU/(processed_word.length as f64); 
         let mut con_count:usize = 0;
         let mut con = self.get_con();
         for cha in word.chars() {
-            let (l_mark, repeat) = gall_fn::stem_lookup(&cha);
+            let (mut l_mark, repeat) = gall_fn::stem_lookup(&cha);
             let d_mark = gall_fn::dot_lookup(&cha);
             if con.stem_type().is_none() && con.is_empty() {
                 if let LetterMark::Stem(stem) = l_mark {
-                    con_count = con.init(Some(stem), con_count, tainer_ang)
+                    con_count = con.init(Some(stem), con_count, tainer_ang);
+                } else if let LetterMark::Digit(num) = l_mark {
+                    con_count = con.init(Some(StemType::J), con_count, tainer_ang);
+                    if let Some(neg) = processed_word.neg_digit.pop() {
+                        l_mark = LetterMark::Digit(if neg {-num}else{num});
+                    }
                 } else {
-                    con_count = con.init(None,con_count,tainer_ang)
+                    con_count = con.init(None,con_count,tainer_ang);
                 }
             } else {
                 match &l_mark {
@@ -66,9 +73,16 @@ impl GallWord {
                             continue;
                         }
                     },
-                    LetterMark::Digit(_) => {todo!()},
+                    LetterMark::Digit(num) => {
+                        if con.stem_type() != Some(&StemType::J) || con.mark.is_empty() {
+                            con = self.get_con();
+                            con.init(Some(StemType::J), con_count, tainer_ang);
+                            if let Some(neg) = processed_word.neg_digit.pop() {
+                                l_mark = LetterMark::Digit(if neg {-num}else{*num});
+                            }
+                        }
+                    },
                     LetterMark::GallMark => {},
-                     
                 }
             } //At this point the con tainer should be initialised.
             con.populate(l_mark, d_mark, repeat, &self)

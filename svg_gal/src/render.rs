@@ -163,11 +163,12 @@ impl GallWord {
         let mut post_render = Vec::new();
         for tainer in skel {
             (data, fin_ang) = tainer.part_render(data, fin_ang)?;
-            if !tainer.stem.is_empty() {
-                if tainer.stem_type() == Some(&StemType::B) {
-                    tainer.b_stack_render(&mut post_render);
-                } else {
-                    tainer.t_stack_render(&mut post_render); // render skel letter gaps
+            if !tainer.stem.is_empty() || !tainer.mark.is_empty() {
+                match tainer.stem_type(){
+                    Some(&StemType::B) => tainer.b_stack_render(&mut post_render),
+                    Some(&StemType::S) => tainer.t_stack_render(&mut post_render), // render skel letter gaps
+                    Some(_) => {},
+                    None => {}, //render skel marks
                 }
             }
             tainer.post_render(&mut post_render); //render non-skel stems

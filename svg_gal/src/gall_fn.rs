@@ -1,13 +1,15 @@
 use std::f64::consts::{PI, TAU};
 
-use crate::{gall_errors::{Error, GallError}, gall_stem::StemType, gall_vowel::VowelType};
+use crate::gall_errors::{Error, GallError};
+use crate::gall_stem::StemType; 
+use crate::gall_vowel::VowelType;
 
 #[derive(PartialEq)]
 pub enum LetterMark {
     Stem(StemType),
     GallVowel(VowelType),
     GallMark,
-    Digit(u32), //TODO: change to i32
+    Digit(i8), //TODO: change to i32
 }
 #[derive(PartialEq)]
 pub enum Decor {
@@ -27,6 +29,7 @@ pub struct ProcessedWord {
     pub a_flag: bool,
     pub z_stem: bool,
     pub s_stem: bool,
+    pub neg_digit: Vec<bool>,
 } 
 pub fn basic_angle(word_list:Vec<ProcessedWord>, small_weight:i32,avg_weight:i32,large_weight:i32) -> f64 {
     let mut pool = 0;
@@ -65,9 +68,10 @@ pub fn default_layouts(phrase_length:usize, num:usize) -> (f64,f64,f64,f64) {
 
 pub fn string_parse(raw_word:String) -> ProcessedWord {
     let mut word = raw_word.to_lowercase();
+    word = replace_three_char(word);
     word = replace_two_char(word);
     word = replace_repeat_char(word);
-    let (length, vowels, a_flag, z_stem, s_stem) = letter_count(&word);
+    let (length, vowels, a_flag, z_stem, s_stem, neg_digit) = letter_count(&word);
     let size = match length {
         0..=4 => {Size::Small},
         5..=9 => {Size::Med},
@@ -81,15 +85,19 @@ pub fn string_parse(raw_word:String) -> ProcessedWord {
         a_flag,
         z_stem,
         s_stem,
+        neg_digit,
     }
 }
 
-fn letter_count(word:&String) -> (usize, usize, bool, bool, bool) {
+fn letter_count(word:&String) -> (usize, usize, bool, bool, bool, Vec<bool>) {
     let mut vow_count = 0;
     let mut count = 0;
     let mut a_flag = false;
     let mut z_stem = false;
     let mut s_stem = false;
+    let mut num_vec = Vec::new();
+    let mut negative_digit = None;
+    let mut negative_flag = false;
     for letter in word.chars() {
         count += 1;
         match letter {
@@ -105,8 +113,36 @@ fn letter_count(word:&String) -> (usize, usize, bool, bool, bool) {
             '\u{e000}'|'\u{e700}'|'\u{e800}'|'\u{e900}' => z_stem = true, //TH, GH,NG, QU
             _ => {},
         }
+        match letter {
+            '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9' => {
+                if negative_flag {
+                    negative_digit = Some(false);
+                } else {
+                    negative_digit = Some(true);
+                }
+                count -= 1; //the whole number is 1 character
+            },
+            '-' => negative_flag = true,
+            _ => {
+                negative_flag = false;
+                if let Some(neg) = negative_digit {
+                    if !neg {
+                        count += 1;
+                    }
+                    num_vec.push(neg);
+                    negative_digit = None;
+                }
+            }
+        }
+        if let Some(neg) = negative_digit {
+            if !neg {
+                count += 1;
+            }
+            num_vec.push(neg);
+        }
     }
-    (count, vow_count, a_flag, z_stem, s_stem)
+    num_vec.reverse(); //reversed so that it gets popped in the right order
+    (count, vow_count, a_flag, z_stem, s_stem, num_vec)
 }
 
 fn replace_repeat_char(lowercase_str:String) -> String {
@@ -139,9 +175,12 @@ fn replace_repeat_char(lowercase_str:String) -> String {
         .replace("zz", &'\u{ea1a}'.to_string())
 }
 
-fn replace_two_char(lowercase_str:String) -> String {
-    // \u{f8ff} is last available unicode in private use space.
+fn replace_three_char(lowercase_str:String) -> String {
     //TODO: Add precursor/middle vowels
+    lowercase_str
+}
+
+fn replace_two_char(lowercase_str:String) -> String {
     lowercase_str
         .replace("ch", &'\u{e100}'.to_string())
         .replace("nd", &'\u{e200}'.to_string())
@@ -166,7 +205,16 @@ pub fn stem_lookup(letter:&char) -> (LetterMark, bool) {
         'C'|'J'|'K'|'L'|'M'|'N'|'P'|'c'|'j'|'k'|'l'|'m'|'n'|'p' => LetterMark::Stem(StemType::J),
         'R'|'S'|'T'|'V'|'W'|'r'|'s'|'t'|'v'|'w'                 => LetterMark::Stem(StemType::S),
         'Q'|'X'|'Y'|'Z'|'q'|'x'|'y'|'z'                         => LetterMark::Stem(StemType::Z), 
-        '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'                 => LetterMark::Digit(letter.to_digit(10).unwrap()), // TODO
+        '0'                                                     => LetterMark::Digit(0),
+        '1'                                                     => LetterMark::Digit(1),
+        '2'                                                     => LetterMark::Digit(2),
+        '3'                                                     => LetterMark::Digit(3),
+        '4'                                                     => LetterMark::Digit(4),
+        '5'                                                     => LetterMark::Digit(5),
+        '6'                                                     => LetterMark::Digit(6),
+        '7'                                                     => LetterMark::Digit(7),
+        '8'                                                     => LetterMark::Digit(8),
+        '9'                                                     => LetterMark::Digit(9),
         '\u{e100}'..='\u{e2ff}'                                 => LetterMark::Stem(StemType::B), // CH & ND,
         '\u{e300}'..='\u{e3ff}'                                 => LetterMark::Stem(StemType::J), // PH,
         '\u{e400}'..='\u{e6ff}'                                 => LetterMark::Stem(StemType::S), // WH, SH, NT
