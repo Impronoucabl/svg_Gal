@@ -85,13 +85,11 @@ impl GallTainer {
         match l_mark {
             LetterMark::Stem(stem) => {
                 for n in 0..=repeat {
-                    println!("{}",n);
                     self.add_stem(stem, word, n);
                 };                
             },
             LetterMark::GallVowel(vow) => {
                 for n in 0..=repeat {
-                    println!("{}",n);
                     self.add_vowel(vow,word, n);
                 };
             },
@@ -156,8 +154,8 @@ impl GallTainer {
             1.0,
             word.pos_ref(),
         ); 
+        let p_rad = word.radius();
         if self.state.letter_dist.get() < 0.0 {
-            let p_rad = word.radius();
             let dist = match vow {
                 VowelType::A => p_rad*1.2,
                 VowelType::E => p_rad,
@@ -170,7 +168,12 @@ impl GallTainer {
             self.state.letter_dist = Rc::new(Cell::new(dist));
             self.state.letter_pos = loc.pos_ref();
         } else {
-            let dist = self.state.letter_dist.get();
+            let dist = match vow {
+                VowelType::A => p_rad*1.2,
+                VowelType::O1 => p_rad*0.6,
+                VowelType::O2 => p_rad*0.6,
+                _ => self.state.letter_dist.get(),
+            };
             _ = loc.mut_dist(dist);
         };
         let rad = word.radius()*Config::VOWEL_FRAC_OF_WRD;
