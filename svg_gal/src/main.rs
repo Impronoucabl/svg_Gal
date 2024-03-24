@@ -36,6 +36,7 @@ fn main() {
         filename += &raw_word;
         word_list.push(gall_fn::string_parse(raw_word));
     }   
+    filename += ".svg";
     println!("Generating...");
     let mut sent = GallSentence::new(
         GallLoc::new(
@@ -58,7 +59,7 @@ fn main() {
     drawn = render::render_start(sent, drawn);
     drawn = render::render_post(post_render, drawn);
     println!("Saving under {}", filename);
-    match svg::save(filename + ".svg", &drawn) {
+    match svg::save(filename, &drawn) {
         Ok(_) => println!("Done!"),
         Err(message) => println!("{}", message),
     }

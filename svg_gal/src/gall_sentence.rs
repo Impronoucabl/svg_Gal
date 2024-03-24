@@ -2,6 +2,7 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::gall_circle::{Circle, HollowCircle};
+use crate::gall_config::Config;
 use crate::gall_errors::Error;
 use crate::gall_fn::{self, ProcessedWord};
 use crate::gall_loc::{GallLoc, LocHolder, Location};
@@ -28,8 +29,15 @@ impl GallSentence {
     }
     pub fn generate(&mut self, word_list:Vec<ProcessedWord>) {
         let sentence_length = word_list.len();
+        let ang = gall_fn::basic_angle(&word_list, 6, 10, 14);
         for (num,word) in word_list.into_iter().enumerate() {
-            let (w_radius, w_thick, word_ang, dist) = gall_fn::default_layouts(sentence_length, num);
+            let (w_radius, w_thick, word_ang, dist) = if sentence_length == 1 {
+                gall_fn::default_layouts(sentence_length, num)
+            } else if Config::BASIC_LAYOUT {
+                gall_fn::default_layouts(sentence_length, num)
+            } else {
+                (300.0,25.0,ang, 500.0)
+            };
             //create word struct
             let loc = GallLoc::new(
                 word_ang,

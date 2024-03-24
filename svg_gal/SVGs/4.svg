@@ -1,0 +1,7 @@
+<svg viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+<rect fill="yellow" height="2048" stroke="none" width="2048" x="0" y="0"/>
+<circle cx="1024" cy="1024" fill="orange" r="1000" stroke="none"/>
+<circle cx="1024" cy="1024" fill="none" r="650" stroke="black" stroke-width="110"/>
+<circle cx="NaN" cy="NaN" fill="none" r="227.49999999999997" stroke="black" stroke-width="66px"/>
+<circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="40"/>
+</svg>

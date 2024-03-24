@@ -2,8 +2,9 @@
 pub struct Config {}
 
 impl Config {
-    pub const NODE_VISIBILITY: bool = true;
     pub const ENABLE_CANVAS: bool = true;
+    pub const NODE_VISIBILITY: bool = true;
+    pub const BASIC_LAYOUT: bool = true;
     pub const WIDTH:f64 = 2048.0;
     pub const HEIGHT:f64 = 2048.0;
     pub const STACK: bool = true;
@@ -11,6 +12,7 @@ impl Config {
     pub const SENT_THICK: f64 = 20.0;
     pub const LETTER_FRAC_OF_WRD: f64 = 0.35;
     pub const LETTER_THICK_FRAC: f64 = 0.6;
+    pub const DIGIT_THICK_FRAC: f64 = 0.4;
     pub const STACK_SEP_DIST: f64 = 25.0;
     pub const NUM_SEP_DIST: f64 = 25.0;
     pub const CONSEC_LETT_GROWTH: f64 = 15.0;

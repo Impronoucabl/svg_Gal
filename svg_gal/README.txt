@@ -47,8 +47,34 @@ Unicode mappings from private use space (as of 23/03/2024)
 '\u{ea18}'              | "XX"
 '\u{ea19}'              | "YY"
 '\u{ea1a}'              | "ZZ"
-'\u{ea1b}'..='\u{f8ff}' | Unused
-
+'\u{ea1b}'..='\u{ea20}' | Unused
+'\u{ea21}'              | "AAA"
+'\u{ea22}'              | "BBB"
+'\u{ea23}'              | "CCC"
+'\u{ea24}'              | "DDD"
+'\u{ea25}'              | "EEE"
+'\u{ea26}'              | "FFF"
+'\u{ea27}'              | "GGG"
+'\u{ea28}'              | "HHH"
+'\u{ea29}'              | "III"
+'\u{ea2a}'              | "JJJ"
+'\u{ea2b}'              | "KKK"
+'\u{ea2c}'              | "LLL"
+'\u{ea2d}'              | "MMM"
+'\u{ea2e}'              | "NNN"
+'\u{ea2f}'              | "OOO"
+'\u{ea30}'              | "PPP"
+'\u{ea31}'              | "QQQ"
+'\u{ea32}'              | "RRR"
+'\u{ea33}'              | "SSS"
+'\u{ea34}'              | "TTT"
+'\u{ea35}'              | "UUU"
+'\u{ea36}'              | "VVV"
+'\u{ea37}'              | "WWW"
+'\u{ea38}'              | "XXX"
+'\u{ea39}'              | "YYY"
+'\u{ea3a}'              | "ZZZ"
+'\u{ea3b}'..='\u{f8ff}' | Unused
 
 Instead of T for Stemtype, use S to avoid confusion with Rust's Generic Type pararmeter.
 Instead of TH for Stemtype, use Z to keep everything momospaced aligned. 

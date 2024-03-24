@@ -81,22 +81,23 @@ impl GallTainer {
     pub fn is_empty(&self) -> bool {
         self.stem.is_empty() && self.vowel.is_empty() && self.mark.is_empty()
     }
-    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<Decor>, i8), repeat:bool, word: &GallWord) {
+    pub fn populate(&mut self, l_mark: LetterMark, d_mark:(Option<Decor>, i8), repeat:u8, word: &GallWord) {
         match l_mark {
             LetterMark::Stem(stem) => {
-                self.add_stem(stem, word, false);
-                if repeat {
-                    self.add_stem(stem, word, true);
+                for n in 0..=repeat {
+                    println!("{}",n);
+                    self.add_stem(stem, word, n);
                 };                
             },
             LetterMark::GallVowel(vow) => {
-                self.add_vowel(vow,word, false);
-                if repeat {
-                    self.add_vowel(vow,word, true);
+                for n in 0..=repeat {
+                    println!("{}",n);
+                    self.add_vowel(vow,word, n);
                 };
             },
             LetterMark::Digit(mut num) => {
                 self.add_digit(word);
+                println!("{}",num);
                 if num.is_negative() {
                     //add negative mark
                     num = num.abs();
@@ -217,12 +218,12 @@ impl GallTainer {
             w_rad,     
         ))
     }
-    pub fn add_stem(&mut self, stem: StemType, word: &GallWord, repeat: bool) {
+    pub fn add_stem(&mut self, stem: StemType, word: &GallWord, repeat: u8) {
         if self.state.stem_type.get().unwrap() != &stem {
             println!("Warning! Stem has different type to tainer")
         };
         let rank = self.stem.len();
-        let thick = word.thick()*Config::LETTER_THICK_FRAC + (rank as f64 - if repeat {1.0} else {0.0}) * Config::CONSEC_LETT_GROWTH;
+        let thick = word.thick()*Config::LETTER_THICK_FRAC + f64::from(rank as u8 - repeat) * Config::CONSEC_LETT_GROWTH;
         let loc = if rank <= 0 {
             self.init_state_lett(stem, word)
         } else {
@@ -243,10 +244,10 @@ impl GallTainer {
             word
         ));
     }
-    pub fn add_vowel(&mut self, vow:VowelType, word: &GallWord, repeat:bool) {
-        let rank = self.vowel.len() as f64 - if repeat {1.0} else {0.0};
-        let thick = word.thick()*Config::VOWEL_THICK_FRAC + rank * Config::CONSEC_LETT_GROWTH;
-        let loc = if rank <= 0.0 {
+    pub fn add_vowel(&mut self, vow:VowelType, word: &GallWord, repeat:u8) {
+        let rank = self.vowel.len();
+        let thick = word.thick()*Config::VOWEL_THICK_FRAC + f64::from(rank as u8 - repeat) * Config::CONSEC_LETT_GROWTH;
+        let loc = if rank <= 0 {
             self.init_state_vow(vow, word)
         } else {
             let rad = self.state.letter_rad.clone();
@@ -282,7 +283,7 @@ impl GallTainer {
     }
     pub fn add_digit(&mut self, word: &GallWord) {
         let rank = self.stem.len();
-        let thick = word.thick()*Config::LETTER_THICK_FRAC;
+        let thick = word.thick()*Config::DIGIT_THICK_FRAC;
         let loc = if rank <= 0 {
             self.init_state_digit(word)
         } else {

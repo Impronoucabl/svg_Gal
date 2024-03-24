@@ -40,7 +40,7 @@ impl GallWord {
         let mut con_count:usize = 0;
         let mut con = self.get_con();
         for cha in word.chars() {
-            let (mut l_mark, repeat) = gall_fn::stem_lookup(&cha);
+            let (mut l_mark, repeats) = gall_fn::stem_lookup(&cha);
             let d_mark = gall_fn::dot_lookup(&cha);
             if con.stem_type().is_none() && con.is_empty() {
                 if let LetterMark::Stem(stem) = l_mark {
@@ -85,7 +85,7 @@ impl GallWord {
                     LetterMark::GallMark => {},
                 }
             } //At this point the con tainer should be initialised.
-            con.populate(l_mark, d_mark, repeat, &self)
+            con.populate(l_mark, d_mark, repeats, &self)
         }
         self.tainer_vec.push(con);
     }
