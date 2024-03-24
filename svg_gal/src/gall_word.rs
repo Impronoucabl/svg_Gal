@@ -38,36 +38,33 @@ impl GallWord {
         let word = processed_word.word;
         let tainer_ang = TAU/(processed_word.length as f64); 
         let mut con_count:usize = 0;
-        let mut con = self.get_con();
+        let mut con = GallTainer::new(); // create new container
         for cha in word.chars() {
             let (mut l_mark, repeats) = gall_fn::stem_lookup(&cha);
             let d_mark = gall_fn::dot_lookup(&cha);
-            if con.stem_type().is_none() && con.is_empty() {
-                if let LetterMark::Stem(stem) = l_mark {
-                    con_count = con.init(Some(stem), con_count, tainer_ang);
-                } else if let LetterMark::Digit(num) = l_mark {
-                    con_count = con.init(Some(StemType::J), con_count, tainer_ang);
+            //check if we can add to container
+            if con.is_stateless() {
+                if let LetterMark::Digit(num) = l_mark {
                     if let Some(neg) = processed_word.neg_digit.pop() {
                         l_mark = LetterMark::Digit(if neg {-num}else{num});
                     }
-                } else {
-                    con_count = con.init(None,con_count,tainer_ang);
                 }
+                con_count = con.init(&l_mark,con_count,tainer_ang, self);
             } else {
                 match &l_mark {
                     LetterMark::Stem(stem) => {
                         if (!Config::STACK && !con.is_empty()) || 
                         (Some(stem) != con.stem_type()) || (!con.vowel.is_empty()) {
                             self.tainer_vec.push(con);
-                            con = self.get_con();
-                            con_count = con.init(Some(*stem), con_count, tainer_ang);
+                            con = GallTainer::new();
+                            con_count = con.init(&l_mark,con_count,tainer_ang, self);
                         }
                     },
                     LetterMark::GallVowel(vow) => {
                         if !Config::STACK && !con.vowel.is_empty() {
                             self.tainer_vec.push(con);
-                            con = self.get_con();
-                            con_count = con.init(None, con_count, tainer_ang);
+                            con = GallTainer::new();
+                            con_count = con.init(&l_mark,con_count,tainer_ang, self);
                         } else if !con.stem.is_empty() && vow == &VowelType::O2{
                             //con.populate_o1(repeat, &self);
                             continue;
@@ -75,8 +72,8 @@ impl GallWord {
                     },
                     LetterMark::Digit(num) => {
                         if con.stem_type() != Some(&StemType::J) || con.mark.is_empty() {
-                            con = self.get_con();
-                            con.init(Some(StemType::J), con_count, tainer_ang);
+                            con = GallTainer::new();
+                            con_count = con.init(&l_mark,con_count,tainer_ang, self);
                             if let Some(neg) = processed_word.neg_digit.pop() {
                                 l_mark = LetterMark::Digit(if neg {-num}else{*num});
                             }
@@ -84,13 +81,11 @@ impl GallWord {
                     },
                     LetterMark::GallMark => {},
                 }
-            } //At this point the con tainer should be initialised.
+            }
+            //actually add to the container
             con.populate(l_mark, d_mark, repeats, &self)
         }
         self.tainer_vec.push(con);
-    }
-    fn get_con(&self) -> GallTainer {
-        GallTainer::new(LetterMark::GallMark)
     }
     fn check_radius(&self, new_radius:f64) -> Result<(),Error> {
         //todo!();

@@ -29,54 +29,92 @@ pub struct GallTainer {
     pub node: Vec<GallNode>,
     pub dot: Vec<Dot>,
     pub mark: Vec<()>, //GallMark>,
-    state: TainerState,
+    pub state: Option<TainerState>,
 }
 
 impl TainerState {
-    pub fn new() -> TainerState {
-        let angle = Rc::new(Cell::new(GallAng::new(None)));
+    pub fn new(angle: f64, letter_mark:&LetterMark, word:&GallWord) -> TainerState {
+        //let angle = ;
         let stem_type = OnceCell::new();
+        let w_rad = word.radius();
+        let rad: f64;
+        let dist = match letter_mark {
+            LetterMark::Stem(stem) => {
+                stem_type.set(*stem);
+                rad = word.radius()*Config::LETTER_FRAC_OF_WRD;
+                match stem {
+                    StemType::J => w_rad*(0.7 - Config::LETTER_FRAC_OF_WRD),
+                    StemType::B => w_rad*(1.2 - Config::LETTER_FRAC_OF_WRD),
+                    StemType::S => w_rad + word.thick()*Config::LETTER_THICK_FRAC,
+                    StemType::Z => w_rad,
+                }
+            },
+            LetterMark::GallVowel(vow) => {
+                rad = word.radius()*Config::VOWEL_FRAC_OF_WRD;
+                match vow {
+                    VowelType::A => w_rad*1.2,
+                    VowelType::O1 => w_rad*0.6,
+                    VowelType::O2 => w_rad*0.6,
+                    _ => w_rad,
+                }
+            },
+            LetterMark::Digit(_) => {
+                stem_type.set(StemType::J);
+                rad = word.radius()*Config::LETTER_FRAC_OF_WRD;
+                w_rad*(0.7 - Config::LETTER_FRAC_OF_WRD)
+            },
+            LetterMark::GallMark => todo!(),
+        };
+
+        let loc = GallLoc::new(
+            angle,
+            dist,
+            word.pos_ref(),
+        );
         TainerState { 
-            angle, 
+            angle: Rc::new(Cell::new(GallAng::new(loc.ang()))), 
             stem_type, 
-            letter_dist: Rc::new(Cell::new(-0.0)), 
-            letter_rad: Rc::new(Cell::new(-0.0)), 
-            letter_pos: Rc::new(Cell::new((-0.0,-0.0))), 
+            letter_dist: Rc::new(Cell::new(dist)), 
+            letter_rad: Rc::new(Cell::new(rad)), 
+            letter_pos: loc.pos_ref(), 
             vowel: false,
         }
     }
 }
 
 impl GallTainer {
-    pub fn new(l_type:LetterMark) -> GallTainer {
-        let (mark_type, stem_vec, vowel_vec) = match l_type {
-            LetterMark::Digit(_) => (Some(StemType::J),Vec::with_capacity(1), Vec::new()),
-            LetterMark::Stem(mark) => (Some(mark),Vec::with_capacity(1), Vec::new()),
-            LetterMark::GallVowel(_) => (None, Vec::new(), Vec::with_capacity(1)),
-            LetterMark::GallMark => (None,Vec::new(), Vec::new())
-        };
-        let buffer = TainerState::new();
-        if let Some(stem) = mark_type {
-            buffer.stem_type.get_or_init(||stem);
-        };
+    pub fn new() -> GallTainer {
         GallTainer {
-            stem:stem_vec,
-            vowel:vowel_vec,
+            stem:Vec::new(),
+            vowel:Vec::new(),
             node: Vec::new(),
             dot: Vec::new(),
             mark: Vec::new(),
-            state: buffer,
+            state: None,
         }
     }
-    pub fn init(&mut self, stem_type:Option<StemType>, con_count:usize, ang:f64) -> usize {
-        if let Some(stem) = stem_type {
-            self.state.stem_type.get_or_init(||stem);
+    pub fn init(&mut self, mark:&LetterMark, con_count:usize, ang:f64, word: &GallWord) -> usize {
+        if let Some(state) = &mut self.state {
+            panic!();
+        } else {
+            let state = TainerState::new(
+                con_count as f64 * ang,
+                mark,
+                word,
+            );
+            self.state = Some(state);
         };
-        self.set_ang(Some(con_count as f64 * ang));
         con_count + 1
     }
+    pub fn is_stateless(&self) -> bool {
+        self.state.is_none()
+    }
     pub fn stem_type(&self) -> Option<&StemType> {
-        self.state.stem_type.get()
+        if let Ok(state) = self.get_state() {
+            state.stem_type.get()
+        } else {
+            None
+        }
     }
     pub fn is_empty(&self) -> bool {
         self.stem.is_empty() && self.vowel.is_empty() && self.mark.is_empty()
@@ -129,25 +167,6 @@ impl GallTainer {
     //     };
     //     self.add_vowel(letter);
     // }
-    fn init_state_lett(&mut self, stem:StemType, word:&GallWord) -> GallLoc {
-        let p_rad = word.radius();
-        let dist = match stem {
-            StemType::J => p_rad*(0.7 - Config::LETTER_FRAC_OF_WRD),
-            StemType::B => p_rad*(1.2 - Config::LETTER_FRAC_OF_WRD),
-            StemType::S => p_rad + word.thick()*Config::LETTER_THICK_FRAC,
-            StemType::Z => p_rad,
-        };
-        let rad = p_rad*Config::LETTER_FRAC_OF_WRD;
-        let loc = GallLoc::new(
-            self.ang(),
-            dist,
-            word.pos_ref(),
-        );
-        self.state.letter_dist = Rc::new(Cell::new(dist));
-        self.state.letter_pos = loc.pos_ref();
-        self.state.letter_rad = Rc::new(Cell::new(rad));
-        loc
-    }
     fn init_state_vow(&mut self, vow:VowelType, word: &GallWord) -> GallLoc {
         let mut loc = GallLoc::new(
             self.ang(),
@@ -155,97 +174,68 @@ impl GallTainer {
             word.pos_ref(),
         ); 
         let p_rad = word.radius();
-        if self.state.letter_dist.get() < 0.0 {
-            let dist = match vow {
-                VowelType::A => p_rad*1.2,
-                VowelType::E => p_rad,
-                VowelType::I => p_rad,
-                VowelType::O1 => p_rad*0.6,
-                VowelType::O2 => p_rad*0.6,
-                VowelType::U => p_rad,
-            };
-            _ = loc.mut_dist(dist);
-            self.state.letter_dist = Rc::new(Cell::new(dist));
-            self.state.letter_pos = loc.pos_ref();
-        } else {
+        if let Some(state) = &mut self.state {
             let dist = match vow {
                 VowelType::A => p_rad*1.2,
                 VowelType::O1 => p_rad*0.6,
                 VowelType::O2 => p_rad*0.6,
-                _ => self.state.letter_dist.get(),
+                _ => state.letter_dist.get(),
             };
             _ = loc.mut_dist(dist);
-        };
-        let rad = word.radius()*Config::VOWEL_FRAC_OF_WRD;
-        self.state.letter_rad = Rc::new(Cell::new(rad));
-        self.state.vowel = true;
+            let rad = word.radius()*Config::VOWEL_FRAC_OF_WRD;
+            state.letter_rad = Rc::new(Cell::new(rad));
+            state.vowel = true;
+        }
         loc
     }
-    fn init_state_digit(&mut self, word:&GallWord) -> GallLoc {
-        let p_rad = word.radius();
-        let dist = p_rad*(0.7 - Config::LETTER_FRAC_OF_WRD);
-        let rad = p_rad*Config::LETTER_FRAC_OF_WRD;
-        let loc = GallLoc::new(
-            self.ang(),
-            dist,
-            word.pos_ref(),
-        );
-        self.state.letter_dist = Rc::new(Cell::new(dist));
-        self.state.letter_pos = loc.pos_ref();
-        self.state.letter_rad = Rc::new(Cell::new(rad));
-        loc
-    }
-    pub fn add_dot(&mut self, num: i8, w_rad: Rc<Cell<f64>>) {
+    pub fn add_dot(&mut self, num: i8, w_rad: Rc<Cell<f64>>) -> Result<(), Error>{
         self.dot.push(Dot::new(
             GallRelLoc::new(
                 self.get_ang(),
                 PI + Config::DEF_DOT_SPREAD * f64::from(num),
-                self.state.letter_rad.clone(),
+                self.get_state()?.letter_rad.clone(),
                 0.0,
-                self.state.letter_pos.clone(),
+                self.get_state()?.letter_pos.clone(),
             ),
             Config::DOT_RADIUS,
             w_rad,     
-        ))
+        ));
+        Ok(())
     }
-    pub fn add_dash(&mut self, num: i8, w_rad: Rc<Cell<f64>>) {
+    pub fn add_dash(&mut self, num: i8, w_rad: Rc<Cell<f64>>) -> Result<(), Error> {
         self.node.push(GallNode::new(
             GallRelLoc::new(
                 self.get_ang(),
                 PI + num as f64 * Config::DEF_DOT_SPREAD,
-                self.state.letter_rad.clone(),
+                self.get_state()?.letter_rad.clone(),
                 0.0,
-                self.state.letter_pos.clone(),
+                self.get_state()?.letter_pos.clone(),
             ),
-            self.state.letter_dist.clone(),
+            self.get_state()?.letter_dist.clone(),
             w_rad,     
-        ))
+        ));
+        Ok(())
     }
     pub fn add_stem(&mut self, stem: StemType, word: &GallWord, repeat: u8) {
-        if self.state.stem_type.get().unwrap() != &stem {
-            println!("Warning! Stem has different type to tainer")
-        };
         let rank = self.stem.len();
         let thick = word.thick()*Config::LETTER_THICK_FRAC + f64::from(rank as u8 - repeat) * Config::CONSEC_LETT_GROWTH;
-        let loc = if rank <= 0 {
-            self.init_state_lett(stem, word)
-        } else {
-            let rad = self.state.letter_rad.clone();
+        let ang = self.ang();
+        if let Some(state) = &mut self.state {
+            let rad = state.letter_rad.clone();
             let new_rad = rad.get() + Config::STACK_SEP_DIST+2.0*thick;
-            self.state.letter_rad = Rc::new(Cell::new(new_rad));
-            GallLoc::new(
-                self.ang(),
-                self.state.letter_dist.get(),
-                word.pos_ref(),
-            )
+            state.letter_rad = Rc::new(Cell::new(new_rad));
+            self.stem.push(Stem::new(
+                GallLoc::new(
+                    ang,
+                    state.letter_dist.get(),
+                    word.pos_ref(),
+                ),
+                state.letter_rad.clone(),
+                thick,
+                stem,
+                word
+            ));
         };
-        self.stem.push(Stem::new(
-            loc,
-            self.state.letter_rad.clone(),
-            thick,
-            stem,
-            word
-        ));
     }
     pub fn add_vowel(&mut self, vow:VowelType, word: &GallWord, repeat:u8) {
         let rank = self.vowel.len();
@@ -253,32 +243,34 @@ impl GallTainer {
         let loc = if rank <= 0 {
             self.init_state_vow(vow, word)
         } else {
-            let rad = self.state.letter_rad.clone();
+            let ang = self.ang();
+            let state = self.get_mut_state().expect("existing vowels should set state");
+            let rad = state.letter_rad.clone();
             let new_rad = rad.get() + Config::STACK_SEP_DIST+2.0*thick;
-            self.state.letter_rad = Rc::new(Cell::new(new_rad));
+            state.letter_rad = Rc::new(Cell::new(new_rad));
             GallLoc::new(
-                self.ang(),
-                self.state.letter_dist.get(),
+                ang,
+                state.letter_dist.get(),
                 word.pos_ref(),
             )
         };
-        if let Some(stem) = self.state.stem_type.get() {
-            match stem {
-                // StemType::J|StemType::B => match vow {
-                //     VowelType::E|VowelType::I|VowelType::U => {
-                //         new_vowel.center_on_stem(&self.stem[0]);
-                //     },
-                //     VowelType::O1 => {
-                //         new_vowel.o_attach_init(&self.stem[0]);
-                //     },
-                //     _ => {},
-                // },
-                _ => {},
-            }
-        }
+        // if let Some(stem) = self.state.stem_type.get() {
+        //     match stem {
+        //         // StemType::J|StemType::B => match vow {
+        //         //     VowelType::E|VowelType::I|VowelType::U => {
+        //         //         new_vowel.center_on_stem(&self.stem[0]);
+        //         //     },
+        //         //     VowelType::O1 => {
+        //         //         new_vowel.o_attach_init(&self.stem[0]);
+        //         //     },
+        //         //     _ => {},
+        //         // },
+        //         _ => {},
+        //     }
+        // }
         self.vowel.push(GallVowel::new(
             loc,
-            self.state.letter_rad.clone(),
+            self.get_state().unwrap().letter_rad.clone(),
             thick,
             vow,
             word
@@ -287,25 +279,23 @@ impl GallTainer {
     pub fn add_digit(&mut self, word: &GallWord) {
         let rank = self.stem.len();
         let thick = word.thick()*Config::DIGIT_THICK_FRAC;
-        let loc = if rank <= 0 {
-            self.init_state_digit(word)
-        } else {
-            let rad = self.state.letter_rad.clone();
-            let new_rad = rad.get() - Config::NUM_SEP_DIST+2.0*thick;
-            self.state.letter_rad = Rc::new(Cell::new(new_rad));
-            GallLoc::new(
-                self.ang(),
-                self.state.letter_dist.get(),
-                word.pos_ref(),
-            )
+        let ang = self.ang();
+        if let Some(state) = &mut self.state {
+            let rad = state.letter_rad.clone();
+            let new_rad = rad.get() + Config::NUM_SEP_DIST+2.0*thick;
+            state.letter_rad = Rc::new(Cell::new(new_rad));
+            self.stem.push(Stem::new(
+                GallLoc::new(
+                    ang,
+                    state.letter_dist.get(),
+                    word.pos_ref(),
+                ),
+                state.letter_rad.clone(),
+                thick,
+                StemType::J,
+                word,
+            ));
         };
-        self.stem.push(Stem::new(
-            loc,
-            self.state.letter_rad.clone(),
-            thick,
-            StemType::J,
-            word
-        ));
     }
     pub fn thi_calc(&self) -> Result<(f64,f64), Error> {
         let (stem1,stem2) = self.stack_check()?;
@@ -343,7 +333,11 @@ impl GallTainer {
     //     (self.stem,self.vowel)
     // }
     pub fn set_ang(&mut self, new_ang:Option<f64>) {
-        self.state.angle.set(GallAng::new(new_ang))
+        if let Some(state) = &mut self.state {
+            state.angle.set(GallAng::new(new_ang));
+        } else {
+            println!("Warning: angle not set - tainer not init")
+        }
     }
     pub fn bound_ccw_rotate(&mut self, angle: f64) -> Result<(), Error> {
         if angle < 0.0 {
@@ -368,15 +362,16 @@ impl GallTainer {
         }
     }
     pub fn rotate(&mut self, angle: f64) -> Result<(), Error> {
-        let mut ang = self.state.angle.take();
+        let state = self.get_mut_state()?;
+        let mut ang = state.angle.get();
         ang.rotate(angle).expect("tainer ang is None");
+        state.angle.set(ang);
         for stem in &mut self.stem {
             stem.mut_ccw(angle)?;
         }
         for vowel in &mut self.vowel {
             vowel.mut_ccw(angle)?;
         }
-        self.state.angle.set(ang);
         for node in &mut self.node {
             node.update()
         }
@@ -385,11 +380,25 @@ impl GallTainer {
         }
         Ok(())
     }
+    pub fn get_state(&self) -> Result<&TainerState, Error> {
+        if let Some(state) = &self.state {
+            Ok(state)
+        } else {
+            Err(Error::new(GallError::TainerNotInit))
+        }
+    }
+    pub fn get_mut_state(&mut self) -> Result<&mut TainerState, Error> {
+        if let Some(state) = &mut self.state {
+            Ok(state)
+        } else {
+            Err(Error::new(GallError::TainerNotInit))
+        }
+    }
     pub fn ang(&self) -> f64 {
-        self.state.angle.get().ang().unwrap()
+        self.get_state().unwrap().angle.get().ang().unwrap()
     }
     pub fn get_ang(&self) -> Rc<Cell<GallAng>> {
-        self.state.angle.clone()
+        self.get_state().unwrap().angle.clone()
     }
     pub fn step_ccw(&mut self) -> Result<(), Error> {
         self.bound_ccw_rotate(Config::COLLISION_DIST)

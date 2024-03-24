@@ -23,7 +23,7 @@ pub enum GallError {
     NoStepSpace ,
     NoStemInTainer ,
     LetterNotTouchingSkel,
-    BadVowelType,
+    TainerNotInit,
 }
 
 impl Error {
@@ -52,7 +52,7 @@ impl fmt::Display for Error {
             GallError::NoStepSpace =>"Stepping further will cross 6 o'clock",
             GallError::NoStemInTainer =>"Tainer stemtype is None",
             GallError::LetterNotTouchingSkel=>"Letter is not touching skeleton",
-            GallError::BadVowelType=>"Bad Vowel type",
+            GallError::TainerNotInit=>"Tainer has not been initialised yet",
             _ => "Unspecified Error",
         };
         write!(f, "{}",message)
