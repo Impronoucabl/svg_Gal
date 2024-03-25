@@ -3,10 +3,10 @@
 <circle cx="1024" cy="1024" fill="orange" r="1000" stroke="none"/>
 <circle cx="1024" cy="1024" fill="none" r="650" stroke="black" stroke-width="110"/>
 <circle cx="1024" cy="1804" fill="none" r="97.5" stroke="red" stroke-width="49.5px"/>
+<circle cx="1024" cy="796.5" fill="none" r="409.5" stroke="black" stroke-width="66px"/>
 <circle cx="1024" cy="796.5" fill="none" r="318.5" stroke="black" stroke-width="66px"/>
-<circle cx="1024" cy="796.5" fill="none" r="227.49999999999997" stroke="black" stroke-width="66px"/>
-<circle cx="844.1613722236813" cy="1059.3693933487325" fill="blue" r="25" stroke="none"/>
-<circle cx="1023.9999999999999" cy="1115" fill="blue" r="25" stroke="none"/>
-<circle cx="1203.8386277763186" cy="1059.3693933487325" fill="blue" r="25" stroke="none"/>
+<circle cx="792.778907144733" cy="1134.4749343055132" fill="blue" r="25" stroke="none"/>
+<circle cx="1023.9999999999999" cy="1206" fill="blue" r="25" stroke="none"/>
+<circle cx="1255.2210928552668" cy="1134.4749343055134" fill="blue" r="25" stroke="none"/>
 <circle cx="1024" cy="1024" fill="none" r="1020" stroke="black" stroke-width="40"/>
 </svg>

@@ -27,17 +27,17 @@ impl GallNode  {
     pub fn theta(&self) -> Result<f64, Error> {
         gall_fn::theta(self.l_dist.get(),self.loc.dist(),self.w_rad.get())
     }
-    fn broken_gap(&self) -> bool {
+    fn broken_gap(&self) -> Option<bool> {
         if let (Some(ang),Ok(thi)) = (self.ang(),self.thi()) {
-            ang + PI - thi > TAU || ang - PI + thi < 0.0 
+            Some(ang + PI - thi > TAU || ang - PI + thi < 0.0 )
         } else {
-            false
+            None
         }
     }
     fn ang_bounds(&self) -> (f64,f64) {
         if let (Some(ang),Ok(theta)) = (self.ang(),self.theta()) {
-            (gall_ang::constrain(ang - theta + PI), 
-            gall_ang::constrain(ang + theta - PI))
+            (gall_ang::constrain(ang + theta - PI),
+            gall_ang::constrain(ang - theta + PI)) 
         } else {(0.0,TAU)}
     }
     pub fn node_test(&self, node2:&GallNode)-> bool {
@@ -54,11 +54,14 @@ impl GallNode  {
     }
     pub fn angle_test(&self, ang:f64) -> bool {
         let (cw, ccw) = self.ang_bounds();
-        if self.broken_gap() {
-            ang < cw || ang > ccw
-        } else {
-            ang < cw && ang > ccw
-        }
+        if let Some(gap) = self.broken_gap() {
+            if gap {
+                ang > cw || ang <= ccw
+            } else {
+                ang >= cw && ang < ccw
+            }
+        } else {true}
+            
     }
 }
 impl PolarOrdinate for GallNode {
